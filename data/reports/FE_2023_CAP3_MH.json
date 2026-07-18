@@ -1,0 +1,20 @@
+{
+  "file": "FE_2023_CAP3_MH.pdf",
+  "academic_year": "2023-24",
+  "admission_route": "FE",
+  "cap_round": 3,
+  "quota": "MH",
+  "pages_processed": 1216,
+  "colleges_found": 336,
+  "branches_found": 1743,
+  "cutoff_records": 12278,
+  "valid_records": 4681,
+  "records_needing_review": 7597,
+  "duplicate_records": 2656,
+  "issues": {
+    "COLUMN_ALIGNMENT_UNCERTAIN": 7279,
+    "DUPLICATE_UNIQUE_KEY": 2656,
+    "UNKNOWN_SEAT_TYPE": 178,
+    "MISSING_BRANCH_CODE": 131
+  }
+}

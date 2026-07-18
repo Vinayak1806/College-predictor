@@ -1,0 +1,11 @@
+$ next dev
+   ▲ Next.js 15.5.20
+   - Local:        http://localhost:3000
+   - Network:      http://10.197.141.254:3000
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 2.7s
+ ○ Compiling /colleges/[slug] ...
+ ✓ Compiled /colleges/[slug] in 3.5s (616 modules)
+ GET /colleges/1002-government-college-of-engineering-amravati 200 in 6329ms

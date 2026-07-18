@@ -1,0 +1,252 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model University {
+  id       BigInt    @id @default(autoincrement())
+  name     String    @unique
+  colleges College[]
+
+  @@map("universities")
+}
+
+model City {
+  id       BigInt    @id @default(autoincrement())
+  name     String
+  district String?
+  region   String?
+  colleges College[]
+
+  @@unique([name, district])
+  @@map("cities")
+}
+
+model College {
+  id              BigInt          @id @default(autoincrement())
+  instituteCode   String          @unique @map("institute_code")
+  name            String
+  slug            String          @unique
+  cityId          BigInt?         @map("city_id")
+  universityId    BigInt?         @map("university_id")
+  collegeType     String?         @map("college_type")
+  autonomous      Boolean         @default(false)
+  minorityType    String?         @map("minority_type")
+  officialWebsite String?         @map("official_website")
+  city            City?           @relation(fields: [cityId], references: [id])
+  university      University?     @relation(fields: [universityId], references: [id])
+  collegeBranches CollegeBranch[]
+  profile         CollegeProfile?
+  fees            CollegeFee[]
+
+  @@index([cityId])
+  @@map("colleges")
+}
+
+model CollegeProfile {
+  id                         BigInt   @id @default(autoincrement())
+  instituteCode              String   @unique @map("institute_code")
+  instituteName              String   @map("institute_name")
+  currentCap2025             String?  @map("current_cap_2025")
+  state                      String?
+  region                     String?
+  districtCity               String?  @map("district_city")
+  address                    String?
+  ownershipType              String?  @map("ownership_type")
+  autonomyStatus             String?  @map("autonomy_status")
+  minorityStatus             String?  @map("minority_status")
+  university                 String?
+  totalIntake                Int?     @map("total_intake")
+  branchRecords              Int?     @map("branch_records")
+  feeYear                    String?  @map("fee_year")
+  totalApprovedFee           Int?     @map("total_approved_fee")
+  fePreferenceProxy          Decimal? @map("fe_preference_proxy") @db.Decimal(10, 4)
+  dsePreferenceProxy         Decimal? @map("dse_preference_proxy") @db.Decimal(10, 4)
+  combinedPreferenceProxy    Decimal? @map("combined_preference_proxy") @db.Decimal(10, 4)
+  preferenceBand             String?  @map("preference_band")
+  naacStatus                 String?  @map("naac_status")
+  nbaStatus                  String?  @map("nba_status")
+  placementData              String?  @map("placement_data")
+  officialWebsite            String?  @map("official_website")
+  websiteCompletenessScore   Decimal? @map("website_completeness_score") @db.Decimal(10, 4)
+  websiteCompletenessStatus  String?  @map("website_completeness_status")
+  dataQualityNote            String?  @map("data_quality_note")
+  sourceUrl                  String?  @map("source_url")
+  college                    College  @relation(fields: [instituteCode], references: [instituteCode])
+
+  @@map("college_profiles")
+}
+
+model CollegeFee {
+  id               BigInt  @id @default(autoincrement())
+  academicYear     String  @map("academic_year")
+  fraInstituteId   String  @map("fra_institute_id")
+  instituteCode    String? @map("institute_code")
+  instituteName    String  @map("institute_name")
+  district         String?
+  approvalStatus   String? @map("approval_status")
+  meetingDate      String? @map("meeting_date")
+  tuitionFee       Int?    @map("tuition_fee")
+  developmentFee   Int?    @map("development_fee")
+  totalApprovedFee Int?    @map("total_approved_fee")
+  sourceUrl        String? @map("source_url")
+  college          College? @relation(fields: [instituteCode], references: [instituteCode])
+
+  @@unique([academicYear, fraInstituteId])
+  @@index([instituteCode])
+  @@map("college_fees")
+}
+
+model Branch {
+  id              BigInt          @id @default(autoincrement())
+  branchCode      String          @unique @map("branch_code")
+  officialName    String          @map("official_name")
+  displayName     String          @map("display_name")
+  searchGroup     String?         @map("search_group")
+  collegeBranches CollegeBranch[]
+
+  @@map("branches")
+}
+
+model CollegeBranch {
+  id           BigInt   @id @default(autoincrement())
+  collegeId    BigInt   @map("college_id")
+  branchId     BigInt   @map("branch_id")
+  academicYear String   @map("academic_year")
+  intake       Int?
+  college      College  @relation(fields: [collegeId], references: [id])
+  branch       Branch   @relation(fields: [branchId], references: [id])
+  cutoffs      Cutoff[]
+  shortlists   Shortlist[]
+
+  @@unique([collegeId, branchId, academicYear])
+  @@map("college_branches")
+}
+
+model SeatType {
+  id             BigInt   @id @default(autoincrement())
+  code           String   @unique
+  category       String
+  gender         String
+  universityType String   @map("university_type")
+  specialType    String?  @map("special_type")
+  cutoffs        Cutoff[]
+
+  @@index([code, category])
+  @@map("seat_types")
+}
+
+model CutoffDataset {
+  id             BigInt   @id @default(autoincrement())
+  academicYear   String   @map("academic_year")
+  admissionRoute String   @map("admission_route")
+  capRound       Int      @map("cap_round")
+  quota          String
+  sourceFilename String   @map("source_filename")
+  sourceUrl      String?  @map("source_url")
+  fileHash       String?  @map("file_hash")
+  status         String
+  importedAt     DateTime @default(now()) @map("imported_at")
+  verifiedAt     DateTime? @map("verified_at")
+  cutoffs        Cutoff[]
+
+  @@index([admissionRoute, academicYear, capRound, quota, status])
+  @@map("cutoff_datasets")
+}
+
+model Cutoff {
+  id              BigInt        @id @default(autoincrement())
+  datasetId       BigInt        @map("dataset_id")
+  collegeBranchId BigInt        @map("college_branch_id")
+  seatTypeId      BigInt        @map("seat_type_id")
+  stage           String?
+  openingRank     Int?          @map("opening_rank")
+  closingRank     Int?          @map("closing_rank")
+  openingScore    Decimal?      @map("opening_score") @db.Decimal(10, 7)
+  closingScore    Decimal?      @map("closing_score") @db.Decimal(10, 7)
+  sourcePage      Int           @map("source_page")
+  verified        Boolean       @default(false)
+  needsReview     Boolean       @default(true) @map("needs_review")
+  reviewReason    String?       @map("review_reason")
+  dataset         CutoffDataset @relation(fields: [datasetId], references: [id])
+  collegeBranch   CollegeBranch @relation(fields: [collegeBranchId], references: [id])
+  seatType        SeatType      @relation(fields: [seatTypeId], references: [id])
+
+  @@unique([datasetId, collegeBranchId, seatTypeId, stage])
+  @@index([closingScore])
+  @@index([closingRank])
+  @@index([datasetId, collegeBranchId, seatTypeId])
+  @@map("cutoffs")
+}
+
+model SeatMatrix {
+  id                BigInt  @id @default(autoincrement())
+  academicYear      String  @map("academic_year")
+  admissionRoute    String  @map("admission_route")
+  instituteCode     String  @map("institute_code")
+  collegeName       String  @map("college_name")
+  collegeStatus     String? @map("college_status")
+  collegeType       String? @map("college_type")
+  autonomous        Boolean @default(false)
+  capSeats          Int?    @map("cap_seats")
+  branchCode        String  @map("branch_code")
+  branchName        String  @map("branch_name")
+  sanctionedIntake  Int?    @map("sanctioned_intake")
+  maharashtraSeats  Int?    @map("maharashtra_seats")
+  minoritySeats     Int?    @map("minority_seats")
+  allIndiaSeats     Int?    @map("all_india_seats")
+  instituteSeats    Int?    @map("institute_seats")
+  orphanSeats       Int?    @map("orphan_seats")
+  ewsSeats          Int?    @map("ews_seats")
+  tfwsChoiceCode    String? @map("tfws_choice_code")
+  tfwsSeats         Int?    @map("tfws_seats")
+  sourceFile        String  @map("source_file")
+  sourcePage        Int     @map("source_page")
+  verified          Boolean @default(false)
+  needsReview       Boolean @default(false) @map("needs_review")
+  reviewReason      String? @map("review_reason")
+
+  @@unique([academicYear, admissionRoute, branchCode])
+  @@index([academicYear, branchCode])
+  @@index([instituteCode])
+  @@index([sanctionedIntake, capSeats])
+  @@map("seat_matrices")
+}
+
+model User {
+  id              BigInt           @id @default(autoincrement())
+  email           String?          @unique
+  role            String           @default("STUDENT")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  shortlists      Shortlist[]
+  preferenceLists PreferenceList[]
+
+  @@map("users")
+}
+
+model Shortlist {
+  id              BigInt        @id @default(autoincrement())
+  userId          BigInt?       @map("user_id")
+  collegeBranchId BigInt        @map("college_branch_id")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  user            User?         @relation(fields: [userId], references: [id])
+  collegeBranch   CollegeBranch @relation(fields: [collegeBranchId], references: [id])
+
+  @@map("shortlists")
+}
+
+model PreferenceList {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt?  @map("user_id")
+  name      String
+  items     Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@map("preference_lists")
+}

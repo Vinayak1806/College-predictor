@@ -1,0 +1,20 @@
+{
+  "file": "FE_2025_CAP1_MH.pdf",
+  "academic_year": "2025-26",
+  "admission_route": "FE",
+  "cap_round": 1,
+  "quota": "MH",
+  "pages_processed": 1566,
+  "colleges_found": 368,
+  "branches_found": 2134,
+  "cutoff_records": 34422,
+  "valid_records": 26413,
+  "records_needing_review": 8009,
+  "duplicate_records": 1634,
+  "issues": {
+    "COLUMN_ALIGNMENT_UNCERTAIN": 6888,
+    "DUPLICATE_UNIQUE_KEY": 1634,
+    "UNKNOWN_SEAT_TYPE": 311,
+    "MISSING_BRANCH_CODE": 351
+  }
+}

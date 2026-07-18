@@ -1,0 +1,122 @@
+﻿[
+    {
+        "file":  "FE_2023_CAP1_MH.pdf",
+        "academic_year":  "2023-24",
+        "cap_round":  1,
+        "pages_processed":  1485,
+        "colleges_found":  332,
+        "branches_found":  1848,
+        "cutoff_records":  23919,
+        "valid_records":  19390,
+        "records_needing_review":  4529,
+        "duplicate_records":  1332
+    },
+    {
+        "file":  "FE_2023_CAP2_MH.pdf",
+        "academic_year":  "2023-24",
+        "cap_round":  2,
+        "pages_processed":  1365,
+        "colleges_found":  336,
+        "branches_found":  1784,
+        "cutoff_records":  20932,
+        "valid_records":  4232,
+        "records_needing_review":  16700,
+        "duplicate_records":  5631
+    },
+    {
+        "file":  "FE_2023_CAP3_MH.pdf",
+        "academic_year":  "2023-24",
+        "cap_round":  3,
+        "pages_processed":  1216,
+        "colleges_found":  336,
+        "branches_found":  1743,
+        "cutoff_records":  12278,
+        "valid_records":  4681,
+        "records_needing_review":  7597,
+        "duplicate_records":  2656
+    },
+    {
+        "file":  "FE_2024_CAP1_MH.pdf",
+        "academic_year":  "2024-25",
+        "cap_round":  1,
+        "pages_processed":  1590,
+        "colleges_found":  349,
+        "branches_found":  2007,
+        "cutoff_records":  31690,
+        "valid_records":  24879,
+        "records_needing_review":  6811,
+        "duplicate_records":  1673
+    },
+    {
+        "file":  "FE_2024_CAP2_MH.pdf",
+        "academic_year":  "2024-25",
+        "cap_round":  2,
+        "pages_processed":  1545,
+        "colleges_found":  352,
+        "branches_found":  1972,
+        "cutoff_records":  30589,
+        "valid_records":  4398,
+        "records_needing_review":  26191,
+        "duplicate_records":  9544
+    },
+    {
+        "file":  "FE_2024_CAP3_MH.pdf",
+        "academic_year":  "2024-25",
+        "cap_round":  3,
+        "pages_processed":  1393,
+        "colleges_found":  354,
+        "branches_found":  1962,
+        "cutoff_records":  16524,
+        "valid_records":  5150,
+        "records_needing_review":  11374,
+        "duplicate_records":  3750
+    },
+    {
+        "file":  "FE_2025_CAP1_MH.pdf",
+        "academic_year":  "2025-26",
+        "cap_round":  1,
+        "pages_processed":  1566,
+        "colleges_found":  368,
+        "branches_found":  2134,
+        "cutoff_records":  34422,
+        "valid_records":  26413,
+        "records_needing_review":  8009,
+        "duplicate_records":  1634
+    },
+    {
+        "file":  "FE_2025_CAP2_MH.pdf",
+        "academic_year":  "2025-26",
+        "cap_round":  2,
+        "pages_processed":  1516,
+        "colleges_found":  370,
+        "branches_found":  2107,
+        "cutoff_records":  33245,
+        "valid_records":  4485,
+        "records_needing_review":  28760,
+        "duplicate_records":  10221
+    },
+    {
+        "file":  "FE_2025_CAP3_MH.pdf",
+        "academic_year":  "2025-26",
+        "cap_round":  3,
+        "pages_processed":  1359,
+        "colleges_found":  369,
+        "branches_found":  2077,
+        "cutoff_records":  17790,
+        "valid_records":  5261,
+        "records_needing_review":  12529,
+        "duplicate_records":  3904
+    },
+    {
+        "file":  "FE_2025_CAP4_MH.pdf",
+        "academic_year":  "2025-26",
+        "cap_round":  4,
+        "pages_processed":  1234,
+        "colleges_found":  371,
+        "branches_found":  2036,
+        "cutoff_records":  13557,
+        "valid_records":  4749,
+        "records_needing_review":  8808,
+        "duplicate_records":  2759
+    }
+]

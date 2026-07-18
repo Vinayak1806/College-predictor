@@ -1,0 +1,6 @@
+TRUNCATE TABLE seat_matrices RESTART IDENTITY;
+
+\copy seat_matrices (academic_year, admission_route, institute_code, college_name, college_status, college_type, autonomous, cap_seats, branch_code, branch_name, sanctioned_intake, maharashtra_seats, minority_seats, all_india_seats, institute_seats, orphan_seats, ews_seats, tfws_choice_code, tfws_seats, source_file, source_page, needs_review, review_reason) FROM 'data/staging/FE_2023_SeatMatrix.csv' WITH (FORMAT csv, HEADER true);
+\copy seat_matrices (academic_year, admission_route, institute_code, college_name, college_status, college_type, autonomous, cap_seats, branch_code, branch_name, sanctioned_intake, maharashtra_seats, minority_seats, all_india_seats, institute_seats, orphan_seats, ews_seats, tfws_choice_code, tfws_seats, source_file, source_page, needs_review, review_reason) FROM 'data/staging/FE_2024_SeatMatrix.csv' WITH (FORMAT csv, HEADER true);
+\copy seat_matrices (academic_year, admission_route, institute_code, college_name, college_status, college_type, autonomous, cap_seats, branch_code, branch_name, sanctioned_intake, maharashtra_seats, minority_seats, all_india_seats, institute_seats, orphan_seats, ews_seats, tfws_choice_code, tfws_seats, source_file, source_page, needs_review, review_reason) FROM 'data/staging/FE_2025_SeatMatrix.csv' WITH (FORMAT csv, HEADER true);
+
