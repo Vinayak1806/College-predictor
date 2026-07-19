@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ResultCard } from "../../components/ResultCard";
 import { SiteHeader } from "../../components/SiteHeader";
-import { eligibleSeatTypes } from "../../lib/eligibility";
 import { explainSeatType } from "../../lib/seatTypes";
 
 const defaultForm = {
@@ -12,11 +11,12 @@ const defaultForm = {
   academicYear: "2025-26",
   capRound: "3",
   category: "OBC",
-  exactSeatType: "",
   gender: "MALE",
   universityType: "HOME",
-  branch: "Computer",
-  city: "Pune",
+  branches: ["Computer"],
+  cities: ["Pune"],
+  collegeTypes: [],
+  autonomousOnly: false,
   tfws: false,
   pwd: false,
   defence: false,
@@ -32,7 +32,6 @@ const zoneFilters = [
 ];
 
 const branchOptions = [
-  { label: "All branches", value: "" },
   { label: "Computer / CS / AI / Data Science", value: "Computer" },
   { label: "Computer Engineering", value: "Computer Engineering" },
   { label: "Information Technology", value: "Information Technology" },
@@ -49,6 +48,12 @@ const branchOptions = [
   { label: "Production Engineering", value: "Production Engineering" }
 ];
 
+const collegeTypeOptions = [
+  { label: "Government", value: "GOVERNMENT" },
+  { label: "Government-aided", value: "AIDED" },
+  { label: "Private / Un-Aided", value: "PRIVATE" }
+];
+
 function FilterButton({ active, children, onClick }) {
   return (
     <button
@@ -63,38 +68,177 @@ function FilterButton({ active, children, onClick }) {
   );
 }
 
+function selectedSummary(selectedValues, options, emptyText) {
+  if (!selectedValues.length) return emptyText;
+
+  const selectedLabels = selectedValues
+    .map((value) => options.find((option) => option.value === value)?.label || value)
+    .filter(Boolean);
+
+  if (selectedLabels.length === 1) return selectedLabels[0];
+  return `${selectedLabels.length} selected`;
+}
+
+function CompactMultiSelect({
+  label,
+  options,
+  selectedValues,
+  emptyText,
+  onToggle,
+  onClear,
+  searchPlaceholder = "Type to search",
+  noOptionsText = "No matching options found."
+}) {
+  const inputId = useId();
+  const containerRef = useRef(null);
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const matchingOptions = options
+    .filter((option) => option.label.toLowerCase().includes(query.trim().toLowerCase()))
+    .slice(0, 50);
+
+  useEffect(() => {
+    function closeWhenClickingOutside(event) {
+      if (!containerRef.current?.contains(event.target)) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", closeWhenClickingOutside);
+    return () => document.removeEventListener("pointerdown", closeWhenClickingOutside);
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative grid gap-2 text-sm">
+      <label className="font-medium" htmlFor={inputId}>{label}</label>
+      <div className="focus-within:ring-2 focus-within:ring-[#7db9ca] flex min-h-11 items-center gap-2 rounded border border-line bg-white px-3">
+        {!query && selectedValues.length ? (
+          <span className="max-w-[48%] shrink-0 truncate rounded bg-panel px-2 py-1 text-xs font-medium text-ink">
+            {selectedSummary(selectedValues, options, emptyText)}
+          </span>
+        ) : null}
+        <input
+          id={inputId}
+          aria-autocomplete="list"
+          aria-expanded={open}
+          autoComplete="off"
+          className="min-h-10 min-w-0 flex-1 border-0 bg-transparent p-0 text-sm outline-none"
+          placeholder={searchPlaceholder}
+          role="combobox"
+          value={query}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") setOpen(false);
+          }}
+        />
+        <button
+          aria-label={open ? `Close ${label}` : `Open ${label}`}
+          className="flex h-10 w-8 shrink-0 items-center justify-center"
+          type="button"
+          onClick={() => setOpen((current) => !current)}
+        >
+          <span
+            aria-hidden="true"
+            className={`h-2 w-2 border-b-2 border-r-2 border-slate-500 transition-transform ${
+              open ? "rotate-[225deg]" : "rotate-45"
+            }`}
+          />
+        </button>
+      </div>
+
+      {open ? (
+        <div className="absolute left-0 right-0 top-full z-30 mt-1 rounded border border-line bg-white p-2 shadow-lg">
+          <div className="flex min-h-9 items-center justify-between gap-3 px-1">
+            <span className="text-xs text-slate-600">
+              {selectedValues.length ? `${selectedValues.length} selected` : emptyText}
+            </span>
+            {selectedValues.length ? (
+              <button className="text-xs font-medium text-action underline" type="button" onClick={onClear}>
+                Clear
+              </button>
+            ) : null}
+          </div>
+
+          <div className="scrollbar-hidden grid max-h-52 gap-1 overflow-y-auto overscroll-contain">
+            {matchingOptions.map((option) => {
+              const selected = selectedValues.includes(option.value);
+
+              return (
+                <button
+                  key={option.value}
+                  className={`flex min-h-11 items-center justify-between gap-3 rounded px-3 text-left hover:bg-panel ${
+                    selected ? "bg-panel font-medium text-ink" : "text-slate-700"
+                  }`}
+                  type="button"
+                  onClick={() => {
+                    onToggle(option.value);
+                    setQuery("");
+                    setOpen(true);
+                  }}
+                >
+                  <span className="min-w-0 break-words">{option.label}</span>
+                  {selected ? <span className="shrink-0 text-xs text-action">Selected</span> : null}
+                </button>
+              );
+            })}
+            {!matchingOptions.length ? <p className="px-3 py-3 text-slate-600">{noOptionsText}</p> : null}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export default function FePredictorPage() {
   const [form, setForm] = useState(defaultForm);
+  const [cities, setCities] = useState([]);
   const [results, setResults] = useState([]);
   const [selectedZone, setSelectedZone] = useState("ALL");
   const [seatTypes, setSeatTypes] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const exactSeatOptions = eligibleSeatTypes({
-    category: form.category,
-    gender: form.gender,
-    universityType: form.universityType,
-    tfws: form.tfws,
-    pwd: form.pwd,
-    defence: form.defence,
-    ews: form.ews
-  });
   const visibleResults = results.filter((result) => {
     const matchesZone = selectedZone === "ALL" || result.zone === selectedZone;
 
     return matchesZone;
   });
 
+  useEffect(() => {
+    async function loadCities() {
+      try {
+        const response = await fetch("/api/cities");
+        const data = await response.json();
+        const uniqueCities = [...new Map((data.data || []).map((city) => [city.name, city])).values()];
+        setCities(uniqueCities);
+      } catch {
+        setCities([]);
+      }
+    }
+
+    loadCities();
+  }, []);
+
   function updateField(name, value) {
     setForm((currentForm) => ({
       ...currentForm,
-      [name]: value,
-      exactSeatType:
-        ["category", "gender", "universityType", "tfws", "pwd", "defence", "ews"].includes(name)
-          ? ""
-          : currentForm.exactSeatType
+      [name]: value
     }));
+  }
+
+  function toggleListValue(field, value) {
+    setForm((currentForm) => {
+      const currentValues = currentForm[field];
+      const nextValues = currentValues.includes(value)
+        ? currentValues.filter((item) => item !== value)
+        : [...currentValues, value];
+
+      return { ...currentForm, [field]: nextValues };
+    });
   }
 
   async function submitForm(event) {
@@ -111,11 +255,12 @@ export default function FePredictorPage() {
       academicYear: form.academicYear || undefined,
       capRound: form.capRound ? Number(form.capRound) : undefined,
       category: form.category.trim().toUpperCase(),
-      exactSeatType: form.exactSeatType || undefined,
       gender: form.gender,
       universityType: form.universityType,
-      preferredBranches: form.branch.trim() ? [form.branch.trim()] : [],
-      preferredCities: form.city.trim() ? [form.city.trim()] : [],
+      preferredBranches: form.branches,
+      preferredCities: form.cities,
+      collegeTypes: form.collegeTypes,
+      autonomousOnly: form.autonomousOnly,
       tfws: form.tfws,
       pwd: form.pwd,
       defence: form.defence,
@@ -249,7 +394,7 @@ export default function FePredictorPage() {
             </label>
 
             <label className="grid gap-2 text-sm font-medium">
-              University seat type
+              University eligibility
               <select
                 className="focus-ring min-h-11 rounded border border-line px-3"
                 value={form.universityType}
@@ -261,72 +406,64 @@ export default function FePredictorPage() {
               </select>
             </label>
 
-            <label className="grid gap-2 text-sm font-medium">
-              Preferred branch
-              <select
-                className="focus-ring min-h-11 rounded border border-line px-3"
-                value={form.branch}
-                onChange={(event) => updateField("branch", event.target.value)}
-              >
-                {branchOptions.map((branch) => (
-                  <option key={branch.label} value={branch.value}>
-                    {branch.label}
-                  </option>
-                ))}
-              </select>
-              <span className="text-xs font-normal text-slate-600">
-                Choose All branches if you want wider results.
-              </span>
-            </label>
+            <CompactMultiSelect
+              label="Preferred branches"
+              options={branchOptions}
+              selectedValues={form.branches}
+              emptyText="All branches"
+              onToggle={(value) => toggleListValue("branches", value)}
+              onClear={() => updateField("branches", [])}
+              searchPlaceholder="Type branch name"
+            />
 
-            <label className="grid gap-2 text-sm font-medium">
-              Preferred city
+            <CompactMultiSelect
+              label={`Preferred cities (${cities.length})`}
+              options={cities.map((city) => ({ label: city.name, value: city.name }))}
+              selectedValues={form.cities}
+              emptyText="All Maharashtra"
+              onToggle={(value) => toggleListValue("cities", value)}
+              onClear={() => updateField("cities", [])}
+              searchPlaceholder="Type city name"
+              noOptionsText="No matching city found."
+            />
+
+            <CompactMultiSelect
+              label="Institute ownership"
+              options={collegeTypeOptions}
+              selectedValues={form.collegeTypes}
+              emptyText="All institute types"
+              onToggle={(value) => toggleListValue("collegeTypes", value)}
+              onClear={() => updateField("collegeTypes", [])}
+              searchPlaceholder="Choose institute type"
+            />
+
+            <label className="flex min-h-11 items-center gap-2 rounded border border-line px-3 text-sm font-medium">
               <input
-                className="focus-ring min-h-11 rounded border border-line px-3"
-                value={form.city}
-                onChange={(event) => updateField("city", event.target.value)}
+                type="checkbox"
+                checked={form.autonomousOnly}
+                onChange={(event) => updateField("autonomousOnly", event.target.checked)}
               />
+              Autonomous institutes only
             </label>
 
             <fieldset className="grid gap-2 text-sm">
               <legend className="font-medium">Special eligibility</legend>
-              {["tfws", "pwd", "defence", "ews"].map((name) => (
-                <label key={name} className="flex min-h-11 items-center gap-2 rounded border border-line px-3">
-                  <input
-                    type="checkbox"
-                    checked={form[name]}
-                    onChange={(event) => updateField(name, event.target.checked)}
-                  />
-                  {name.toUpperCase()}
-                </label>
-              ))}
+              <div className="grid grid-cols-2 gap-2">
+                {["tfws", "pwd", "defence", "ews"].map((name) => (
+                  <label key={name} className="flex min-h-11 items-center gap-2 rounded border border-line px-3">
+                    <input
+                      type="checkbox"
+                      checked={form[name]}
+                      onChange={(event) => updateField(name, event.target.checked)}
+                    />
+                    <span className="min-w-0 text-xs font-medium">{name.toUpperCase()}</span>
+                  </label>
+                ))}
+              </div>
             </fieldset>
 
-            <label className="grid gap-2 text-sm font-medium">
-              Exact seat type
-              <select
-                className="focus-ring min-h-11 rounded border border-line px-3"
-                value={form.exactSeatType}
-                onChange={(event) => updateField("exactSeatType", event.target.value)}
-              >
-                <option value="">Auto - check all eligible seat types</option>
-                {exactSeatOptions.map((seatType) => {
-                  const seatTypeInfo = explainSeatType(seatType);
-
-                  return (
-                    <option key={seatType} value={seatType}>
-                      {seatTypeInfo.label}
-                    </option>
-                  );
-                })}
-              </select>
-              <span className="text-xs font-normal text-slate-600">
-                Final eligible list is calculated after category, gender, university type, and special eligibility.
-              </span>
-            </label>
-
             <button
-              className="focus-ring sticky bottom-3 min-h-11 rounded bg-action px-4 font-semibold text-white disabled:opacity-60"
+              className="focus-ring min-h-11 w-full rounded bg-action px-4 font-semibold text-white disabled:opacity-60"
               disabled={loading}
             >
               {loading ? "Predicting..." : "Predict Colleges"}

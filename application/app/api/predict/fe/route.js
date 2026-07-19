@@ -17,6 +17,18 @@ function normalizeOwnership(value) {
   return text;
 }
 
+function matchesCollegeType(collegeType, selectedTypes) {
+  if (!selectedTypes.length) return true;
+
+  const value = (collegeType || "").toLowerCase();
+  return selectedTypes.some((selectedType) => {
+    if (selectedType === "GOVERNMENT") return value === "government" || value.includes("university-managed");
+    if (selectedType === "AIDED") return value.includes("aided") && !value.includes("un-aided");
+    if (selectedType === "PRIVATE") return value.includes("private") || value.includes("un-aided");
+    return false;
+  });
+}
+
 export async function POST(request) {
   const input = fePredictSchema.parse(await request.json());
   if (input.exam === "MHT_CET" && input.percentile === undefined) {
@@ -24,16 +36,14 @@ export async function POST(request) {
   }
 
   const eligibleSeats = eligibleSeatTypes(input);
-  const seatTypes = input.exactSeatType ? [input.exactSeatType.toUpperCase()] : eligibleSeats;
-
-  if (input.exactSeatType && !eligibleSeats.includes(input.exactSeatType.toUpperCase())) {
-    return NextResponse.json(
-      { error: "Selected exact seat type is not eligible for this student profile." },
-      { status: 400 }
-    );
-  }
-  const branchSearch = input.preferredBranches[0];
-  const citySearch = input.preferredCities[0];
+  const seatTypes = eligibleSeats;
+  const branchFilters = input.preferredBranches.map((branch) => ({
+    displayName: { contains: branch, mode: "insensitive" }
+  }));
+  const cityFilters = input.preferredCities.flatMap((city) => [
+    { name: { contains: city, mode: "insensitive" } },
+    { city: { name: { contains: city, mode: "insensitive" } } }
+  ]);
   const studentScore = input.percentile ?? 0;
   const lowestUsefulCutoff = Math.max(0, studentScore - 20);
   const highestUsefulCutoff = Math.min(100, studentScore + 8);
@@ -56,17 +66,8 @@ export async function POST(request) {
         capRound: input.capRound || undefined
       },
       collegeBranch: {
-        branch: branchSearch
-          ? { displayName: { contains: branchSearch, mode: "insensitive" } }
-          : undefined,
-        college: citySearch
-          ? {
-              OR: [
-                { name: { contains: citySearch, mode: "insensitive" } },
-                { city: { name: { contains: citySearch, mode: "insensitive" } } }
-              ]
-            }
-          : undefined
+        branch: branchFilters.length ? { OR: branchFilters } : undefined,
+        college: cityFilters.length ? { OR: cityFilters } : undefined
       }
     },
     include: {
@@ -148,6 +149,12 @@ export async function POST(request) {
     return result;
   });
 
-  results.sort(compareUsefulResults);
-  return NextResponse.json({ seatTypes, results: results.slice(0, 30) });
+  const filteredResults = results.filter((result) => {
+    const matchesOwnership = matchesCollegeType(result.collegeType, input.collegeTypes);
+    const matchesAutonomy = !input.autonomousOnly || result.autonomous;
+    return matchesOwnership && matchesAutonomy;
+  });
+
+  filteredResults.sort(compareUsefulResults);
+  return NextResponse.json({ seatTypes, results: filteredResults.slice(0, 30) });
 }
