@@ -20,6 +20,9 @@ body {
   margin: 0;
   background: #f6f8fb;
   color: #18202a;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
 }
 
 a {
@@ -34,9 +37,54 @@ textarea {
   font: inherit;
 }
 
+input,
+select,
+textarea {
+  background: #ffffff;
+}
+
+button,
+summary,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
 .focus-ring:focus-visible {
-  outline: 3px solid #7db9ca;
+  outline: 3px solid #67b5c8;
   outline-offset: 2px;
+}
+
+::selection {
+  background: #ccebf1;
+  color: #102a43;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .enter-up {
+    animation: enter-up 420ms ease-out both;
+  }
+
+  @keyframes enter-up {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .scrollbar-hidden {

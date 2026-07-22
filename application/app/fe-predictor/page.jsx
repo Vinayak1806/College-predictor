@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, BarChart3, ChevronDown, ChevronUp } from "lucide-react";
 import { ResultCard } from "../../components/ResultCard";
 import { SiteHeader } from "../../components/SiteHeader";
 import { explainSeatType } from "../../lib/seatTypes";
@@ -8,11 +9,11 @@ import { explainSeatType } from "../../lib/seatTypes";
 const defaultForm = {
   exam: "MHT_CET",
   percentile: "89.20",
-  academicYear: "2025-26",
-  capRound: "3",
+  academicYear: "",
+  capRound: "",
   category: "OBC",
   gender: "MALE",
-  universityType: "HOME",
+  homeUniversity: "",
   branches: ["Computer"],
   cities: ["Pune"],
   collegeTypes: [],
@@ -57,7 +58,7 @@ const collegeTypeOptions = [
 function FilterButton({ active, children, onClick }) {
   return (
     <button
-      className={`focus-ring min-h-11 max-w-full rounded border px-3 py-2 text-left text-sm font-medium ${
+      className={`focus-ring min-h-11 max-w-full shrink-0 rounded border px-3 py-2 text-left text-sm font-medium ${
         active ? "border-action bg-action text-white" : "border-line bg-white text-slate-700"
       }`}
       type="button"
@@ -109,9 +110,9 @@ function CompactMultiSelect({
   }, []);
 
   return (
-    <div ref={containerRef} className="relative grid gap-2 text-sm">
+    <div ref={containerRef} className="relative grid min-w-0 w-full gap-2 text-sm">
       <label className="font-medium" htmlFor={inputId}>{label}</label>
-      <div className="focus-within:ring-2 focus-within:ring-[#7db9ca] flex min-h-11 items-center gap-2 rounded border border-line bg-white px-3">
+      <div className="focus-within:ring-2 focus-within:ring-[#7db9ca] flex min-h-11 w-full min-w-0 max-w-full items-center gap-2 overflow-hidden rounded border border-line bg-white px-3">
         {!query && selectedValues.length ? (
           <span className="max-w-[48%] shrink-0 truncate rounded bg-panel px-2 py-1 text-xs font-medium text-ink">
             {selectedSummary(selectedValues, options, emptyText)}
@@ -122,7 +123,7 @@ function CompactMultiSelect({
           aria-autocomplete="list"
           aria-expanded={open}
           autoComplete="off"
-          className="min-h-10 min-w-0 flex-1 border-0 bg-transparent p-0 text-sm outline-none"
+          className="min-h-10 w-0 min-w-0 flex-1 border-0 bg-transparent p-0 text-sm outline-none"
           placeholder={searchPlaceholder}
           role="combobox"
           value={query}
@@ -141,12 +142,7 @@ function CompactMultiSelect({
           type="button"
           onClick={() => setOpen((current) => !current)}
         >
-          <span
-            aria-hidden="true"
-            className={`h-2 w-2 border-b-2 border-r-2 border-slate-500 transition-transform ${
-              open ? "rotate-[225deg]" : "rotate-45"
-            }`}
-          />
+          {open ? <ChevronUp aria-hidden="true" size={17} /> : <ChevronDown aria-hidden="true" size={17} />}
         </button>
       </div>
 
@@ -194,13 +190,16 @@ function CompactMultiSelect({
 }
 
 export default function FePredictorPage() {
+  const predictorFormRef = useRef(null);
   const [form, setForm] = useState(defaultForm);
   const [cities, setCities] = useState([]);
+  const [universities, setUniversities] = useState([]);
   const [results, setResults] = useState([]);
   const [selectedZone, setSelectedZone] = useState("ALL");
   const [seatTypes, setSeatTypes] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mobileStep, setMobileStep] = useState(1);
 
   const visibleResults = results.filter((result) => {
     const matchesZone = selectedZone === "ALL" || result.zone === selectedZone;
@@ -209,18 +208,26 @@ export default function FePredictorPage() {
   });
 
   useEffect(() => {
-    async function loadCities() {
+    async function loadReferenceData() {
       try {
-        const response = await fetch("/api/cities");
-        const data = await response.json();
-        const uniqueCities = [...new Map((data.data || []).map((city) => [city.name, city])).values()];
+        const [cityResponse, universityResponse] = await Promise.all([
+          fetch("/api/cities"),
+          fetch("/api/universities")
+        ]);
+        const [cityData, universityData] = await Promise.all([
+          cityResponse.json(),
+          universityResponse.json()
+        ]);
+        const uniqueCities = [...new Map((cityData.data || []).map((city) => [city.name, city])).values()];
         setCities(uniqueCities);
+        setUniversities(universityData.data || []);
       } catch {
         setCities([]);
+        setUniversities([]);
       }
     }
 
-    loadCities();
+    loadReferenceData();
   }, []);
 
   function updateField(name, value) {
@@ -241,6 +248,19 @@ export default function FePredictorPage() {
     });
   }
 
+  function moveToStep(nextStep) {
+    if (nextStep > mobileStep) {
+      const currentSection = predictorFormRef.current?.querySelector(`[data-step="${mobileStep}"]`);
+      const fields = currentSection?.querySelectorAll("input, select") || [];
+      for (const field of fields) {
+        if (!field.reportValidity()) return;
+      }
+    }
+
+    setMobileStep(nextStep);
+    requestAnimationFrame(() => predictorFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
+
   async function submitForm(event) {
     event.preventDefault();
     setLoading(true);
@@ -256,7 +276,7 @@ export default function FePredictorPage() {
       capRound: form.capRound ? Number(form.capRound) : undefined,
       category: form.category.trim().toUpperCase(),
       gender: form.gender,
-      universityType: form.universityType,
+      homeUniversity: form.homeUniversity,
       preferredBranches: form.branches,
       preferredCities: form.cities,
       collegeTypes: form.collegeTypes,
@@ -299,73 +319,107 @@ export default function FePredictorPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto grid max-w-7xl gap-6 px-4 py-8 lg:grid-cols-[360px_1fr]">
-        <section>
-          <h1 className="text-2xl font-semibold">FE Predictor</h1>
-          <p className="mt-2 text-sm text-slate-600">
-            This form sends your details to the backend, searches PostgreSQL cutoffs, and returns matching colleges.
-          </p>
+      <main className="mx-auto grid max-w-7xl gap-6 overflow-x-hidden px-4 py-8 lg:grid-cols-[340px_minmax(0,1fr)] lg:items-start xl:grid-cols-[360px_minmax(0,1fr)]">
+        <section className="min-w-0">
+          <div className="border-l-4 border-action pl-4">
+            <p className="text-xs font-semibold uppercase text-action">First-year engineering</p>
+            <h1 className="mt-1 text-2xl font-semibold">Find realistic college options</h1>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              We check verified Maharashtra CAP cutoffs, your eligibility and your preferences. Historical results do
+              not guarantee admission.
+            </p>
+          </div>
+          <div className="mt-4 grid grid-cols-3 divide-x divide-line rounded border border-line bg-white py-3 text-center shadow-sm">
+            <div><strong className="block text-base text-ink">103k+</strong><span className="text-xs text-slate-500">Cutoffs</span></div>
+            <div><strong className="block text-base text-ink">3</strong><span className="text-xs text-slate-500">Years</span></div>
+            <div><strong className="block text-base text-ink">702</strong><span className="text-xs text-slate-500">Colleges</span></div>
+          </div>
 
-          <form onSubmit={submitForm} className="mt-6 grid gap-4 rounded-lg border border-line bg-white p-4">
-            <label className="grid gap-2 text-sm font-medium">
+          <form ref={predictorFormRef} onSubmit={submitForm} className="mt-4 grid min-w-0 scroll-mt-20 gap-4 rounded-lg border border-line bg-white p-4 shadow-sm">
+            <div className="md:hidden">
+              <div className="flex items-center justify-between text-xs font-semibold">
+                <span className="text-action">Step {mobileStep} of 3</span>
+                <span className="text-slate-500">{mobileStep === 1 ? "Score" : mobileStep === 2 ? "Eligibility" : "Preferences"}</span>
+              </div>
+              <div className="mt-3 h-2 overflow-hidden rounded bg-slate-100">
+                <div className="h-full bg-action transition-[width] duration-200" style={{ width: `${(mobileStep / 3) * 100}%` }} />
+              </div>
+            </div>
+
+            <fieldset data-step="1" className={`${mobileStep === 1 ? "grid" : "hidden"} min-w-0 gap-4 md:grid`}>
+              <legend className="sr-only">Score and cutoff history</legend>
+              <div className="border-b border-line pb-2">
+                <p className="font-semibold text-ink">1. Score and cutoff history</p>
+                <p className="mt-1 text-xs text-slate-500">Use all years for a more stable prediction.</p>
+              </div>
+              <label className="grid min-w-0 gap-2 text-sm font-medium">
               Exam
               <select
-                className="focus-ring min-h-11 rounded border border-line px-3"
+                className="focus-ring min-h-11 w-full min-w-0 max-w-full rounded border border-line px-3"
                 value={form.exam}
                 onChange={(event) => updateField("exam", event.target.value)}
               >
                 <option value="MHT_CET">MHT-CET</option>
-                <option value="JEE">JEE</option>
+                <option value="JEE" disabled>JEE - coming after All India data</option>
               </select>
-            </label>
+              </label>
 
-            <label className="grid gap-2 text-sm font-medium">
+              <label className="grid min-w-0 gap-2 text-sm font-medium">
               Percentile
               <input
-                className="focus-ring min-h-11 rounded border border-line px-3"
+                className="focus-ring min-h-11 w-full min-w-0 max-w-full rounded border border-line px-3"
                 inputMode="decimal"
                 min="0"
                 max="100"
                 step="0.01"
                 type="number"
+                required
                 value={form.percentile}
                 onChange={(event) => updateField("percentile", event.target.value)}
               />
-            </label>
+              </label>
 
-            <label className="grid gap-2 text-sm font-medium">
+              <label className="grid min-w-0 gap-2 text-sm font-medium">
               Academic year
               <select
-                className="focus-ring min-h-11 rounded border border-line px-3"
+                className="focus-ring min-h-11 w-full min-w-0 max-w-full rounded border border-line px-3"
                 value={form.academicYear}
                 onChange={(event) => updateField("academicYear", event.target.value)}
               >
-                <option value="">All years</option>
+                <option value="">All available years (recommended)</option>
                 <option value="2025-26">2025-26</option>
                 <option value="2024-25">2024-25</option>
                 <option value="2023-24">2023-24</option>
               </select>
-            </label>
+              </label>
 
-            <label className="grid gap-2 text-sm font-medium">
+              <label className="grid min-w-0 gap-2 text-sm font-medium">
               CAP round
               <select
-                className="focus-ring min-h-11 rounded border border-line px-3"
+                className="focus-ring min-h-11 w-full min-w-0 max-w-full rounded border border-line px-3"
                 value={form.capRound}
                 onChange={(event) => updateField("capRound", event.target.value)}
               >
-                <option value="">All rounds</option>
+                <option value="">Latest comparable round (recommended)</option>
                 <option value="1">CAP Round 1</option>
                 <option value="2">CAP Round 2</option>
                 <option value="3">CAP Round 3</option>
                 <option value="4">CAP Round 4</option>
               </select>
-            </label>
+              </label>
+            </fieldset>
 
-            <label className="grid gap-2 text-sm font-medium">
+            <fieldset data-step="2" className={`${mobileStep === 2 ? "grid" : "hidden"} min-w-0 gap-4 md:grid`}>
+              <legend className="sr-only">Admission eligibility</legend>
+              <div className="mt-1 border-b border-line pb-2">
+                <p className="font-semibold text-ink">2. Admission eligibility</p>
+                <p className="mt-1 text-xs text-slate-500">These details decide which official seat types can apply.</p>
+              </div>
+
+              <label className="grid min-w-0 gap-2 text-sm font-medium">
               Category
               <select
-                className="focus-ring min-h-11 rounded border border-line px-3"
+                className="focus-ring min-h-11 w-full min-w-0 max-w-full rounded border border-line px-3"
                 value={form.category}
                 onChange={(event) => updateField("category", event.target.value)}
               >
@@ -379,76 +433,38 @@ export default function FePredictorPage() {
                 <option value="NT3">NT3</option>
                 <option value="VJ">VJ</option>
               </select>
-            </label>
+              </label>
 
-            <label className="grid gap-2 text-sm font-medium">
+              <label className="grid min-w-0 gap-2 text-sm font-medium">
               Gender
               <select
-                className="focus-ring min-h-11 rounded border border-line px-3"
+                className="focus-ring min-h-11 w-full min-w-0 max-w-full rounded border border-line px-3"
                 value={form.gender}
                 onChange={(event) => updateField("gender", event.target.value)}
               >
                 <option value="MALE">Male</option>
                 <option value="FEMALE">Female</option>
               </select>
-            </label>
+              </label>
 
-            <label className="grid gap-2 text-sm font-medium">
-              University eligibility
+              <label className="grid min-w-0 gap-2 text-sm font-medium">
+              Home university
               <select
-                className="focus-ring min-h-11 rounded border border-line px-3"
-                value={form.universityType}
-                onChange={(event) => updateField("universityType", event.target.value)}
+                className="focus-ring min-h-11 w-full min-w-0 max-w-full rounded border border-line px-3"
+                required
+                value={form.homeUniversity}
+                onChange={(event) => updateField("homeUniversity", event.target.value)}
               >
-                <option value="HOME">Home University</option>
-                <option value="OTHER">Other Than Home University</option>
-                <option value="STATE">State Level</option>
+                <option value="">Select your home university</option>
+                {universities.map((university) => (
+                  <option key={university.id} value={university.name}>{university.name}</option>
+                ))}
               </select>
-            </label>
+              </label>
 
-            <CompactMultiSelect
-              label="Preferred branches"
-              options={branchOptions}
-              selectedValues={form.branches}
-              emptyText="All branches"
-              onToggle={(value) => toggleListValue("branches", value)}
-              onClear={() => updateField("branches", [])}
-              searchPlaceholder="Type branch name"
-            />
-
-            <CompactMultiSelect
-              label={`Preferred cities (${cities.length})`}
-              options={cities.map((city) => ({ label: city.name, value: city.name }))}
-              selectedValues={form.cities}
-              emptyText="All Maharashtra"
-              onToggle={(value) => toggleListValue("cities", value)}
-              onClear={() => updateField("cities", [])}
-              searchPlaceholder="Type city name"
-              noOptionsText="No matching city found."
-            />
-
-            <CompactMultiSelect
-              label="Institute ownership"
-              options={collegeTypeOptions}
-              selectedValues={form.collegeTypes}
-              emptyText="All institute types"
-              onToggle={(value) => toggleListValue("collegeTypes", value)}
-              onClear={() => updateField("collegeTypes", [])}
-              searchPlaceholder="Choose institute type"
-            />
-
-            <label className="flex min-h-11 items-center gap-2 rounded border border-line px-3 text-sm font-medium">
-              <input
-                type="checkbox"
-                checked={form.autonomousOnly}
-                onChange={(event) => updateField("autonomousOnly", event.target.checked)}
-              />
-              Autonomous institutes only
-            </label>
-
-            <fieldset className="grid gap-2 text-sm">
-              <legend className="font-medium">Special eligibility</legend>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid gap-2 text-sm">
+                <p className="font-medium">Special eligibility</p>
+                <div className="grid grid-cols-2 gap-2">
                 {["tfws", "pwd", "defence", "ews"].map((name) => (
                   <label key={name} className="flex min-h-11 items-center gap-2 rounded border border-line px-3">
                     <input
@@ -459,32 +475,115 @@ export default function FePredictorPage() {
                     <span className="min-w-0 text-xs font-medium">{name.toUpperCase()}</span>
                   </label>
                 ))}
+                </div>
               </div>
             </fieldset>
 
+            <fieldset data-step="3" className={`${mobileStep === 3 ? "grid" : "hidden"} min-w-0 gap-4 md:grid`}>
+              <legend className="sr-only">College preferences</legend>
+              <div className="mt-1 border-b border-line pb-2">
+                <p className="font-semibold text-ink">3. College preferences</p>
+                <p className="mt-1 text-xs text-slate-500">Leave a selector empty when you want to see every option.</p>
+              </div>
+
+              <CompactMultiSelect
+              label="Preferred branches"
+              options={branchOptions}
+              selectedValues={form.branches}
+              emptyText="All branches"
+              onToggle={(value) => toggleListValue("branches", value)}
+              onClear={() => updateField("branches", [])}
+              searchPlaceholder="Type branch name"
+              />
+
+              <CompactMultiSelect
+              label={`Preferred cities (${cities.length})`}
+              options={cities.map((city) => ({ label: city.name, value: city.name }))}
+              selectedValues={form.cities}
+              emptyText="All Maharashtra"
+              onToggle={(value) => toggleListValue("cities", value)}
+              onClear={() => updateField("cities", [])}
+              searchPlaceholder="Type city name"
+              noOptionsText="No matching city found."
+              />
+
+              <CompactMultiSelect
+              label="Institute ownership"
+              options={collegeTypeOptions}
+              selectedValues={form.collegeTypes}
+              emptyText="All institute types"
+              onToggle={(value) => toggleListValue("collegeTypes", value)}
+              onClear={() => updateField("collegeTypes", [])}
+              searchPlaceholder="Choose institute type"
+              />
+
+              <label className="flex min-h-11 items-center gap-2 rounded border border-line px-3 text-sm font-medium">
+              <input
+                type="checkbox"
+                checked={form.autonomousOnly}
+                onChange={(event) => updateField("autonomousOnly", event.target.checked)}
+              />
+              Autonomous institutes only
+              </label>
+            </fieldset>
+
+            <div className="grid grid-cols-2 gap-2 md:hidden">
+              <button
+                className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded border border-line px-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+                type="button"
+                disabled={mobileStep === 1}
+                onClick={() => moveToStep(mobileStep - 1)}
+              >
+                <ArrowLeft aria-hidden="true" size={17} /> Back
+              </button>
+              {mobileStep < 3 ? (
+                <button className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded bg-action px-3 text-sm font-semibold text-white" type="button" onClick={() => moveToStep(mobileStep + 1)}>
+                  Continue <ArrowRight aria-hidden="true" size={17} />
+                </button>
+              ) : <span />}
+            </div>
+
             <button
-              className="focus-ring min-h-11 w-full rounded bg-action px-4 font-semibold text-white disabled:opacity-60"
+              className={`${mobileStep === 3 ? "flex" : "hidden"} focus-ring min-h-11 w-full items-center justify-center gap-2 rounded bg-action px-4 font-semibold text-white disabled:opacity-60 md:flex`}
               disabled={loading}
             >
-              {loading ? "Predicting..." : "Predict Colleges"}
+              <BarChart3 aria-hidden="true" size={18} /> {loading ? "Predicting..." : "Predict Colleges"}
             </button>
           </form>
         </section>
 
-        <section className="grid content-start gap-4">
-          <div className="rounded-lg border border-line bg-white p-4">
-            <h2 className="font-semibold">College predictions</h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Eligible seats checked:{" "}
-              {seatTypes.length ? seatTypes.map((seatType) => explainSeatType(seatType).code).join(", ") : "Run prediction to see seat types."}
-            </p>
-            <p className="mt-2 text-sm text-slate-600">
-              Cutoffs searched: {form.academicYear || "All years"}, {form.capRound ? `CAP Round ${form.capRound}` : "all CAP rounds"}.
-            </p>
+        <section className="grid min-w-0 content-start gap-4">
+          <div className="rounded-lg border border-line bg-white p-4 shadow-sm md:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-xs font-semibold uppercase text-action">Prediction results</p>
+                <h2 className="mt-1 text-xl font-semibold">Colleges matching your profile</h2>
+              </div>
+              {results.length ? <span className="rounded bg-panel px-3 py-2 text-sm font-semibold">{results.length} matches</span> : null}
+            </div>
+
+            <div className="mt-4 grid gap-3 border-y border-line py-4 sm:grid-cols-2">
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase text-slate-500">Eligible seat types checked</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {seatTypes.length ? seatTypes.map((seatType) => (
+                    <span key={seatType} className="rounded bg-cyan-50 px-2 py-1 text-xs font-semibold text-action">
+                      {explainSeatType(seatType).code}
+                    </span>
+                  )) : <span className="text-sm text-slate-600">Run prediction to calculate eligibility.</span>}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase text-slate-500">Cutoff history used</p>
+                <p className="mt-2 text-sm font-semibold text-ink">{form.academicYear || "All available years"}</p>
+                <p className="mt-1 text-xs text-slate-500">{form.capRound ? `CAP Round ${form.capRound}` : "Latest comparable round from each year"}</p>
+              </div>
+            </div>
+
             {seatTypes.length ? (
-              <details className="mt-3 rounded border border-line p-3 text-sm">
+              <details className="mt-3 text-sm">
                 <summary className="cursor-pointer font-medium text-action">View eligible seat meanings</summary>
-                <div className="mt-3 grid gap-2">
+                <div className="mt-3 grid gap-2 border-l-2 border-action pl-3">
                   {seatTypes.map((seatType) => {
                     const seatTypeInfo = explainSeatType(seatType);
 
@@ -497,7 +596,7 @@ export default function FePredictorPage() {
                 </div>
               </details>
             ) : null}
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="scrollbar-hidden mt-4 flex max-w-full gap-2 overflow-x-auto pb-1">
               {zoneFilters.map((zone) => (
                 <FilterButton
                   key={zone.value}
@@ -508,7 +607,7 @@ export default function FePredictorPage() {
                 </FilterButton>
               ))}
             </div>
-            <p className="mt-3 text-sm text-slate-600">
+            <p className="mt-3 text-xs text-slate-500">
               Showing {visibleResults.length} of {results.length} results.
             </p>
           </div>

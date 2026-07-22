@@ -30,3 +30,22 @@ export function eligibleSeatTypes(input) {
 
   return Array.from(seatTypes);
 }
+
+export function eligibleSeatTypesAcrossUniversities(input) {
+  return [...new Set([
+    ...eligibleSeatTypes({ ...input, universityType: "HOME" }),
+    ...eligibleSeatTypes({ ...input, universityType: "OTHER" })
+  ])];
+}
+
+export function universityEligibilityForCollege(homeUniversity, collegeUniversity) {
+  if (!homeUniversity || !collegeUniversity) return "STATE";
+
+  const normalize = (value) => value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+  return normalize(homeUniversity) === normalize(collegeUniversity) ? "HOME" : "OTHER";
+}
+
+export function eligibleSeatTypesForCollege(input, collegeUniversity) {
+  const universityType = universityEligibilityForCollege(input.homeUniversity, collegeUniversity);
+  return eligibleSeatTypes({ ...input, universityType });
+}

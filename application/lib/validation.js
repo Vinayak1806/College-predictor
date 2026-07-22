@@ -21,7 +21,7 @@ export const fePredictSchema = z.object({
   capRound: z.number().int().min(1).max(4).optional(),
   category: z.string().min(2),
   gender: z.enum(["MALE", "FEMALE"]),
-  universityType: z.enum(["HOME", "OTHER", "STATE"]),
+  homeUniversity: z.string().min(2),
   preferredBranches: z.array(z.string()).default([]),
   preferredCities: z.array(z.string()).default([]),
   collegeTypes: z.array(z.enum(["GOVERNMENT", "AIDED", "PRIVATE"])).default([]),
