@@ -12,6 +12,16 @@ Required lifecycle:
 6. Approve the dataset.
 7. Publish only verified records.
 
+Before rebuilding PostgreSQL:
+
+1. Create a compressed `pg_dump` backup.
+2. Normalize staging codes.
+3. Build relational exports.
+4. Run `validate_relational_exports.py` and require zero errors.
+5. Run `database/rebuild_normalized_data.sql` from the project root.
+6. Import college profiles and fee rows.
+7. Verify database counts and run prediction tests.
+
 Dataset statuses:
 
 - `UPLOADED`
@@ -37,4 +47,3 @@ Review these groups first:
 The extractor is intentionally conservative. A high review count is acceptable
 for raw PDF text extraction because official CAP PDFs often contain blank table
 cells that are not preserved in plain text.
-

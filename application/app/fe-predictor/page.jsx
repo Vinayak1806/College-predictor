@@ -1,10 +1,23 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, BarChart3, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  BarChart3,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  SlidersHorizontal
+} from "lucide-react";
 import { ResultCard } from "../../components/ResultCard";
 import { SiteHeader } from "../../components/SiteHeader";
+import { getPageRange, getPaginationItems } from "../../lib/pagination";
 import { explainSeatType } from "../../lib/seatTypes";
+
+const PAGE_SIZE = 10;
 
 const defaultForm = {
   exam: "MHT_CET",
@@ -66,6 +79,94 @@ function FilterButton({ active, children, onClick }) {
     >
       {children}
     </button>
+  );
+}
+
+function RequiredMark() {
+  return <span className="text-danger" aria-hidden="true"> *</span>;
+}
+
+function Pagination({ currentPage, totalPages, totalResults, disabled, onPageChange }) {
+  if (totalPages <= 1) return null;
+
+  const pageRange = getPageRange(currentPage, PAGE_SIZE, totalResults);
+
+  return (
+    <nav
+      aria-label="Prediction result pages"
+      className="grid gap-3 border-t border-line bg-white px-4 py-4 sm:flex sm:items-center sm:justify-between"
+    >
+      <p className="text-center text-sm text-slate-600 sm:text-left">
+        Options <strong className="text-ink">{pageRange.start}-{pageRange.end}</strong> of{" "}
+        <strong className="text-ink">{totalResults}</strong>
+      </p>
+      <div className="flex items-center justify-center gap-2 sm:hidden">
+        <button
+          aria-label="Previous results page"
+          className="focus-ring flex h-11 w-11 shrink-0 items-center justify-center rounded border border-line bg-white text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+          type="button"
+          disabled={disabled || currentPage === 1}
+          onClick={() => onPageChange(currentPage - 1)}
+        >
+          <ChevronLeft aria-hidden="true" size={19} />
+        </button>
+        <span className="flex h-11 min-w-28 items-center justify-center rounded border border-line bg-panel px-3 text-sm font-semibold text-ink">
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          aria-label="Next results page"
+          className="focus-ring flex h-11 w-11 shrink-0 items-center justify-center rounded border border-line bg-white text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+          type="button"
+          disabled={disabled || currentPage === totalPages}
+          onClick={() => onPageChange(currentPage + 1)}
+        >
+          <ChevronRight aria-hidden="true" size={19} />
+        </button>
+      </div>
+      <div className="hidden min-w-0 items-center justify-center gap-1 sm:flex">
+        <button
+          aria-label="Previous results page"
+          className="focus-ring flex h-11 w-11 shrink-0 items-center justify-center rounded border border-line bg-white text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+          type="button"
+          disabled={disabled || currentPage === 1}
+          onClick={() => onPageChange(currentPage - 1)}
+        >
+          <ChevronLeft aria-hidden="true" size={19} />
+        </button>
+        {getPaginationItems(currentPage, totalPages).map((item) => (
+          typeof item === "number" ? (
+            <button
+              key={item}
+              aria-current={item === currentPage ? "page" : undefined}
+              aria-label={`Results page ${item}`}
+              className={`focus-ring flex h-11 min-w-11 items-center justify-center rounded border px-2 text-sm font-semibold ${
+                item === currentPage
+                  ? "border-action bg-action text-white"
+                  : "border-line bg-white text-slate-700 hover:bg-panel"
+              }`}
+              type="button"
+              disabled={disabled}
+              onClick={() => onPageChange(item)}
+            >
+              {item}
+            </button>
+          ) : (
+            <span key={item} className="flex h-11 min-w-6 items-center justify-center text-slate-400" aria-hidden="true">
+              ...
+            </span>
+          )
+        ))}
+        <button
+          aria-label="Next results page"
+          className="focus-ring flex h-11 w-11 shrink-0 items-center justify-center rounded border border-line bg-white text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+          type="button"
+          disabled={disabled || currentPage === totalPages}
+          onClick={() => onPageChange(currentPage + 1)}
+        >
+          <ChevronRight aria-hidden="true" size={19} />
+        </button>
+      </div>
+    </nav>
   );
 }
 
@@ -191,21 +292,27 @@ function CompactMultiSelect({
 
 export default function FePredictorPage() {
   const predictorFormRef = useRef(null);
+  const resultsTopRef = useRef(null);
   const [form, setForm] = useState(defaultForm);
   const [cities, setCities] = useState([]);
   const [universities, setUniversities] = useState([]);
   const [results, setResults] = useState([]);
   const [selectedZone, setSelectedZone] = useState("ALL");
   const [seatTypes, setSeatTypes] = useState([]);
+  const [totalResults, setTotalResults] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [zoneCounts, setZoneCounts] = useState({});
+  const [hasPredicted, setHasPredicted] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("info");
   const [loading, setLoading] = useState(false);
+  const [showValidation, setShowValidation] = useState(false);
   const [mobileStep, setMobileStep] = useState(1);
 
-  const visibleResults = results.filter((result) => {
-    const matchesZone = selectedZone === "ALL" || result.zone === selectedZone;
-
-    return matchesZone;
-  });
+  const percentileNumber = Number(form.percentile);
+  const percentileValid = form.percentile !== "" && Number.isFinite(percentileNumber) && percentileNumber >= 0 && percentileNumber <= 100;
+  const canPredict = Boolean(form.exam && percentileValid && form.category && form.gender && form.homeUniversity);
 
   useEffect(() => {
     async function loadReferenceData() {
@@ -250,10 +357,10 @@ export default function FePredictorPage() {
 
   function moveToStep(nextStep) {
     if (nextStep > mobileStep) {
-      const currentSection = predictorFormRef.current?.querySelector(`[data-step="${mobileStep}"]`);
-      const fields = currentSection?.querySelectorAll("input, select") || [];
-      for (const field of fields) {
-        if (!field.reportValidity()) return;
+      const currentStepValid = mobileStep === 1 ? percentileValid : mobileStep === 2 ? Boolean(form.homeUniversity) : true;
+      if (!currentStepValid) {
+        setShowValidation(true);
+        return;
       }
     }
 
@@ -261,15 +368,8 @@ export default function FePredictorPage() {
     requestAnimationFrame(() => predictorFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
-  async function submitForm(event) {
-    event.preventDefault();
-    setLoading(true);
-    setMessage("");
-    setResults([]);
-    setSelectedZone("ALL");
-
-    // This object is the student profile that goes to our backend API.
-    const studentInput = {
+  function buildStudentInput(page, zone) {
+    return {
       exam: form.exam,
       percentile: Number(form.percentile),
       academicYear: form.academicYear || undefined,
@@ -281,11 +381,24 @@ export default function FePredictorPage() {
       preferredCities: form.cities,
       collegeTypes: form.collegeTypes,
       autonomousOnly: form.autonomousOnly,
+      zone,
+      page,
+      pageSize: PAGE_SIZE,
       tfws: form.tfws,
       pwd: form.pwd,
       defence: form.defence,
       ews: form.ews
     };
+  }
+
+  async function requestPrediction({ page = 1, zone = selectedZone, scrollToResults = true } = {}) {
+    if (!canPredict) {
+      setShowValidation(true);
+      return;
+    }
+
+    setLoading(true);
+    setMessage("");
 
     try {
       const response = await fetch("/api/predict/fe", {
@@ -293,49 +406,79 @@ export default function FePredictorPage() {
         headers: {
           "content-type": "application/json"
         },
-        body: JSON.stringify(studentInput)
+        body: JSON.stringify(buildStudentInput(page, zone))
       });
 
       const data = await response.json();
 
       if (!response.ok) {
+        setMessageType("error");
         setMessage(data.error || "Prediction failed. Check the form values.");
         return;
       }
 
       setSeatTypes(data.seatTypes || []);
       setResults(data.results || []);
+      setCurrentPage(data.pagination?.page || page);
+      setTotalResults(data.pagination?.totalResults || 0);
+      setTotalPages(data.pagination?.totalPages || 0);
+      setZoneCounts(data.zoneCounts || {});
+      setHasPredicted(true);
 
       if (!data.results?.length) {
-        setMessage("No matching colleges found. Try changing branch, city, or category.");
+        setMessageType("info");
+        setMessage("No matching options found. Try removing a branch, city, or institute filter.");
+      }
+
+      if (scrollToResults) {
+        requestAnimationFrame(() => {
+          resultsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
       }
     } catch (error) {
+      setMessageType("error");
       setMessage("Could not connect to the prediction API. Make sure the website server is running.");
     } finally {
       setLoading(false);
     }
   }
 
+  async function submitForm(event) {
+    event.preventDefault();
+    setSelectedZone("ALL");
+    await requestPrediction({ page: 1, zone: "ALL" });
+  }
+
+  async function selectZone(zone) {
+    setSelectedZone(zone);
+    if (hasPredicted) await requestPrediction({ page: 1, zone });
+  }
+
+  async function selectPage(page) {
+    if (loading || page < 1 || page > totalPages || page === currentPage) return;
+    await requestPrediction({ page, zone: selectedZone });
+  }
+
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto grid max-w-7xl gap-6 overflow-x-hidden px-4 py-8 lg:grid-cols-[340px_minmax(0,1fr)] lg:items-start xl:grid-cols-[360px_minmax(0,1fr)]">
-        <section className="min-w-0">
+      <main className="mx-auto grid min-w-0 max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[340px_minmax(0,1fr)] lg:items-start xl:grid-cols-[360px_minmax(0,1fr)]">
+        <section className="min-w-0 lg:self-stretch">
           <div className="border-l-4 border-action pl-4">
             <p className="text-xs font-semibold uppercase text-action">First-year engineering</p>
-            <h1 className="mt-1 text-2xl font-semibold">Find realistic college options</h1>
+            <h1 className="mt-1 text-2xl font-semibold">FE College Predictor</h1>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              We check verified Maharashtra CAP cutoffs, your eligibility and your preferences. Historical results do
-              not guarantee admission.
+              Find realistic options from verified Maharashtra CAP cutoffs and your official seat eligibility.
             </p>
           </div>
-          <div className="mt-4 grid grid-cols-3 divide-x divide-line rounded border border-line bg-white py-3 text-center shadow-sm">
+          <div className="mt-4 grid grid-cols-3 divide-x divide-line border-y border-line py-3 text-center">
             <div><strong className="block text-base text-ink">103k+</strong><span className="text-xs text-slate-500">Cutoffs</span></div>
             <div><strong className="block text-base text-ink">3</strong><span className="text-xs text-slate-500">Years</span></div>
-            <div><strong className="block text-base text-ink">702</strong><span className="text-xs text-slate-500">Colleges</span></div>
+            <div><strong className="block text-base text-ink">372</strong><span className="text-xs text-slate-500">Institutes</span></div>
           </div>
 
-          <form ref={predictorFormRef} onSubmit={submitForm} className="mt-4 grid min-w-0 scroll-mt-20 gap-4 rounded-lg border border-line bg-white p-4 shadow-sm">
+          <form ref={predictorFormRef} noValidate onSubmit={submitForm} className="mt-4 grid min-w-0 scroll-mt-20 gap-4 rounded-lg border border-line bg-white p-4">
+            <p className="text-right text-xs text-slate-500"><span className="font-semibold text-danger">*</span> Required</p>
             <div className="md:hidden">
               <div className="flex items-center justify-between text-xs font-semibold">
                 <span className="text-action">Step {mobileStep} of 3</span>
@@ -353,7 +496,7 @@ export default function FePredictorPage() {
                 <p className="mt-1 text-xs text-slate-500">Use all years for a more stable prediction.</p>
               </div>
               <label className="grid min-w-0 gap-2 text-sm font-medium">
-              Exam
+              <span>Exam type<RequiredMark /></span>
               <select
                 className="focus-ring min-h-11 w-full min-w-0 max-w-full rounded border border-line px-3"
                 value={form.exam}
@@ -365,9 +508,10 @@ export default function FePredictorPage() {
               </label>
 
               <label className="grid min-w-0 gap-2 text-sm font-medium">
-              Percentile
+              <span>Percentile<RequiredMark /></span>
               <input
-                className="focus-ring min-h-11 w-full min-w-0 max-w-full rounded border border-line px-3"
+                aria-invalid={showValidation && !percentileValid}
+                className={`focus-ring min-h-11 w-full min-w-0 max-w-full rounded border px-3 ${showValidation && !percentileValid ? "border-danger" : "border-line"}`}
                 inputMode="decimal"
                 min="0"
                 max="100"
@@ -377,6 +521,7 @@ export default function FePredictorPage() {
                 value={form.percentile}
                 onChange={(event) => updateField("percentile", event.target.value)}
               />
+              {showValidation && !percentileValid ? <span className="text-xs font-normal text-danger">Enter a percentile between 0 and 100.</span> : null}
               </label>
 
               <label className="grid min-w-0 gap-2 text-sm font-medium">
@@ -386,7 +531,7 @@ export default function FePredictorPage() {
                 value={form.academicYear}
                 onChange={(event) => updateField("academicYear", event.target.value)}
               >
-                <option value="">All available years (recommended)</option>
+                <option value="">All available years</option>
                 <option value="2025-26">2025-26</option>
                 <option value="2024-25">2024-25</option>
                 <option value="2023-24">2023-24</option>
@@ -400,7 +545,7 @@ export default function FePredictorPage() {
                 value={form.capRound}
                 onChange={(event) => updateField("capRound", event.target.value)}
               >
-                <option value="">Latest comparable round (recommended)</option>
+                <option value="">Latest available CAP round</option>
                 <option value="1">CAP Round 1</option>
                 <option value="2">CAP Round 2</option>
                 <option value="3">CAP Round 3</option>
@@ -417,7 +562,7 @@ export default function FePredictorPage() {
               </div>
 
               <label className="grid min-w-0 gap-2 text-sm font-medium">
-              Category
+              <span>Category<RequiredMark /></span>
               <select
                 className="focus-ring min-h-11 w-full min-w-0 max-w-full rounded border border-line px-3"
                 value={form.category}
@@ -436,7 +581,7 @@ export default function FePredictorPage() {
               </label>
 
               <label className="grid min-w-0 gap-2 text-sm font-medium">
-              Gender
+              <span>Gender<RequiredMark /></span>
               <select
                 className="focus-ring min-h-11 w-full min-w-0 max-w-full rounded border border-line px-3"
                 value={form.gender}
@@ -448,9 +593,10 @@ export default function FePredictorPage() {
               </label>
 
               <label className="grid min-w-0 gap-2 text-sm font-medium">
-              Home university
+              <span>Home university<RequiredMark /></span>
               <select
-                className="focus-ring min-h-11 w-full min-w-0 max-w-full rounded border border-line px-3"
+                aria-invalid={showValidation && !form.homeUniversity}
+                className={`focus-ring min-h-11 w-full min-w-0 max-w-full rounded border px-3 ${showValidation && !form.homeUniversity ? "border-danger" : "border-line"}`}
                 required
                 value={form.homeUniversity}
                 onChange={(event) => updateField("homeUniversity", event.target.value)}
@@ -460,6 +606,7 @@ export default function FePredictorPage() {
                   <option key={university.id} value={university.name}>{university.name}</option>
                 ))}
               </select>
+              {showValidation && !form.homeUniversity ? <span className="text-xs font-normal text-danger">Select your home university to continue.</span> : null}
               </label>
 
               <div className="grid gap-2 text-sm">
@@ -497,14 +644,14 @@ export default function FePredictorPage() {
               />
 
               <CompactMultiSelect
-              label={`Preferred cities (${cities.length})`}
+              label={`Preferred districts / cities (${cities.length})`}
               options={cities.map((city) => ({ label: city.name, value: city.name }))}
               selectedValues={form.cities}
               emptyText="All Maharashtra"
               onToggle={(value) => toggleListValue("cities", value)}
               onClear={() => updateField("cities", [])}
-              searchPlaceholder="Type city name"
-              noOptionsText="No matching city found."
+              searchPlaceholder="Type district or city name"
+              noOptionsText="No matching district or city found."
               />
 
               <CompactMultiSelect
@@ -545,80 +692,211 @@ export default function FePredictorPage() {
 
             <button
               className={`${mobileStep === 3 ? "flex" : "hidden"} focus-ring min-h-11 w-full items-center justify-center gap-2 rounded bg-action px-4 font-semibold text-white disabled:opacity-60 md:flex`}
-              disabled={loading}
+              disabled={loading || !canPredict}
             >
               <BarChart3 aria-hidden="true" size={18} /> {loading ? "Predicting..." : "Predict Colleges"}
             </button>
+            {!canPredict ? <p className="text-center text-xs text-slate-500">Complete the required fields to enable prediction.</p> : null}
           </form>
-        </section>
 
-        <section className="grid min-w-0 content-start gap-4">
-          <div className="rounded-lg border border-line bg-white p-4 shadow-sm md:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <p className="text-xs font-semibold uppercase text-action">Prediction results</p>
-                <h2 className="mt-1 text-xl font-semibold">Colleges matching your profile</h2>
-              </div>
-              {results.length ? <span className="rounded bg-panel px-3 py-2 text-sm font-semibold">{results.length} matches</span> : null}
-            </div>
-
-            <div className="mt-4 grid gap-3 border-y border-line py-4 sm:grid-cols-2">
-              <div className="min-w-0">
-                <p className="text-xs font-medium uppercase text-slate-500">Eligible seat types checked</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {seatTypes.length ? seatTypes.map((seatType) => (
-                    <span key={seatType} className="rounded bg-cyan-50 px-2 py-1 text-xs font-semibold text-action">
-                      {explainSeatType(seatType).code}
-                    </span>
-                  )) : <span className="text-sm text-slate-600">Run prediction to calculate eligibility.</span>}
+          {hasPredicted ? (
+            <aside className="sticky top-20 mt-4 hidden overflow-hidden rounded-lg border border-line bg-white lg:block">
+              <div className="flex items-start justify-between gap-3 p-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase text-action">Current prediction</p>
+                  <p className="mt-1 text-lg font-semibold text-ink">{form.percentile} percentile</p>
                 </div>
+                <span className="rounded bg-panel px-2 py-1 text-xs font-semibold text-ink">{form.category}</span>
               </div>
-              <div>
-                <p className="text-xs font-medium uppercase text-slate-500">Cutoff history used</p>
-                <p className="mt-2 text-sm font-semibold text-ink">{form.academicYear || "All available years"}</p>
-                <p className="mt-1 text-xs text-slate-500">{form.capRound ? `CAP Round ${form.capRound}` : "Latest comparable round from each year"}</p>
-              </div>
-            </div>
 
-            {seatTypes.length ? (
-              <details className="mt-3 text-sm">
-                <summary className="cursor-pointer font-medium text-action">View eligible seat meanings</summary>
-                <div className="mt-3 grid gap-2 border-l-2 border-action pl-3">
-                  {seatTypes.map((seatType) => {
-                    const seatTypeInfo = explainSeatType(seatType);
+              <dl className="grid grid-cols-2 border-y border-line bg-panel">
+                <div className="min-w-0 border-r border-line px-4 py-3">
+                  <dt className="text-xs text-slate-500">Branch preference</dt>
+                  <dd className="mt-1 break-words text-sm font-semibold text-ink">
+                    {selectedSummary(form.branches, branchOptions, "All branches")}
+                  </dd>
+                </div>
+                <div className="min-w-0 px-4 py-3">
+                  <dt className="text-xs text-slate-500">Location preference</dt>
+                  <dd className="mt-1 break-words text-sm font-semibold text-ink">
+                    {form.cities.length ? form.cities.join(", ") : "All Maharashtra"}
+                  </dd>
+                </div>
+                <div className="min-w-0 border-r border-t border-line px-4 py-3">
+                  <dt className="text-xs text-slate-500">Cutoff year</dt>
+                  <dd className="mt-1 text-sm font-semibold text-ink">{form.academicYear || "All years"}</dd>
+                </div>
+                <div className="min-w-0 border-t border-line px-4 py-3">
+                  <dt className="text-xs text-slate-500">CAP round</dt>
+                  <dd className="mt-1 text-sm font-semibold text-ink">
+                    {form.capRound ? `Round ${form.capRound}` : "Latest comparable"}
+                  </dd>
+                </div>
+              </dl>
+
+              <div className="p-4">
+                <div className="flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-medium uppercase text-slate-500">Result distribution</p>
+                    <p className="mt-1 text-sm text-slate-600">{totalResults} college-branch options</p>
+                  </div>
+                  <p className="text-xs text-slate-500">Page {currentPage}/{totalPages}</p>
+                </div>
+                <div className="mt-3 grid gap-2.5">
+                  {zoneFilters.filter((zone) => zone.value !== "ALL").map((zone) => {
+                    const count = zoneCounts[zone.value] || 0;
+                    const percentage = totalResults ? Math.max(3, Math.round((count / totalResults) * 100)) : 0;
 
                     return (
-                      <p key={seatType} className="text-slate-600">
-                        <span className="font-semibold text-ink">{seatTypeInfo.code}</span> - {seatTypeInfo.title}
-                      </p>
+                      <div key={zone.value}>
+                        <div className="flex items-center justify-between gap-3 text-xs">
+                          <span className="font-medium text-slate-700">{zone.label}</span>
+                          <span className="text-slate-500">{count}</span>
+                        </div>
+                        <div className="mt-1 h-1.5 overflow-hidden rounded bg-slate-100">
+                          <div className="h-full bg-action" style={{ width: `${percentage}%` }} />
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
-              </details>
-            ) : null}
-            <div className="scrollbar-hidden mt-4 flex max-w-full gap-2 overflow-x-auto pb-1">
-              {zoneFilters.map((zone) => (
-                <FilterButton
-                  key={zone.value}
-                  active={selectedZone === zone.value}
-                  onClick={() => setSelectedZone(zone.value)}
+                <button
+                  className="focus-ring mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded border border-action bg-white px-4 text-sm font-semibold text-action hover:bg-cyan-50"
+                  type="button"
+                  onClick={() => predictorFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
                 >
-                  {zone.label}
-                </FilterButton>
-              ))}
+                  <SlidersHorizontal aria-hidden="true" size={17} /> Edit prediction
+                </button>
+              </div>
+            </aside>
+          ) : null}
+        </section>
+
+        <section ref={resultsTopRef} className="grid min-w-0 scroll-mt-20 content-start gap-4">
+          <div className="overflow-hidden rounded-lg border border-line bg-white">
+            <div className="flex flex-wrap items-start justify-between gap-3 p-4 md:p-5">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase text-action">Prediction workspace</p>
+                <h2 className="mt-1 text-xl font-semibold">
+                  {hasPredicted ? "Your college-branch options" : "Ready for your profile"}
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                  {hasPredicted
+                    ? `${form.percentile} percentile | ${form.category} | ${form.branches.length ? selectedSummary(form.branches, branchOptions, "All branches") : "All branches"} | ${form.cities.length ? form.cities.join(", ") : "All Maharashtra"}`
+                    : "Complete the required eligibility fields, then run the predictor to see your closest official cutoff matches."}
+                </p>
+              </div>
+              {hasPredicted ? (
+                <div className="shrink-0 text-right">
+                  <p className="text-2xl font-semibold text-ink">{totalResults}</p>
+                  <p className="text-xs text-slate-500">matching options</p>
+                </div>
+              ) : null}
             </div>
-            <p className="mt-3 text-xs text-slate-500">
-              Showing {visibleResults.length} of {results.length} results.
-            </p>
+
+            {hasPredicted ? (
+              <>
+                <div className="grid gap-3 border-y border-line bg-panel px-4 py-3 sm:grid-cols-2 md:px-5">
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium uppercase text-slate-500">Official seats checked</p>
+                    <p className="mt-1 break-words text-sm font-semibold text-ink">
+                      {seatTypes.length ? seatTypes.join(", ") : "No eligible seat codes returned"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium uppercase text-slate-500">Cutoff history</p>
+                    <p className="mt-1 text-sm font-semibold text-ink">
+                      {form.academicYear || "All available years"} | {form.capRound ? `CAP Round ${form.capRound}` : "Latest comparable rounds"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-4 md:px-5">
+                  <div className="scrollbar-hidden flex max-w-full gap-2 overflow-x-auto pb-1" aria-label="Admission zone filters">
+                    {zoneFilters.map((zone) => (
+                      <FilterButton
+                        key={zone.value}
+                        active={selectedZone === zone.value}
+                        onClick={() => {
+                          if (!loading) selectZone(zone.value);
+                        }}
+                      >
+                        {zone.label} ({zoneCounts[zone.value] || 0})
+                      </FilterButton>
+                    ))}
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                    <p>
+                      {totalResults
+                        ? `Page ${currentPage} of ${totalPages} | ${getPageRange(currentPage, PAGE_SIZE, totalResults).start}-${getPageRange(currentPage, PAGE_SIZE, totalResults).end} shown`
+                        : "No options in this admission zone."}
+                    </p>
+                    {seatTypes.length ? (
+                      <details className="relative">
+                        <summary className="cursor-pointer font-medium text-action">Seat type meanings</summary>
+                        <div className="mt-2 grid gap-2 border-l-2 border-action pl-3 text-sm sm:absolute sm:right-0 sm:z-20 sm:w-80 sm:rounded sm:border sm:border-line sm:bg-white sm:p-3 sm:shadow-lg">
+                          {seatTypes.map((seatType) => {
+                            const seatTypeInfo = explainSeatType(seatType);
+                            return (
+                              <p key={seatType} className="text-slate-600">
+                                <span className="font-semibold text-ink">{seatTypeInfo.code}</span> - {seatTypeInfo.title}
+                              </p>
+                            );
+                          })}
+                        </div>
+                      </details>
+                    ) : null}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="border-t border-line bg-panel px-4 py-5 text-sm text-slate-600 md:px-5">
+                Required: exam, percentile, category, gender and home university. Branch and city preferences are optional.
+              </div>
+            )}
           </div>
 
           {message ? (
-            <div className="rounded-lg border border-warning bg-white p-4 text-sm text-warning">{message}</div>
+            <div
+              role={messageType === "error" ? "alert" : "status"}
+              className={`flex items-start gap-3 rounded-lg border bg-white p-4 text-sm ${
+                messageType === "error" ? "border-danger text-danger" : "border-warning text-warning"
+              }`}
+            >
+              <AlertCircle aria-hidden="true" className="mt-0.5 shrink-0" size={18} />
+              <p>{message}</p>
+            </div>
           ) : null}
 
-          {visibleResults.map((result, index) => (
-            <ResultCard key={`${result.college}-${result.branch}-${result.seatType}-${index}`} {...result} />
-          ))}
+          <div className={`grid gap-4 transition-opacity ${loading && results.length ? "pointer-events-none opacity-50" : ""}`} aria-busy={loading}>
+            {results.map((result, index) => (
+              <ResultCard
+                key={`${result.college}-${result.branch}-${result.seatType}-${index}`}
+                {...result}
+                position={(currentPage - 1) * PAGE_SIZE + index + 1}
+              />
+            ))}
+          </div>
+
+          {loading && !results.length ? (
+            <div className="rounded-lg border border-line bg-white p-8 text-center">
+              <BarChart3 aria-hidden="true" className="mx-auto text-action" size={24} />
+              <p className="mt-3 font-semibold text-ink">Checking official cutoff records...</p>
+              <p className="mt-1 text-sm text-slate-500">This usually takes a few seconds.</p>
+            </div>
+          ) : null}
+
+          {hasPredicted && totalPages > 1 ? (
+            <div className="overflow-hidden rounded-lg border border-line">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalResults={totalResults}
+                disabled={loading}
+                onPageChange={selectPage}
+              />
+            </div>
+          ) : null}
         </section>
       </main>
     </>

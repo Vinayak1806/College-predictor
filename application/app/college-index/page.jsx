@@ -25,7 +25,10 @@ export const metadata = {
 
 export default async function CollegeIndexPage() {
   const profiles = await prisma.collegeProfile.findMany({
-    where: { fePreferenceProxy: { not: null } },
+    where: {
+      currentCap2025: "Yes",
+      fePreferenceProxy: { not: null }
+    },
     include: {
       college: {
         include: { city: true, university: true }

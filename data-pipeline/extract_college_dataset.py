@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from college_predictor.codes import normalize_institute_code
+
 
 def clean_value(value):
     if value is None:
@@ -45,16 +47,6 @@ def number_value(value):
         return round(float(value), 4)
     except (TypeError, ValueError):
         return None
-
-
-def normalize_institute_code(value):
-    text = text_value(value)
-    if not text:
-        return None
-    digits = re.sub(r"\D", "", text)
-    if not digits:
-        return None
-    return str(int(digits))
 
 
 def extract_profiles(workbook_path: Path) -> list[dict[str, object]]:

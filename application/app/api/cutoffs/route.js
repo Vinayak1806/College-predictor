@@ -19,7 +19,10 @@ export async function GET(request) {
       },
       collegeBranch: {
         branch: query.branch ? { displayName: { contains: query.branch, mode: "insensitive" } } : undefined,
-        college: query.city ? { city: { name: { contains: query.city, mode: "insensitive" } } } : undefined
+        college: {
+          profile: { is: { currentCap2025: "Yes" } },
+          city: query.city ? { name: { contains: query.city, mode: "insensitive" } } : undefined
+        }
       }
     },
     query.page,

@@ -9,6 +9,8 @@ from pathlib import Path
 
 import pdfplumber
 
+from college_predictor.codes import normalize_branch_code, normalize_institute_code
+
 
 FIELDNAMES = [
     "academic_year",
@@ -106,7 +108,7 @@ def parse_page(text: str, page_number: int, source_file: str, academic_year: str
 
         college_match = COLLEGE_RE.match(line)
         if college_match and not row["institute_code"]:
-            row["institute_code"] = college_match.group("code")
+            row["institute_code"] = normalize_institute_code(college_match.group("code"))
             row["college_name"] = college_match.group("name").strip()
             continue
 
@@ -121,12 +123,13 @@ def parse_page(text: str, page_number: int, source_file: str, academic_year: str
         branch_match = BRANCH_RE.match(line)
         if branch_match:
             row.update(branch_match.groupdict())
+            row["branch_code"] = normalize_branch_code(row["branch_code"])
             continue
 
         ews_match = EWS_TFWS_RE.search(line)
         if ews_match:
             row["ews_seats"] = ews_match.group("ews")
-            row["tfws_choice_code"] = ews_match.group("tfws_code").strip(":")
+            row["tfws_choice_code"] = normalize_branch_code(ews_match.group("tfws_code").strip(":"))
             row["tfws_seats"] = ews_match.group("tfws")
 
     required_fields = ["institute_code", "college_name", "branch_code", "branch_name"]
@@ -218,4 +221,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

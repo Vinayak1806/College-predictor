@@ -3,7 +3,8 @@ __pycache__/
 .venv/
 node_modules/
 .next/
+.next-dev/
 dist/
 coverage/
 .env
-
+database/backups/

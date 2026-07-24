@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pdfplumber
 
+from college_predictor.codes import normalize_branch_code, normalize_institute_code
 from college_predictor.seat_types import decode_seat_type, merge_wrapped_heading_tokens
 
 
@@ -188,7 +189,7 @@ def parse_page(text: str, page_number: int, args: argparse.Namespace) -> list[di
 
         college_match = COLLEGE_RE.match(line)
         if college_match:
-            ctx.institute_code = college_match.group("code")
+            ctx.institute_code = normalize_institute_code(college_match.group("code"))
             ctx.college_name = college_match.group("name").strip()
             ctx.branch_code = ""
             ctx.branch_name = ""
@@ -198,7 +199,7 @@ def parse_page(text: str, page_number: int, args: argparse.Namespace) -> list[di
 
         branch_match = BRANCH_RE.match(line)
         if branch_match:
-            ctx.branch_code = branch_match.group("code")
+            ctx.branch_code = normalize_branch_code(branch_match.group("code"))
             ctx.branch_name = branch_match.group("name").strip()
             ctx.section = ""
             seat_types = []

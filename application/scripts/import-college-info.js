@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
+import { currentInstituteCode } from "../lib/instituteCodes.js";
 
 const prisma = new PrismaClient();
 const dataDir = path.resolve(process.cwd(), "..", "data", "processed", "college_info");
@@ -12,14 +13,30 @@ async function readJson(filename) {
 }
 
 function keepKnownProfiles(rows, knownCollegeCodes) {
-  return rows.filter((row) => knownCollegeCodes.has(row.instituteCode));
+  const profilesByCode = new Map();
+
+  for (const row of rows) {
+    const instituteCode = currentInstituteCode(row.instituteCode);
+    if (!instituteCode || !knownCollegeCodes.has(instituteCode)) continue;
+
+    const candidate = { ...row, instituteCode };
+    const existing = profilesByCode.get(instituteCode);
+    if (!existing || candidate.currentCap2025 === "Yes") {
+      profilesByCode.set(instituteCode, candidate);
+    }
+  }
+
+  return [...profilesByCode.values()];
 }
 
 function prepareFees(rows, knownCollegeCodes) {
-  return rows.map((row) => ({
-    ...row,
-    instituteCode: knownCollegeCodes.has(row.instituteCode) ? row.instituteCode : null
-  }));
+  return rows.map((row) => {
+    const instituteCode = currentInstituteCode(row.instituteCode);
+    return {
+      ...row,
+      instituteCode: instituteCode && knownCollegeCodes.has(instituteCode) ? instituteCode : null
+    };
+  });
 }
 
 async function main() {

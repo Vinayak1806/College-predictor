@@ -3,8 +3,16 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import json
 import re
 from pathlib import Path
+
+from college_predictor.codes import (
+    canonical_branch_code,
+    canonical_institute_code,
+    normalize_institute_code,
+)
+from college_predictor.locations import resolve_college_location
 
 
 def slugify(value: str) -> str:
@@ -30,14 +38,19 @@ def read_stage_files(paths: list[Path], include_review: bool) -> list[dict[str, 
     return rows
 
 
-def infer_city(college_name: str) -> str:
-    parts = [part.strip() for part in college_name.split(",") if part.strip()]
-    if len(parts) < 2:
-        return ""
-    city = parts[-1]
-    city = re.sub(r"\bDist\.?\b.*$", "", city, flags=re.IGNORECASE).strip()
-    city = re.sub(r"\bTal\.?\b.*$", "", city, flags=re.IGNORECASE).strip()
-    return city
+def read_profile_locations(path: Path) -> dict[str, dict[str, str | None]]:
+    if not path.exists():
+        return {}
+
+    profiles = json.loads(path.read_text(encoding="utf-8"))
+    return {
+        normalize_institute_code(profile.get("instituteCode")): {
+            "district": profile.get("districtCity"),
+            "region": profile.get("region"),
+        }
+        for profile in profiles
+        if normalize_institute_code(profile.get("instituteCode"))
+    }
 
 
 def write_csv(path: Path, fieldnames: list[str], rows: list[dict[str, object]]) -> None:
@@ -52,12 +65,18 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Build relational PostgreSQL-ready CSV exports.")
     parser.add_argument("--staging-dir", default="data/staging")
     parser.add_argument("--output-dir", default="data/processed/postgres")
+    parser.add_argument(
+        "--college-profiles",
+        default="data/processed/college_info/college_profiles.json",
+        help="Canonical district and region source.",
+    )
     parser.add_argument("--include-review", action="store_true")
     args = parser.parse_args()
 
     staging_paths = sorted(Path(args.staging_dir).glob("FE_20*_CAP*_MH.csv"))
     rows = read_stage_files(staging_paths, args.include_review)
     output_dir = Path(args.output_dir)
+    profile_locations = read_profile_locations(Path(args.college_profiles))
 
     id_counter: dict[str, int] = {}
     cities: dict[str, dict[str, object]] = {}
@@ -70,15 +89,22 @@ def main() -> None:
     cutoffs: list[dict[str, object]] = []
 
     for row in rows:
-        city_name = infer_city(row["college_name"])
+        college_code = canonical_institute_code(row["institute_code"])
+        profile_location = profile_locations.get(college_code, {})
+        location = resolve_college_location(
+            college_code,
+            profile_location.get("district"),
+            profile_location.get("region"),
+        )
+        city_name = location.district if location else ""
         city_id = ""
         if city_name:
             if city_name not in cities:
                 cities[city_name] = {
                     "id": next_id(id_counter, "cities"),
                     "name": city_name,
-                    "district": "",
-                    "region": "",
+                    "district": city_name,
+                    "region": location.region,
                 }
             city_id = cities[city_name]["id"]
 
@@ -92,14 +118,12 @@ def main() -> None:
                 }
             university_id = universities[university_name]["id"]
 
-        college_code = row["institute_code"]
         if college_code not in colleges:
-            college_slug = slugify(f"{college_code}-{row['college_name']}")
             colleges[college_code] = {
                 "id": next_id(id_counter, "colleges"),
                 "institute_code": college_code,
                 "name": row["college_name"],
-                "slug": college_slug,
+                "slug": slugify(f"{college_code}-{row['college_name']}"),
                 "city_id": city_id,
                 "university_id": university_id,
                 "college_type": row.get("college_status", ""),
@@ -107,8 +131,19 @@ def main() -> None:
                 "minority_type": "",
                 "official_website": "",
             }
+        else:
+            colleges[college_code].update(
+                {
+                    "name": row["college_name"],
+                    "slug": slugify(f"{college_code}-{row['college_name']}"),
+                    "city_id": city_id or colleges[college_code]["city_id"],
+                    "university_id": university_id or colleges[college_code]["university_id"],
+                    "college_type": row.get("college_status", "") or colleges[college_code]["college_type"],
+                    "autonomous": "true" if "Autonomous" in row.get("college_status", "") else colleges[college_code]["autonomous"],
+                }
+            )
 
-        branch_code = row["branch_code"]
+        branch_code = canonical_branch_code(row["branch_code"])
         if branch_code not in branches:
             branches[branch_code] = {
                 "id": next_id(id_counter, "branches"),
@@ -117,6 +152,9 @@ def main() -> None:
                 "display_name": row["branch_name"],
                 "search_group": "",
             }
+        else:
+            branches[branch_code]["official_name"] = row["branch_name"]
+            branches[branch_code]["display_name"] = row["branch_name"]
 
         cb_key = (college_code, branch_code, row["academic_year"])
         if cb_key not in college_branches:
@@ -243,4 +281,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

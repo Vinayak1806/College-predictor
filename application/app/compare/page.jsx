@@ -1,4 +1,5 @@
 import { SiteHeader } from "../../components/SiteHeader";
+import { CollegeAutocomplete } from "../../components/CollegeAutocomplete";
 
 export default function ComparePage() {
   return (
@@ -10,7 +11,7 @@ export default function ComparePage() {
           {[1, 2, 3].map((item) => (
             <section key={item} className="rounded-lg border border-line bg-white p-4">
               <h2 className="font-semibold">College {item}</h2>
-              <input className="focus-ring mt-3 min-h-11 w-full rounded border border-line px-3 text-sm" placeholder="Search college" />
+              <CollegeAutocomplete className="focus-within:ring-2 focus-within:ring-[#7db9ca] mt-3 rounded border border-line px-3" placeholder="Search college" selectionMode="fill" showIcon={false} />
               <dl className="mt-4 grid gap-2 text-sm text-slate-600">
                 <div>Admission chance</div>
                 <div>Cutoffs</div>
@@ -24,4 +25,3 @@ export default function ComparePage() {
     </>
   );
 }
-

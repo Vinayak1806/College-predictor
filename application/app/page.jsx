@@ -12,10 +12,11 @@ import {
   ShieldCheck,
   SlidersHorizontal
 } from "lucide-react";
+import { CollegeAutocomplete } from "../components/CollegeAutocomplete";
 import { SiteHeader } from "../components/SiteHeader";
 
 const statistics = [
-  ["702", "Engineering colleges"],
+  ["372", "Current CAP institutes"],
   ["103,638", "Verified cutoff records"],
   ["148", "Cities covered"],
   ["93", "Exact seat types"]
@@ -47,7 +48,7 @@ export default function HomePage() {
     <>
       <SiteHeader />
       <main>
-        <section className="relative min-h-[calc(100svh-104px)] overflow-hidden bg-[#102a43] text-white">
+        <section className="relative min-h-[calc(100svh-104px)] bg-[#102a43] text-white">
           <Image
             src="/images/engineering-students-campus.png"
             alt="Engineering students walking through a modern college campus"
@@ -79,13 +80,10 @@ export default function HomePage() {
                 </Link>
               </div>
 
-              <form action="/colleges" className="mt-8 flex max-w-2xl overflow-hidden rounded bg-white shadow-xl">
+              <form action="/colleges" className="relative z-20 mt-8 flex max-w-2xl rounded bg-white shadow-xl">
                 <label className="sr-only" htmlFor="home-college-search">Search college name, code or city</label>
-                <div className="flex min-w-0 flex-1 items-center gap-3 px-4">
-                  <Search aria-hidden="true" className="shrink-0 text-slate-400" size={19} />
-                  <input id="home-college-search" name="q" className="min-h-12 min-w-0 flex-1 border-0 bg-transparent text-sm text-ink outline-none" placeholder="Search college name or institute code" />
-                </div>
-                <button className="focus-ring min-h-12 bg-[#d97706] px-5 text-sm font-semibold text-white hover:bg-[#b85f05]" type="submit">Search</button>
+                <CollegeAutocomplete id="home-college-search" name="q" className="flex min-h-12 flex-1 items-center px-4" placeholder="Search college name or institute code" />
+                <button className="focus-ring min-h-12 rounded-r bg-[#d97706] px-5 text-sm font-semibold text-white hover:bg-[#b85f05]" type="submit">Search</button>
               </form>
             </div>
           </div>

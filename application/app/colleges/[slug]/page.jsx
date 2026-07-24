@@ -138,8 +138,11 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
   const { slug } = await params;
   const query = await searchParams;
 
-  const college = await prisma.college.findUnique({
-    where: { slug },
+  const college = await prisma.college.findFirst({
+    where: {
+      slug,
+      profile: { is: { currentCap2025: "Yes" } }
+    },
     include: {
       city: true,
       university: true,

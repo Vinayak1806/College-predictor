@@ -39,7 +39,8 @@ function groupRowsByCollegeBranch(rows) {
   for (const row of rows) {
     const college = row.collegeBranch.college;
     const branch = row.collegeBranch.branch;
-    const key = `${college.instituteCode}:${branch.displayName.toLowerCase()}`;
+    const normalizedInstituteCode = String(college.instituteCode || "").replace(/^0+/, "") || college.instituteCode;
+    const key = `${normalizedInstituteCode}:${branch.displayName.toLowerCase()}`;
     const group = groups.get(key) || [];
     group.push(row);
     groups.set(key, group);
@@ -103,7 +104,10 @@ export async function POST(request) {
       },
       collegeBranch: {
         branch: branchFilters.length ? { OR: branchFilters } : undefined,
-        college: cityFilters.length ? { OR: cityFilters } : undefined
+        college: {
+          profile: { is: { currentCap2025: "Yes" } },
+          OR: cityFilters.length ? cityFilters : undefined
+        }
       }
     },
     include: {
@@ -223,12 +227,29 @@ export async function POST(request) {
   });
 
   filteredResults.sort(compareUsefulResults);
-  const visibleResults = filteredResults.slice(0, 30);
-  const seatTypes = [...new Set(visibleResults.flatMap((result) => result.eligibleSeatTypes))].sort();
+  const zoneCounts = filteredResults.reduce((counts, result) => {
+    counts[result.zone] = (counts[result.zone] || 0) + 1;
+    return counts;
+  }, { ALL: filteredResults.length, SAFE: 0, TARGET: 0, AMBITIOUS: 0, HIGHLY_AMBITIOUS: 0 });
+  const zoneResults = input.zone === "ALL"
+    ? filteredResults
+    : filteredResults.filter((result) => result.zone === input.zone);
+  const start = (input.page - 1) * input.pageSize;
+  const visibleResults = zoneResults.slice(start, start + input.pageSize);
+  const totalResults = zoneResults.length;
+  const seatTypes = [...new Set(filteredResults.flatMap((result) => result.eligibleSeatTypes))].sort();
 
   return NextResponse.json({
     seatTypes,
     results: visibleResults,
+    pagination: {
+      page: input.page,
+      pageSize: input.pageSize,
+      totalResults,
+      totalPages: Math.ceil(totalResults / input.pageSize),
+      hasNextPage: start + visibleResults.length < totalResults
+    },
+    zoneCounts,
     analysis: {
       groupedResults: true,
       selectedYear: input.academicYear || "All available years",

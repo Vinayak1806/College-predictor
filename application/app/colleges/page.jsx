@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowRight, Building2, MapPin, Search, University } from "lucide-react";
+import { CollegeAutocomplete } from "../../components/CollegeAutocomplete";
 import { SiteHeader } from "../../components/SiteHeader";
+import { currentInstituteCodeSearch } from "../../lib/instituteCodes";
 import { prisma } from "../../lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -33,17 +35,22 @@ function collegeDataScore(college) {
 export default async function CollegesPage({ searchParams }) {
   const query = await searchParams;
   const search = typeof query?.q === "string" ? query.q.trim() : "";
+  const currentCodeQuery = currentInstituteCodeSearch(search);
 
   const collegeRecords = await prisma.college.findMany({
-    where: search
-      ? {
+    where: {
+      profile: { is: { currentCap2025: "Yes" } },
+      ...(search
+        ? {
           OR: [
             { name: { contains: search, mode: "insensitive" } },
             { instituteCode: { contains: search, mode: "insensitive" } },
-            { city: { name: { contains: search, mode: "insensitive" } } }
+            { city: { name: { contains: search, mode: "insensitive" } } },
+            ...(currentCodeQuery ? [{ instituteCode: currentCodeQuery }] : [])
           ]
         }
-      : undefined,
+        : {})
+    },
     include: {
       city: true,
       university: true,
@@ -74,13 +81,10 @@ export default async function CollegesPage({ searchParams }) {
           <p className="mt-3 text-sm leading-6 text-slate-600">Search by college name, institute code or city, then open one profile for branches, seats and official cutoff history.</p>
         </header>
 
-        <form className="mt-7 flex max-w-3xl overflow-hidden rounded border border-line bg-white shadow-sm" action="/colleges">
+        <form className="relative z-20 mt-7 flex max-w-3xl rounded border border-line bg-white shadow-sm" action="/colleges">
           <label className="sr-only" htmlFor="college-search">Search colleges</label>
-          <div className="flex min-w-0 flex-1 items-center gap-3 px-4">
-            <Search aria-hidden="true" className="shrink-0 text-slate-400" size={20} />
-            <input id="college-search" name="q" defaultValue={search} className="min-h-12 min-w-0 flex-1 border-0 p-0 text-sm outline-none" placeholder="Example: COEP, Pune or institute code 06006" />
-          </div>
-          <button className="focus-ring min-h-12 bg-action px-5 text-sm font-semibold text-white hover:bg-[#11566d]" type="submit">Search</button>
+          <CollegeAutocomplete id="college-search" name="q" defaultValue={search} className="flex min-h-12 flex-1 items-center px-4" placeholder="Example: COEP, Pune or institute code 16006" />
+          <button className="focus-ring min-h-12 rounded-r bg-action px-5 text-sm font-semibold text-white hover:bg-[#11566d]" type="submit">Search</button>
         </form>
 
         <div className="mt-8 flex flex-wrap items-end justify-between gap-3 border-b border-line pb-3">
