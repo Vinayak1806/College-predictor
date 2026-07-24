@@ -14,13 +14,9 @@ import {
 } from "lucide-react";
 import { CollegeAutocomplete } from "../components/CollegeAutocomplete";
 import { SiteHeader } from "../components/SiteHeader";
+import { getPublicStats } from "../lib/publicStats";
 
-const statistics = [
-  ["372", "Current CAP institutes"],
-  ["103,638", "Verified cutoff records"],
-  ["148", "Cities covered"],
-  ["93", "Exact seat types"]
-];
+export const dynamic = "force-dynamic";
 
 const steps = [
   { icon: GraduationCap, title: "Enter your profile", text: "Add percentile, category, gender and home university." },
@@ -43,7 +39,15 @@ const questions = [
   ["Is the College Index an official ranking?", "No. It is a transparent historical-demand research signal. It does not claim to measure teaching quality, placements or campus life."]
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const liveStats = await getPublicStats();
+  const statistics = [
+    [liveStats.currentInstitutes.toLocaleString("en-IN"), "Current CAP institutes"],
+    [liveStats.verifiedCutoffs.toLocaleString("en-IN"), "Verified cutoff records"],
+    [liveStats.districtsCovered.toLocaleString("en-IN"), "Districts covered"],
+    [liveStats.exactSeatTypes.toLocaleString("en-IN"), "Exact seat types"]
+  ];
+
   return (
     <>
       <SiteHeader />

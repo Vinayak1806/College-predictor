@@ -164,6 +164,7 @@ model Cutoff {
   collegeBranchId BigInt        @map("college_branch_id")
   seatTypeId      BigInt        @map("seat_type_id")
   stage           String?
+  section         String        @default("STANDARD")
   openingRank     Int?          @map("opening_rank")
   closingRank     Int?          @map("closing_rank")
   openingScore    Decimal?      @map("opening_score") @db.Decimal(10, 7)
@@ -176,7 +177,7 @@ model Cutoff {
   collegeBranch   CollegeBranch @relation(fields: [collegeBranchId], references: [id])
   seatType        SeatType      @relation(fields: [seatTypeId], references: [id])
 
-  @@unique([datasetId, collegeBranchId, seatTypeId, stage])
+  @@unique([datasetId, collegeBranchId, seatTypeId, stage, section])
   @@index([closingScore])
   @@index([closingRank])
   @@index([datasetId, collegeBranchId, seatTypeId])

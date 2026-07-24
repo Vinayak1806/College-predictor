@@ -32,7 +32,19 @@ def normalize_institute_code(value: object) -> str:
 
 
 def normalize_branch_code(value: object) -> str:
-    return normalize_numeric_code(value, 10)
+    if value is None:
+        return ""
+
+    text = str(value).strip().upper()
+    if not text:
+        return ""
+
+    suffix = text[-1] if text[-1:].isalpha() else ""
+    digits = re.sub(r"\D", "", text)
+    if not digits:
+        return ""
+
+    return f"{digits.zfill(10)}{suffix}"
 
 
 def canonical_institute_code(value: object) -> str:
@@ -42,7 +54,7 @@ def canonical_institute_code(value: object) -> str:
 
 def canonical_branch_code(value: object) -> str:
     code = normalize_branch_code(value)
-    if len(code) != 10:
+    if not re.fullmatch(r"\d{10}[A-Z]?", code):
         return code
 
     return f"{canonical_institute_code(code[:5])}{code[5:]}"

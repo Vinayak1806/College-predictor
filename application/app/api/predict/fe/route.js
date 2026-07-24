@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma";
 import {
+  cutoffIsEligibleForCollege,
   eligibleSeatTypesAcrossUniversities,
-  eligibleSeatTypesForCollege,
   universityEligibilityForCollege
 } from "../../../../lib/eligibility";
 import { analyzeCutoffHistory, calculateStrengthIndex, compareUsefulResults } from "../../../../lib/prediction";
@@ -135,8 +135,12 @@ export async function POST(request) {
   // checked after the college's university is available from the database.
   const eligibleRows = rows.filter((row) => {
     const collegeUniversity = row.collegeBranch.college.university?.name;
-    const validSeatTypes = eligibleSeatTypesForCollege(input, collegeUniversity);
-    return validSeatTypes.includes(row.seatType.code);
+    return cutoffIsEligibleForCollege(
+      input,
+      collegeUniversity,
+      row.seatType.code,
+      row.section
+    );
   });
 
   const branchCodes = [...new Set(eligibleRows.map((row) => row.collegeBranch.branch.branchCode))];
@@ -160,6 +164,7 @@ export async function POST(request) {
       round: row.dataset.capRound,
       cutoff: Number(row.closingScore),
       seatType: row.seatType.code,
+      section: row.section,
       sourceUrl: row.dataset.sourceUrl,
       sourcePage: row.sourcePage
     }));
@@ -180,6 +185,7 @@ export async function POST(request) {
       collegeSlug: college.slug,
       instituteCode: college.instituteCode,
       college: college.name,
+      branchCode: branch.branchCode,
       branch: branch.displayName,
       city: college.city?.name,
       university: college.university?.name || null,
@@ -206,6 +212,7 @@ export async function POST(request) {
       year: analysis.latest.year,
       round: analysis.latest.round,
       seatType: analysis.latest.seatType,
+      cutoffSection: analysis.latest.section,
       eligibleSeatTypes: analysis.eligibleSeatTypes,
       yearsAnalyzed: analysis.yearsAnalyzed,
       dataConfidence: analysis.confidence,

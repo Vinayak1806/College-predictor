@@ -119,6 +119,7 @@ CREATE TABLE cutoffs (
     college_branch_id BIGINT NOT NULL REFERENCES college_branches(id),
     seat_type_id BIGINT NOT NULL REFERENCES seat_types(id),
     stage TEXT,
+    section TEXT NOT NULL DEFAULT 'STANDARD',
     opening_rank INTEGER,
     closing_rank INTEGER,
     opening_score NUMERIC(10, 7),
@@ -127,7 +128,7 @@ CREATE TABLE cutoffs (
     verified BOOLEAN NOT NULL DEFAULT FALSE,
     needs_review BOOLEAN NOT NULL DEFAULT TRUE,
     review_reason TEXT,
-    UNIQUE (dataset_id, college_branch_id, seat_type_id, stage)
+    UNIQUE (dataset_id, college_branch_id, seat_type_id, stage, section)
 );
 
 CREATE TABLE seat_matrices (

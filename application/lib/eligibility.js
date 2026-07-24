@@ -49,3 +49,17 @@ export function eligibleSeatTypesForCollege(input, collegeUniversity) {
   const universityType = universityEligibilityForCollege(input.homeUniversity, collegeUniversity);
   return eligibleSeatTypes({ ...input, universityType });
 }
+
+export function cutoffIsEligibleForCollege(input, collegeUniversity, seatType, section = "STANDARD") {
+  const universityType = universityEligibilityForCollege(input.homeUniversity, collegeUniversity);
+  const broadlyEligible = eligibleSeatTypesAcrossUniversities(input).includes(seatType);
+  if (!broadlyEligible) return false;
+
+  if (section === "HOME") return universityType === "HOME";
+  if (section === "HOME_FOR_OTHER") return universityType === "OTHER";
+  if (section === "OTHER") return universityType === "OTHER";
+  if (section === "OTHER_FOR_HOME") return universityType === "HOME";
+  if (section === "STATE") return true;
+
+  return eligibleSeatTypesForCollege(input, collegeUniversity).includes(seatType);
+}

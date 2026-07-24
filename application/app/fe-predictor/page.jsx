@@ -296,6 +296,7 @@ export default function FePredictorPage() {
   const [form, setForm] = useState(defaultForm);
   const [cities, setCities] = useState([]);
   const [universities, setUniversities] = useState([]);
+  const [instituteCount, setInstituteCount] = useState(null);
   const [results, setResults] = useState([]);
   const [selectedZone, setSelectedZone] = useState("ALL");
   const [seatTypes, setSeatTypes] = useState([]);
@@ -317,20 +318,24 @@ export default function FePredictorPage() {
   useEffect(() => {
     async function loadReferenceData() {
       try {
-        const [cityResponse, universityResponse] = await Promise.all([
+        const [cityResponse, universityResponse, statsResponse] = await Promise.all([
           fetch("/api/cities"),
-          fetch("/api/universities")
+          fetch("/api/universities"),
+          fetch("/api/stats")
         ]);
-        const [cityData, universityData] = await Promise.all([
+        const [cityData, universityData, statsData] = await Promise.all([
           cityResponse.json(),
-          universityResponse.json()
+          universityResponse.json(),
+          statsResponse.json()
         ]);
         const uniqueCities = [...new Map((cityData.data || []).map((city) => [city.name, city])).values()];
         setCities(uniqueCities);
         setUniversities(universityData.data || []);
+        setInstituteCount(statsData.data?.currentInstitutes || null);
       } catch {
         setCities([]);
         setUniversities([]);
+        setInstituteCount(null);
       }
     }
 
@@ -474,7 +479,7 @@ export default function FePredictorPage() {
           <div className="mt-4 grid grid-cols-3 divide-x divide-line border-y border-line py-3 text-center">
             <div><strong className="block text-base text-ink">103k+</strong><span className="text-xs text-slate-500">Cutoffs</span></div>
             <div><strong className="block text-base text-ink">3</strong><span className="text-xs text-slate-500">Years</span></div>
-            <div><strong className="block text-base text-ink">372</strong><span className="text-xs text-slate-500">Institutes</span></div>
+            <div><strong className="block text-base text-ink">{instituteCount ?? "--"}</strong><span className="text-xs text-slate-500">Institutes</span></div>
           </div>
 
           <form ref={predictorFormRef} noValidate onSubmit={submitForm} className="mt-4 grid min-w-0 scroll-mt-20 gap-4 rounded-lg border border-line bg-white p-4">

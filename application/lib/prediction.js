@@ -63,6 +63,7 @@ export function analyzeCutoffHistory(records, studentScore) {
         round: latestRound,
         cutoff: bestRecord.cutoff,
         seatType: bestRecord.seatType,
+        section: bestRecord.section || "STANDARD",
         sourceUrl: bestRecord.sourceUrl || null,
         sourcePage: bestRecord.sourcePage || null
       };

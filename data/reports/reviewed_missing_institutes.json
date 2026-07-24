@@ -1,0 +1,202 @@
+{
+  "reviewMethod": "Official PDF tables were extracted by cell boundaries. Every source rank/percentile pair had to be recovered before a file was approved.",
+  "targetInstitutes": [
+    "02032",
+    "03025",
+    "03035",
+    "04304",
+    "06276",
+    "06285",
+    "06938",
+    "16361"
+  ],
+  "files": [
+    {
+      "stagingFile": "FE_2023_CAP1_MH.csv",
+      "sourcePdf": "data\\raw\\fe\\2023\\FE_2023_CAP1_MH.pdf",
+      "sourceRows": 258,
+      "reviewedRows": 258,
+      "sourcePages": 16,
+      "institutes": [
+        "02032",
+        "03035",
+        "04304",
+        "06276",
+        "06285",
+        "06938"
+      ],
+      "output": "data\\validated\\reviewed_cutoffs\\FE_2023_CAP1_MH.csv",
+      "errors": []
+    },
+    {
+      "stagingFile": "FE_2023_CAP2_MH.csv",
+      "sourcePdf": "data\\raw\\fe\\2023\\FE_2023_CAP2_MH.pdf",
+      "sourceRows": 252,
+      "reviewedRows": 252,
+      "sourcePages": 16,
+      "institutes": [
+        "02032",
+        "03035",
+        "04304",
+        "06276",
+        "06285",
+        "06938"
+      ],
+      "output": "data\\validated\\reviewed_cutoffs\\FE_2023_CAP2_MH.csv",
+      "errors": []
+    },
+    {
+      "stagingFile": "FE_2023_CAP3_MH.csv",
+      "sourcePdf": "data\\raw\\fe\\2023\\FE_2023_CAP3_MH.pdf",
+      "sourceRows": 134,
+      "reviewedRows": 134,
+      "sourcePages": 16,
+      "institutes": [
+        "02032",
+        "03035",
+        "04304",
+        "06276",
+        "06285",
+        "06938"
+      ],
+      "output": "data\\validated\\reviewed_cutoffs\\FE_2023_CAP3_MH.csv",
+      "errors": []
+    },
+    {
+      "stagingFile": "FE_2024_CAP1_MH.csv",
+      "sourcePdf": "data\\raw\\fe\\2024\\FE_2024_CAP1_MH.pdf",
+      "sourceRows": 341,
+      "reviewedRows": 341,
+      "sourcePages": 20,
+      "institutes": [
+        "02032",
+        "03025",
+        "03035",
+        "04304",
+        "06276",
+        "06285",
+        "06938"
+      ],
+      "output": "data\\validated\\reviewed_cutoffs\\FE_2024_CAP1_MH.csv",
+      "errors": []
+    },
+    {
+      "stagingFile": "FE_2024_CAP2_MH.csv",
+      "sourcePdf": "data\\raw\\fe\\2024\\FE_2024_CAP2_MH.pdf",
+      "sourceRows": 354,
+      "reviewedRows": 354,
+      "sourcePages": 20,
+      "institutes": [
+        "02032",
+        "03025",
+        "03035",
+        "04304",
+        "06276",
+        "06285",
+        "06938"
+      ],
+      "output": "data\\validated\\reviewed_cutoffs\\FE_2024_CAP2_MH.csv",
+      "errors": []
+    },
+    {
+      "stagingFile": "FE_2024_CAP3_MH.csv",
+      "sourcePdf": "data\\raw\\fe\\2024\\FE_2024_CAP3_MH.pdf",
+      "sourceRows": 151,
+      "reviewedRows": 151,
+      "sourcePages": 14,
+      "institutes": [
+        "02032",
+        "03025",
+        "03035",
+        "04304",
+        "06276",
+        "06285",
+        "06938"
+      ],
+      "output": "data\\validated\\reviewed_cutoffs\\FE_2024_CAP3_MH.csv",
+      "errors": []
+    },
+    {
+      "stagingFile": "FE_2025_CAP1_MH.csv",
+      "sourcePdf": "data\\raw\\fe\\2025\\FE_2025_CAP1_MH.pdf",
+      "sourceRows": 370,
+      "reviewedRows": 370,
+      "sourcePages": 21,
+      "institutes": [
+        "02032",
+        "03025",
+        "03035",
+        "04304",
+        "06276",
+        "06285",
+        "06938"
+      ],
+      "output": "data\\validated\\reviewed_cutoffs\\FE_2025_CAP1_MH.csv",
+      "errors": []
+    },
+    {
+      "stagingFile": "FE_2025_CAP2_MH.csv",
+      "sourcePdf": "data\\raw\\fe\\2025\\FE_2025_CAP2_MH.pdf",
+      "sourceRows": 472,
+      "reviewedRows": 472,
+      "sourcePages": 23,
+      "institutes": [
+        "02032",
+        "03025",
+        "03035",
+        "04304",
+        "06276",
+        "06285",
+        "06938",
+        "16361"
+      ],
+      "output": "data\\validated\\reviewed_cutoffs\\FE_2025_CAP2_MH.csv",
+      "errors": []
+    },
+    {
+      "stagingFile": "FE_2025_CAP3_MH.csv",
+      "sourcePdf": "data\\raw\\fe\\2025\\FE_2025_CAP3_MH.pdf",
+      "sourceRows": 238,
+      "reviewedRows": 238,
+      "sourcePages": 21,
+      "institutes": [
+        "02032",
+        "03025",
+        "03035",
+        "04304",
+        "06276",
+        "06285",
+        "06938",
+        "16361"
+      ],
+      "output": "data\\validated\\reviewed_cutoffs\\FE_2025_CAP3_MH.csv",
+      "errors": []
+    },
+    {
+      "stagingFile": "FE_2025_CAP4_MH.csv",
+      "sourcePdf": "data\\raw\\fe\\2025\\FE_2025_CAP4_MH.pdf",
+      "sourceRows": 190,
+      "reviewedRows": 190,
+      "sourcePages": 18,
+      "institutes": [
+        "02032",
+        "03025",
+        "03035",
+        "04304",
+        "06276",
+        "06285",
+        "06938",
+        "16361"
+      ],
+      "output": "data\\validated\\reviewed_cutoffs\\FE_2025_CAP4_MH.csv",
+      "errors": []
+    }
+  ],
+  "summary": {
+    "files": 10,
+    "approvedFiles": 10,
+    "reviewedRecords": 2760,
+    "errors": 0
+  },
+  "errors": []
+}

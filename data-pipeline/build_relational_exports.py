@@ -66,6 +66,11 @@ def main() -> None:
     parser.add_argument("--staging-dir", default="data/staging")
     parser.add_argument("--output-dir", default="data/processed/postgres")
     parser.add_argument(
+        "--reviewed-dir",
+        default="data/validated/reviewed_cutoffs",
+        help="Table-reviewed cutoff CSV files that passed source-pair verification.",
+    )
+    parser.add_argument(
         "--college-profiles",
         default="data/processed/college_info/college_profiles.json",
         help="Canonical district and region source.",
@@ -74,7 +79,9 @@ def main() -> None:
     args = parser.parse_args()
 
     staging_paths = sorted(Path(args.staging_dir).glob("FE_20*_CAP*_MH.csv"))
+    reviewed_paths = sorted(Path(args.reviewed_dir).glob("FE_20*_CAP*_MH.csv"))
     rows = read_stage_files(staging_paths, args.include_review)
+    rows.extend(read_stage_files(reviewed_paths, include_review=False))
     output_dir = Path(args.output_dir)
     profile_locations = read_profile_locations(Path(args.college_profiles))
 
@@ -205,6 +212,7 @@ def main() -> None:
                 "college_branch_id": college_branches[cb_key]["id"],
                 "seat_type_id": seat_types[seat_code]["id"],
                 "stage": row["stage"],
+                "section": row.get("section") or "STANDARD",
                 "opening_rank": row["opening_rank"],
                 "closing_rank": row["closing_rank"],
                 "opening_score": row["opening_score"],
@@ -250,6 +258,7 @@ def main() -> None:
             "college_branch_id",
             "seat_type_id",
             "stage",
+            "section",
             "opening_rank",
             "closing_rank",
             "opening_score",
@@ -264,6 +273,7 @@ def main() -> None:
 
     summary = {
         "staging_files": len(staging_paths),
+        "reviewed_files": len(reviewed_paths),
         "source_rows": len(rows),
         "cities": len(cities),
         "universities": len(universities),

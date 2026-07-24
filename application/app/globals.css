@@ -95,3 +95,19 @@ a {
 .scrollbar-hidden::-webkit-scrollbar {
   display: none;
 }
+
+@media print {
+  header,
+  footer,
+  .preference-builder-controls {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  .preference-list-page {
+    width: 100%;
+  }
+}

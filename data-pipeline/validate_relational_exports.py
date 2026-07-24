@@ -54,7 +54,11 @@ def main() -> None:
     dataset_ids = {row["id"] for row in datasets}
 
     invalid_college_codes = [row["institute_code"] for row in colleges if len(row["institute_code"]) != 5 or not row["institute_code"].isdigit()]
-    invalid_branch_codes = [row["branch_code"] for row in branches if len(row["branch_code"]) != 10 or not row["branch_code"].isdigit()]
+    invalid_branch_codes = [
+        row["branch_code"]
+        for row in branches
+        if not re.fullmatch(r"\d{10}[A-Z]?", row["branch_code"])
+    ]
     if invalid_college_codes:
         errors.append(f"Invalid institute codes: {invalid_college_codes[:5]}")
     if invalid_branch_codes:

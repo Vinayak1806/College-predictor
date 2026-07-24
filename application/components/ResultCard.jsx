@@ -1,5 +1,14 @@
+"use client";
+
 import Link from "next/link";
-import { ArrowUpRight, Bookmark, Building2, MapPin, Scale } from "lucide-react";
+import { ArrowUpRight, BookmarkCheck, Building2, MapPin, Scale } from "lucide-react";
+import { useState } from "react";
+import {
+  addPreferenceItem,
+  createPreferenceItemFromResult,
+  readPreferenceList,
+  writePreferenceList
+} from "../lib/preferenceList";
 import { explainSeatType } from "../lib/seatTypes";
 
 const zoneClass = {
@@ -68,6 +77,7 @@ function DetailFact({ label, value }) {
 }
 
 export function ResultCard(props) {
+  const [capListStatus, setCapListStatus] = useState("");
   const marginText = `${props.margin >= 0 ? "+" : ""}${formatNumber(props.margin)}`;
   const marginTone = props.margin >= 0 ? "good" : props.margin >= -4 ? "warning" : "danger";
   const singleYear = (props.yearsAnalyzed || 1) === 1;
@@ -86,6 +96,10 @@ export function ResultCard(props) {
     : props.dataConfidence === "MEDIUM"
       ? "Medium history confidence"
       : "Limited history confidence";
+  const allocationText = {
+    HOME_FOR_OTHER: "Converted Home University allocation",
+    OTHER_FOR_HOME: "Converted Other University allocation"
+  }[props.cutoffSection];
   const comparisonText = props.margin >= 0
     ? `Your percentile is ${formatNumber(Math.abs(props.margin))} points above the ${singleYear ? "official cutoff" : "prediction benchmark"}.`
     : `Your percentile is ${formatNumber(Math.abs(props.margin))} points below the ${singleYear ? "official cutoff" : "prediction benchmark"}.`;
@@ -114,6 +128,18 @@ export function ResultCard(props) {
     hasValue(props.preferenceBand) ? ["Demand band", props.preferenceBand] : null,
     hasValue(props.latestFee) ? ["Approved annual fee", `${formatMoney(props.latestFee)}${props.latestFeeYear ? ` (${props.latestFeeYear})` : ""}`] : null
   ].filter(Boolean);
+
+  function addToCapList() {
+    const item = createPreferenceItemFromResult(props);
+    const result = addPreferenceItem(readPreferenceList(), item);
+
+    if (result.added) {
+      writePreferenceList(result.items);
+      setCapListStatus("Added to CAP List");
+    } else {
+      setCapListStatus("Already in CAP List");
+    }
+  }
 
   return (
     <article className="min-w-0 overflow-hidden rounded-lg border border-line bg-white">
@@ -188,7 +214,7 @@ export function ResultCard(props) {
           <p className="text-xs font-medium uppercase text-slate-500">Official seat used</p>
           <p className="mt-1 font-semibold text-ink">{seatTypeInfo.code} - {seatTypeInfo.title}</p>
           <p className="mt-1 text-sm text-slate-600">
-            {[`${props.year}, CAP Round ${props.round}`, eligibilityText].filter(Boolean).join(" | ")}
+            {[`${props.year}, CAP Round ${props.round}`, eligibilityText, allocationText].filter(Boolean).join(" | ")}
           </p>
         </div>
         <p className="text-xs text-slate-500 sm:text-right">{confidenceText}</p>
@@ -252,8 +278,12 @@ export function ResultCard(props) {
         <button className="focus-ring inline-flex min-h-11 items-center gap-2 rounded border border-line bg-white px-4 text-sm font-medium" type="button">
           <Scale aria-hidden="true" size={17} /> Compare
         </button>
-        <button className="focus-ring inline-flex min-h-11 items-center gap-2 rounded border border-line bg-white px-4 text-sm font-semibold" type="button">
-          <Bookmark aria-hidden="true" size={17} /> Save
+        <button
+          className="focus-ring inline-flex min-h-11 items-center gap-2 rounded border border-line bg-white px-4 text-sm font-semibold"
+          type="button"
+          onClick={addToCapList}
+        >
+          <BookmarkCheck aria-hidden="true" size={17} /> {capListStatus || "Add to CAP List"}
         </button>
       </footer>
     </article>

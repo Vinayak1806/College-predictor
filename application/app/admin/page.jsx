@@ -1,20 +1,24 @@
 import { SiteHeader } from "../../components/SiteHeader";
+import { DataQualityDashboard } from "../../components/DataQualityDashboard";
+import { PredictionHealthDashboard } from "../../components/PredictionHealthDashboard";
 
 export default function AdminPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-7xl px-4 py-8">
-        <h1 className="text-2xl font-semibold">Admin Dashboard</h1>
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {["Upload PDF", "Run extraction", "Preview records", "Validation errors", "Approve dataset", "Import history", "Publish/unpublish", "Rollback"].map((label) => (
-            <button key={label} className="focus-ring min-h-11 rounded-lg border border-line bg-white p-4 text-left text-sm font-medium">
-              {label}
-            </button>
-          ))}
+      <main className="mx-auto max-w-7xl px-4 py-6">
+        <div className="max-w-3xl border-l-4 border-action pl-4">
+          <p className="text-xs font-semibold uppercase text-action">Administration</p>
+          <h1 className="mt-1 text-2xl font-semibold text-ink">Data Quality Centre</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Find records that can mislead predictions, then separate required corrections from optional college-research coverage.
+          </p>
+        </div>
+        <div className="mt-5 grid gap-5">
+          <PredictionHealthDashboard />
+          <DataQualityDashboard />
         </div>
       </main>
     </>
   );
 }
-

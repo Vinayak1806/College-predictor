@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { eligibleSeatTypesForCollege, universityEligibilityForCollege } from "./eligibility.js";
+import {
+  cutoffIsEligibleForCollege,
+  eligibleSeatTypesForCollege,
+  universityEligibilityForCollege
+} from "./eligibility.js";
 
 const student = {
   category: "OBC",
@@ -26,4 +30,22 @@ test("college in another university uses Other Than Home University seats", () =
   assert.ok(seats.includes("GOBCO"));
   assert.ok(seats.includes("GOPENO"));
   assert.ok(!seats.includes("GOBCH"));
+});
+
+test("converted Home University seats apply only to Other University candidates", () => {
+  assert.equal(
+    cutoffIsEligibleForCollege(student, "Mumbai University", "GOBCH", "HOME_FOR_OTHER"),
+    true
+  );
+  assert.equal(
+    cutoffIsEligibleForCollege(student, "Pune University", "GOBCH", "HOME_FOR_OTHER"),
+    false
+  );
+});
+
+test("state-level records remain available across universities", () => {
+  assert.equal(
+    cutoffIsEligibleForCollege(student, "Mumbai University", "GOBCS", "STATE"),
+    true
+  );
 });

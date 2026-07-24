@@ -10,6 +10,7 @@ export function CollegeAutocomplete({
   defaultValue = "",
   placeholder = "Type a college name or institute code",
   selectionMode = "navigate",
+  onSelect,
   className = "",
   inputClassName = "",
   showIcon = true
@@ -70,6 +71,7 @@ export function CollegeAutocomplete({
   function chooseCollege(college) {
     setQuery(college.name);
     setOpen(false);
+    onSelect?.(college);
     if (selectionMode === "navigate") router.push(`/colleges/${college.slug}`);
   }
 

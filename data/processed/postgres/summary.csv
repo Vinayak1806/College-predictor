@@ -1,2 +1,2 @@
-staging_files,source_rows,cities,universities,colleges,branches,college_branches,seat_types,cutoff_datasets,cutoffs,include_review
-10,103638,33,13,375,2270,5846,93,10,103638,False
+staging_files,reviewed_files,source_rows,cities,universities,colleges,branches,college_branches,seat_types,cutoff_datasets,cutoffs,include_review
+10,10,106398,33,14,383,2302,5928,94,10,106398,False

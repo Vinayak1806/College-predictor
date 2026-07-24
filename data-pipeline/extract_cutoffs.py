@@ -52,6 +52,7 @@ STAGE_RE = re.compile(r"^(?P<stage>[IVX]+(?:-Non)?)(?:\s+(?P<values>.*))?$")
 
 SECTION_TYPES = {
     "Home University Seats Allotted to Home University Candidates": "HOME",
+    "Home University Seats Allotted to Other Than Home University Candidates": "HOME_FOR_OTHER",
     "Other Than Home University Seats Allotted to Other Than Home University Candidates": "OTHER",
     "Other Than Home University Seats Allotted to Home University Candidates": "OTHER_FOR_HOME",
     "State Level": "STATE",

@@ -1,0 +1,107 @@
+{
+  "generatedAt": "2026-07-24T18:46:50.764Z",
+  "applied": true,
+  "source": {
+    "authority": "State Common Entrance Test Cell, Government of Maharashtra",
+    "academicYear": "2025-26",
+    "baseUrl": "https://fe2025.mahacet.org/StaticPages/frmInstituteSummary"
+  },
+  "summary": {
+    "targets": 8,
+    "verified": 8,
+    "conflicts": 0,
+    "unresolved": 0
+  },
+  "records": [
+    {
+      "status": "VERIFIED",
+      "instituteCode": "02032",
+      "databaseName": "Institute of Chemical Technology, Mumbai Marathwada off campus, Jalna",
+      "previousUniversity": null,
+      "officialCode": "02032",
+      "officialName": "Institute of Chemical Technology, Mumbai Marathwada off campus, Jalna",
+      "officialCETValue": "Deemed to be University",
+      "university": "Institute of Chemical Technology, Mumbai",
+      "sourceUrl": "https://fe2025.mahacet.org/StaticPages/frmInstituteSummary?InstituteCode=02032",
+      "affiliationSourceUrl": "https://ictmumbai.edu.in/",
+      "reason": "The CET page uses a generic status. ICT's official website identifies the Jalna off-campus institute as part of the named deemed-to-be university."
+    },
+    {
+      "status": "VERIFIED",
+      "instituteCode": "03025",
+      "databaseName": "Svkm's Shri Bhagubhai Mafatlal Polytechnic & College of Engineering",
+      "previousUniversity": null,
+      "officialCode": "03025",
+      "officialName": "Svkm's Shri Bhagubhai Mafatlal Polytechnic & College of Engineering",
+      "university": "Dr. Babasaheb Ambedkar Technological University,Lonere",
+      "sourceUrl": "https://fe2025.mahacet.org/StaticPages/frmInstituteSummary?InstituteCode=03025",
+      "reason": "Single university found across official 2025-26 course rows."
+    },
+    {
+      "status": "VERIFIED",
+      "instituteCode": "03035",
+      "databaseName": "Usha Mittal Institute of Technology SNDT Women's University, Mumbai",
+      "previousUniversity": null,
+      "officialCode": "03035",
+      "officialName": "Usha Mittal Institute of Technology SNDT Women's University, Mumbai",
+      "university": "SNDT Women's University",
+      "sourceUrl": "https://fe2025.mahacet.org/StaticPages/frmInstituteSummary?InstituteCode=03035",
+      "reason": "Single university found across official 2025-26 course rows."
+    },
+    {
+      "status": "VERIFIED",
+      "instituteCode": "04304",
+      "databaseName": "Cummins College of Engineering For Women, Sukhali (Gupchup), Tal. Hingna Hingna Nagpur",
+      "previousUniversity": null,
+      "officialCode": "04304",
+      "officialName": "Cummins College of Engineering For Women, Sukhali (Gupchup), Tal. Hingna Hingna Nagpur",
+      "university": "Rashtrasant Tukadoji Maharaj Nagpur University",
+      "sourceUrl": "https://fe2025.mahacet.org/StaticPages/frmInstituteSummary?InstituteCode=04304",
+      "reason": "Single university found across official 2025-26 course rows."
+    },
+    {
+      "status": "VERIFIED",
+      "instituteCode": "06276",
+      "databaseName": "MKSSS's Cummins College of Engineering for Women, Karvenagar,Pune",
+      "previousUniversity": null,
+      "officialCode": "06276",
+      "officialName": "MKSSS's Cummins College of Engineering for Women, Karvenagar,Pune",
+      "university": "Savitribai Phule Pune University",
+      "sourceUrl": "https://fe2025.mahacet.org/StaticPages/frmInstituteSummary?InstituteCode=06276",
+      "reason": "Single university found across official 2025-26 course rows."
+    },
+    {
+      "status": "VERIFIED",
+      "instituteCode": "06285",
+      "databaseName": "Bharati Vidyapeeth's College of Engineering for Women, Katraj, Dhankawadi, Pune",
+      "previousUniversity": null,
+      "officialCode": "06285",
+      "officialName": "Bharati Vidyapeeth's College of Engineering for Women, Katraj, Dhankawadi, Pune",
+      "university": "Savitribai Phule Pune University",
+      "sourceUrl": "https://fe2025.mahacet.org/StaticPages/frmInstituteSummary?InstituteCode=06285",
+      "reason": "Single university found across official 2025-26 course rows."
+    },
+    {
+      "status": "VERIFIED",
+      "instituteCode": "06938",
+      "databaseName": "Shree Siddheshwar Womens College Of Engineering Solapur.",
+      "previousUniversity": null,
+      "officialCode": "06938",
+      "officialName": "Shree Siddheshwar Womens College Of Engineering Solapur.",
+      "university": "Dr. Babasaheb Ambedkar Technological University,Lonere",
+      "sourceUrl": "https://fe2025.mahacet.org/StaticPages/frmInstituteSummary?InstituteCode=06938",
+      "reason": "Single university found across official 2025-26 course rows."
+    },
+    {
+      "status": "VERIFIED",
+      "instituteCode": "16361",
+      "databaseName": "Zeal College of Engineering & Research, Induri, Pune (Off Campus-Induri)",
+      "previousUniversity": null,
+      "officialCode": "16361",
+      "officialName": "Zeal College of Engineering & Research, Induri, Pune (Off Campus-Induri)",
+      "university": "Savitribai Phule Pune University",
+      "sourceUrl": "https://fe2025.mahacet.org/StaticPages/frmInstituteSummary?InstituteCode=16361",
+      "reason": "Single university found across official 2025-26 course rows."
+    }
+  ]
+}

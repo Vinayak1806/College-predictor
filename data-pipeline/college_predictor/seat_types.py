@@ -25,6 +25,10 @@ SPECIAL_TYPES = {
     "ORPHAN": ("ORPHAN", "SPECIAL", "STATE"),
 }
 
+MINORITY_TYPES = {
+    "MI": ("MINORITY", "GENERAL", "STATE"),
+}
+
 UNIVERSITY_SUFFIX = {
     "H": "HOME",
     "O": "OTHER",
@@ -68,6 +72,10 @@ def decode_seat_type(raw_code: str) -> SeatTypeInfo | None:
     if code in SPECIAL_TYPES:
         category, gender, university_type = SPECIAL_TYPES[code]
         return SeatTypeInfo(code, category, gender, university_type, code)
+
+    if code in MINORITY_TYPES:
+        category, gender, university_type = MINORITY_TYPES[code]
+        return SeatTypeInfo(code, category, gender, university_type, "MINORITY")
 
     university_type = "UNKNOWN"
     body = code
@@ -134,4 +142,3 @@ def eligible_seat_types(
     if include_special:
         seats.update({"TFWS", "EWS", "ORPHAN"})
     return seats
-
