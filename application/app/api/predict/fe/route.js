@@ -6,6 +6,7 @@ import {
   universityEligibilityForCollege
 } from "../../../../lib/eligibility";
 import { analyzeCutoffHistory, calculateStrengthIndex, compareUsefulResults } from "../../../../lib/prediction";
+import { applyResultMode } from "../../../../lib/resultDiversity";
 import { fePredictSchema } from "../../../../lib/validation";
 
 function normalizeOwnership(value) {
@@ -47,6 +48,28 @@ function groupRowsByCollegeBranch(rows) {
   }
 
   return [...groups.values()];
+}
+
+function confidenceWarning(analysis, input) {
+  const specialProfile = input.category !== "OPEN" ||
+    input.tfws ||
+    input.pwd ||
+    input.defence ||
+    input.ews;
+
+  if (analysis.yearsAnalyzed === 1 && specialProfile) {
+    return "Only one comparable year was found for this special-category match. Treat the admission zone cautiously.";
+  }
+  if (analysis.yearsAnalyzed === 1) {
+    return "Only one comparable year was found, so a conservative confidence adjustment was applied.";
+  }
+  if (analysis.volatility > 6) {
+    return `This cutoff changed by ${analysis.volatility.toFixed(2)} points across comparable years. The result has limited confidence.`;
+  }
+  if (specialProfile && analysis.yearsAnalyzed < 3) {
+    return "Fewer than three comparable years were found for this special-category profile.";
+  }
+  return null;
 }
 
 export async function POST(request) {
@@ -209,6 +232,7 @@ export async function POST(request) {
       latestCutoff: analysis.latest.cutoff,
       margin: analysis.margin,
       adjustedMargin: analysis.adjustedMargin,
+      conservativePenalty: analysis.conservativePenalty,
       year: analysis.latest.year,
       round: analysis.latest.round,
       seatType: analysis.latest.seatType,
@@ -216,6 +240,7 @@ export async function POST(request) {
       eligibleSeatTypes: analysis.eligibleSeatTypes,
       yearsAnalyzed: analysis.yearsAnalyzed,
       dataConfidence: analysis.confidence,
+      confidenceWarning: confidenceWarning(analysis, input),
       trend: analysis.trend,
       trendChange: analysis.trendChange,
       volatility: analysis.volatility,
@@ -234,13 +259,14 @@ export async function POST(request) {
   });
 
   filteredResults.sort(compareUsefulResults);
-  const zoneCounts = filteredResults.reduce((counts, result) => {
+  const modeResults = applyResultMode(filteredResults, input.resultMode);
+  const zoneCounts = modeResults.reduce((counts, result) => {
     counts[result.zone] = (counts[result.zone] || 0) + 1;
     return counts;
-  }, { ALL: filteredResults.length, SAFE: 0, TARGET: 0, AMBITIOUS: 0, HIGHLY_AMBITIOUS: 0 });
+  }, { ALL: modeResults.length, SAFE: 0, TARGET: 0, AMBITIOUS: 0, HIGHLY_AMBITIOUS: 0 });
   const zoneResults = input.zone === "ALL"
-    ? filteredResults
-    : filteredResults.filter((result) => result.zone === input.zone);
+    ? modeResults
+    : modeResults.filter((result) => result.zone === input.zone);
   const start = (input.page - 1) * input.pageSize;
   const visibleResults = zoneResults.slice(start, start + input.pageSize);
   const totalResults = zoneResults.length;
@@ -259,6 +285,7 @@ export async function POST(request) {
     zoneCounts,
     analysis: {
       groupedResults: true,
+      resultMode: input.resultMode,
       selectedYear: input.academicYear || "All available years",
       selectedRound: input.capRound || "Latest comparable round"
     }

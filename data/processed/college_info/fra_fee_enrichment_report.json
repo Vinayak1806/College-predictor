@@ -1,0 +1,535 @@
+{
+  "generatedAt": "2026-07-28T14:45:51.092Z",
+  "source": "https://mahafra.org/feesInformation",
+  "yearsChecked": [
+    "2025-26",
+    "2024-25"
+  ],
+  "mode": "apply",
+  "currentColleges": 372,
+  "officialEngineeringFeeRows": 301,
+  "currentCollegesMatched": 290,
+  "originallyMissing": 86,
+  "recoveredMissing": 5,
+  "stillMissing": 81,
+  "recovered": [
+    {
+      "instituteCode": "02508",
+      "name": "GRAMIN TECHNICAL AND MANAGEMENT CAMPUS NANDED.",
+      "academicYear": "2024-25",
+      "totalApprovedFee": 67500
+    },
+    {
+      "instituteCode": "03439",
+      "name": "Anjuman-I-Islam's Kalsekar Technical Campus, Panvel",
+      "academicYear": "2024-25",
+      "totalApprovedFee": 98500
+    },
+    {
+      "instituteCode": "04104",
+      "name": "Kavi Kulguru Institute of Technology & Science, Ramtek",
+      "academicYear": "2024-25",
+      "totalApprovedFee": 105000
+    },
+    {
+      "instituteCode": "05151",
+      "name": "MET Bhujbal Knowledge City MET League's Engineering College, Adgaon, Nashik.",
+      "academicYear": "2024-25",
+      "totalApprovedFee": 105500
+    },
+    {
+      "instituteCode": "05152",
+      "name": "G H Raisoni College of Engineering and Management, Jalgaon",
+      "academicYear": "2024-25",
+      "totalApprovedFee": 83000
+    }
+  ],
+  "unresolved": [
+    {
+      "instituteCode": "01002",
+      "name": "Government College of Engineering, Amravati",
+      "ownership": "Government",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "01005",
+      "name": "Sant Gadge Baba Amravati University,Amravati",
+      "ownership": "University Department",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "01012",
+      "name": "Government College of Engineering,Yavatmal",
+      "ownership": "Government",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "01268",
+      "name": "Siddhivinayak Technical Campus, School of Engineering & Research Technology, Shirasgon, Nile",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "02008",
+      "name": "Government College of Engineering, Chhatrapati Sambhajinagar",
+      "ownership": "Government",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "02015",
+      "name": "PURANMAL LAHOTI GOVERNMENT INSTITUTE OF ENGINEERING AND TECHNOLOGY, LATUR",
+      "ownership": "Government",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "02020",
+      "name": "Shri Guru Gobind Singhji Institute of Engineering and Technology, Nanded",
+      "ownership": "Government-Aided",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "02021",
+      "name": "University Department of Chemical Technology, Aurangabad",
+      "ownership": "University Department",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "02032",
+      "name": "Institute of Chemical Technology, Mumbai Marathwada off campus, Jalna",
+      "ownership": "University Managed",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "02189",
+      "name": "Vishweshwarayya Institute Of Engineering And Technology, Almala, Tq. Ausa, Dist. Latur",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "02282",
+      "name": "Mitthulalji Sarada Institute Of Technology, Nalwandi Road, Beed",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "02634",
+      "name": "Eaglewood Polytechnic Institute, A.P Phulepimpalgaon",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "02637",
+      "name": "Jijau Institute of Engineering Technology and Management, Khandgaon (Bendri), Taluka Naigaon, District Nanded",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "02641",
+      "name": "Dr. V.K. Patil College of Engineering & Technology",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "02666",
+      "name": "Mangaldeep College of Engineering",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "02758",
+      "name": "Sant Eknath College of Engineering",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "02770",
+      "name": "Shetkari Shikshan Prasarak Mandal's Mahesh Institute of Engineering and Technology , Ashti",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "02771",
+      "name": "Amolak College of Engineering Kada",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "02772",
+      "name": "JSPM College of Engineering, Latur",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "02777",
+      "name": "CDS College of Engineering",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "02779",
+      "name": "NKSPT INSTITUTE OF ENGINEERING AND TECHNOLOGY PATHIKAR CAMPUS",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "03012",
+      "name": "Veermata Jijabai Technological Institute(VJTI), Matunga, Mumbai",
+      "ownership": "Government-Aided",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "03014",
+      "name": "Sardar Patel College of Engineering, Andheri",
+      "ownership": "Government-Aided",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "03025",
+      "name": "Svkm's Shri Bhagubhai Mafatlal Polytechnic & College of Engineering",
+      "ownership": "Government-Aided",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "03033",
+      "name": "Dr. Babasaheb Ambedkar Technological University, Lonere",
+      "ownership": "University",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "03035",
+      "name": "Usha Mittal Institute of Technology SNDT Women's University, Mumbai",
+      "ownership": "University Managed (Un-Aided)",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "03036",
+      "name": "Institute of Chemical Technology, Matunga, Mumbai",
+      "ownership": "Deemed University",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "03042",
+      "name": "Loknete Shamrao Peje Government College of Engineering, Ratnagiri",
+      "ownership": "Government",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "03143",
+      "name": "Thakur Shyamnarayan Engineering College, Mumbai",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "03257",
+      "name": "Vidya Prasarak Mandal's College of Engineering, Thane",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "03470",
+      "name": "YASHWANTRAO BHONSALE INSTITUTE OF TECHNOLOGY",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "03546",
+      "name": "Devi Mahalaxmi College of Engineering and Technology",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "03723",
+      "name": "Navjeevan Education Society's College of Engineering",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "03724",
+      "name": "Thakur Shree DPS College of Engineering & Management",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "03725",
+      "name": "MAEER's Maharashtra Institute of Technology, Thane",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "03726",
+      "name": "Imperial College of Engineering",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "04004",
+      "name": "Government College of Engineering, Chandrapur",
+      "ownership": "Government",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "04025",
+      "name": "Government College of Engineering, Nagpur",
+      "ownership": "Government",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "04679",
+      "name": "Karanjekar College of Engineering & Management, Sakoli",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "04703",
+      "name": "Somayya Institute of Technology, Chandrapur",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "05003",
+      "name": "University Institute of Chemical Technology, North Maharashtra University, Jalgaon",
+      "ownership": "University Department",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "05004",
+      "name": "Government College of Engineering, Jalgaon",
+      "ownership": "Government",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "05130",
+      "name": "Brahma Valley College of Engineering & Research, Trimbakeshwar, Nashik",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "05223",
+      "name": "SMT. SHARCHCHANDRIKA SURESH PATIL INSTITUTE OF TECHNOLOGY (ENGINEERING & POLYTECHNIC), CHOPDA",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "05239",
+      "name": "JAMIA INSTITUTE OF TECHNOLOGY",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "05249",
+      "name": "Trimurti Shikshan Prasarak Mandal, Trimurti Institute Of Technology, Paladhi Bk, Jalgaon",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "05256",
+      "name": "Matoshri Aasarabai Institute of Technology and Research Centre",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "05263",
+      "name": "Matoshri Education Soceity, Matoshri Institute Of Technology, Dhanore, Nashik",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "05365",
+      "name": "Vardhaman Education & Welfare Society, Ahinsa Institute of Technology, Post. Dondaicha, Dhule",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "05370",
+      "name": "Kedareshwar Gramin Vikas Pratishthan, Samajbhushan Eknathrao Dhakane College, of Engineering, Shevgaon",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "05395",
+      "name": "Ashok Institute of Engineering & Technology",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "05414",
+      "name": "Nikam Institute of Technology(Polytechnic),Dhule",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "05433",
+      "name": "R.C. Patel College of Engineering and Polytechnic, Shirpur",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "05497",
+      "name": "P.G. College of Engineering & Technology, Nandurbar",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "05509",
+      "name": "Shri Swami Samarth Institute of Management and Technology, Malwadi-Bota",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "05513",
+      "name": "MKD Institute of Technology, Nadurbar",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "05545",
+      "name": "Shri Vile Parle Kelavani Mandal's College of Engineering, Shirpur",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "05597",
+      "name": "VAMANRAO ITHAPE COLLEGE OF ENGINEERING AND MANAGEMENT",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "06004",
+      "name": "Government College of Engineering & Research, Avasari Khurd",
+      "ownership": "Government",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "06005",
+      "name": "Government College of Engineering, Karad",
+      "ownership": "Government",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "06007",
+      "name": "Walchand College of Engineering, Sangli",
+      "ownership": "Government-Aided",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "06028",
+      "name": "Department of Technology, Shivaji University, Kolhapur",
+      "ownership": "University Department",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "06036",
+      "name": "Government College of Engineering, Kolhapur",
+      "ownership": "Government",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "06402",
+      "name": "NEW INSTITUTE OF TECHNOLOGY,KOLHAPUR",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "06444",
+      "name": "Shriram Institute Of Engineering & Technology, (Poly), Paniv",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "06467",
+      "name": "Swami Vivekanand Institute Of Technology, Solapur",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "06468",
+      "name": "Swami Vivekananda Shikshan Sanstha, Dr. Bapuji Salunkhe Institute Of Engineering & Technology,Kolhapur",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "06714",
+      "name": "APPASAHEB ALIAS SA.RE.PATIL INSTITUTE OF TECHNOLOGY, Dattanagar Tal-Shirol, Dist Kolhapur",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "06715",
+      "name": "Babasaheb Phadtare Engineering & Technology Kalamb-Walchandnagar Tal Indapur Dist Pune",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "06771",
+      "name": "Flora Institute of Technology, Khopi, Near Khed Shivapur Toll Plaza, Pune",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "06811",
+      "name": "Sanjay Ghodawat Institute",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "06991",
+      "name": "Dr. D.Y. Patil Technical Campus, Varale, Talegaon, Pune",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "14005",
+      "name": "Laxminarayan Innovation Technological University, Nagpur",
+      "ownership": "University",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "16006",
+      "name": "COEP Technological University",
+      "ownership": "University",
+      "reason": "Fee should be verified from the institute or university; FRA does not regulate this ownership type"
+    },
+    {
+      "instituteCode": "16121",
+      "name": "Shri. Anandrao Abitkar College of Engineering, Pal",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "16351",
+      "name": "Vidya Niketan Institute of Engineering & Technology, Lakhewadi",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "16352",
+      "name": "Yashoda Mahadeo Kakade College of Engineering, Talegaon",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "16354",
+      "name": "DNYANVILAS COLLEGE OF ENGINEERING",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "16355",
+      "name": "Audyogik Shikshan Mandal's Nextgen Technical Campus",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "16357",
+      "name": "MES MUKUNDDAS LOHIA COLLEGE OF ENGINEERING",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    },
+    {
+      "instituteCode": "16361",
+      "name": "Zeal College of Engineering & Research, Induri, Pune (Off Campus-Induri)",
+      "ownership": "Un-Aided",
+      "reason": "No published FRA engineering fee matched for 2025-26 or 2024-25"
+    }
+  ]
+}

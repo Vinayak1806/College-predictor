@@ -76,16 +76,25 @@ export function analyzeCutoffHistory(records, studentScore) {
   const volatility = standardDeviation(history.map((item) => item.cutoff));
   const trendChange = history.length > 1 ? history.at(-1).cutoff - history[0].cutoff : 0;
   const trend = trendChange >= 2 ? "RISING" : trendChange <= -2 ? "FALLING" : "STABLE";
-  const confidence = history.length >= 3 && volatility <= 4 ? "HIGH" : history.length >= 2 ? "MEDIUM" : "LIMITED";
+  const confidence = history.length >= 3 && volatility <= 3
+    ? "HIGH"
+    : history.length >= 2 && volatility <= 6
+      ? "MEDIUM"
+      : "LIMITED";
   const margin = scoreMargin(studentScore, benchmarkCutoff);
 
-  // Volatile cutoffs receive a small conservative penalty before classification.
-  const adjustedMargin = margin - Math.min(volatility, 6) * 0.5;
+  // A single historical year cannot show a trend, so it receives an explicit
+  // conservative adjustment. Volatility keeps its existing capped adjustment.
+  const historyPenalty = history.length === 1 ? 2 : 0;
+  const volatilityPenalty = Math.min(volatility, 6) * 0.5;
+  const conservativePenalty = historyPenalty + volatilityPenalty;
+  const adjustedMargin = margin - conservativePenalty;
 
   return {
     benchmarkCutoff: round(benchmarkCutoff),
     margin: round(margin),
     adjustedMargin: round(adjustedMargin),
+    conservativePenalty: round(conservativePenalty),
     volatility: round(volatility),
     trend,
     trendChange: round(trendChange),

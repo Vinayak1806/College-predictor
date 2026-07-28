@@ -19,6 +19,60 @@ function Metric({ label, value, note }) {
   );
 }
 
+const causeLabels = {
+  WITHIN_EXPECTED_RANGE: "Within expected range",
+  VOLATILE_HISTORY: "Volatile cutoff history",
+  LIMITED_SPECIAL_HISTORY: "Limited special-category history",
+  SEAT_TYPE_CHANGED: "Applicable seat type changed",
+  LATEST_YEAR_SHIFT: "Latest-year cutoff shift"
+};
+
+const breakdownLabels = {
+  category: "Category",
+  seatType: "Seat type",
+  university: "University",
+  branch: "Branch",
+  capRound: "CAP round"
+};
+
+function BreakdownTable({ label, rows }) {
+  if (!rows?.length) return null;
+
+  return (
+    <details className="border-t border-line first:border-t-0">
+      <summary className="focus-ring cursor-pointer px-4 py-3 text-sm font-semibold text-action">
+        {label} breakdown
+      </summary>
+      <div className="overflow-x-auto border-t border-line">
+        <table className="w-full min-w-[620px] border-collapse text-left text-xs">
+          <thead className="bg-panel uppercase text-slate-500">
+            <tr>
+              <th className="px-3 py-2 font-medium">{label}</th>
+              <th className="px-3 py-2 font-medium">Samples</th>
+              <th className="px-3 py-2 font-medium">Exact zone</th>
+              <th className="px-3 py-2 font-medium">Within one zone</th>
+              <th className="px-3 py-2 font-medium">Mean error</th>
+              <th className="px-3 py-2 font-medium">Large errors</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-line">
+            {rows.map((row) => (
+              <tr key={row.value}>
+                <td className="max-w-xs break-words px-3 py-2 font-medium text-ink">{row.value}</td>
+                <td className="px-3 py-2 text-slate-600">{row.samples}</td>
+                <td className="px-3 py-2 text-slate-600">{row.exactZoneAccuracy}%</td>
+                <td className="px-3 py-2 text-slate-600">{row.adjacentZoneAccuracy}%</td>
+                <td className="px-3 py-2 font-semibold text-ink">{row.meanAbsoluteError.toFixed(2)}</td>
+                <td className="px-3 py-2 text-slate-600">{row.largeErrors}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  );
+}
+
 export function PredictionHealthDashboard() {
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -128,6 +182,35 @@ export function PredictionHealthDashboard() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+          <div className="rounded border border-line">
+            <div className="border-b border-line bg-panel px-4 py-3">
+              <p className="text-xs font-semibold uppercase text-slate-500">Likely error causes</p>
+              <p className="mt-1 text-xs text-slate-600">
+                {report.summary.largeErrors} options moved at least 4 percentile points. Selected records with eligibility conflicts: {report.summary.eligibilityConflicts}.
+              </p>
+            </div>
+            <dl className="divide-y divide-line">
+              {Object.entries(report.likelyCauses || {}).map(([cause, count]) => (
+                <div key={cause} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+                  <dt className="text-slate-700">{causeLabels[cause] || cause}</dt>
+                  <dd className="font-semibold text-ink">{count}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          <div className="overflow-hidden rounded border border-line">
+            <div className="bg-panel px-4 py-3">
+              <p className="text-xs font-semibold uppercase text-slate-500">Where errors are highest</p>
+              <p className="mt-1 text-xs text-slate-600">Groups need at least 10 comparable options. Highest mean errors appear first.</p>
+            </div>
+            {Object.entries(report.breakdowns || {}).map(([dimension, rows]) => (
+              <BreakdownTable key={dimension} label={breakdownLabels[dimension] || dimension} rows={rows} />
+            ))}
+          </div>
         </div>
 
         <div className="mt-4 grid gap-3 md:grid-cols-2">

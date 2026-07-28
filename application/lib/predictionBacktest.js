@@ -111,6 +111,61 @@ function toHistoryRecord(row) {
   };
 }
 
+function likelyErrorCause(evaluation, prediction, profile) {
+  if (evaluation.absoluteError < 4) return "WITHIN_EXPECTED_RANGE";
+  if (prediction.volatility > 4) return "VOLATILE_HISTORY";
+
+  const specialProfile = profile.category !== "OPEN" ||
+    profile.tfws ||
+    profile.pwd ||
+    profile.defence ||
+    profile.ews;
+  if (specialProfile && prediction.yearsAnalyzed < 3) return "LIMITED_SPECIAL_HISTORY";
+
+  const historicalSeatTypes = new Set(prediction.history.map((item) => item.seatType));
+  if (historicalSeatTypes.size > 1 || !historicalSeatTypes.has(evaluation.targetSeatType)) {
+    return "SEAT_TYPE_CHANGED";
+  }
+
+  return "LATEST_YEAR_SHIFT";
+}
+
+function dimensionBreakdown(evaluations, field, minimumSamples = 10) {
+  const groups = new Map();
+
+  for (const evaluation of evaluations) {
+    const value = String(evaluation[field] || "Unknown");
+    groups.set(value, [...(groups.get(value) || []), evaluation]);
+  }
+
+  return [...groups.entries()]
+    .map(([value, rows]) => {
+      const exact = rows.filter((row) => row.zoneDistance === 0).length;
+      const adjacent = rows.filter((row) => row.zoneDistance <= 1).length;
+      return {
+        value,
+        samples: rows.length,
+        exactZoneAccuracy: round((exact / rows.length) * 100),
+        adjacentZoneAccuracy: round((adjacent / rows.length) * 100),
+        meanAbsoluteError: round(average(rows.map((row) => row.absoluteError)), 2),
+        largeErrors: rows.filter((row) => row.absoluteError >= 4).length
+      };
+    })
+    .filter((group) => group.samples >= minimumSamples)
+    .sort((a, b) => b.meanAbsoluteError - a.meanAbsoluteError || b.samples - a.samples)
+    .slice(0, 12);
+}
+
+export function buildAccuracyBreakdowns(evaluations) {
+  return {
+    category: dimensionBreakdown(evaluations, "category"),
+    seatType: dimensionBreakdown(evaluations, "targetSeatType"),
+    university: dimensionBreakdown(evaluations, "university"),
+    branch: dimensionBreakdown(evaluations, "branch"),
+    capRound: dimensionBreakdown(evaluations, "targetRound")
+  };
+}
+
 export function evaluateBacktestGroup(rows, profile, trainingYears, targetYear) {
   const eligibleRows = rows.filter((row) =>
     cutoffIsEligibleForCollege(
@@ -135,10 +190,13 @@ export function evaluateBacktestGroup(rows, profile, trainingYears, targetYear) 
   const cutoffError = prediction.benchmarkCutoff - actual.latest.cutoff;
   const firstRow = targetRows[0];
 
-  return {
+  const evaluation = {
+    profileId: profile.id,
+    category: profile.category,
     instituteCode: firstRow.collegeBranch.college.instituteCode,
     college: firstRow.collegeBranch.college.name,
     branch: firstRow.collegeBranch.branch.displayName,
+    university: firstRow.collegeBranch.college.university?.name || "Unknown",
     predictedZone,
     actualZone,
     zoneDistance,
@@ -146,9 +204,14 @@ export function evaluateBacktestGroup(rows, profile, trainingYears, targetYear) 
     actualCutoff: actual.latest.cutoff,
     cutoffError: round(cutoffError, 2),
     absoluteError: round(Math.abs(cutoffError), 2),
+    trainingVolatility: prediction.volatility,
+    trainingYears: prediction.yearsAnalyzed,
     targetRound: actual.latest.round,
-    targetSeatType: actual.latest.seatType
+    targetSeatType: actual.latest.seatType,
+    eligibilityConflict: false
   };
+  evaluation.likelyCause = likelyErrorCause(evaluation, prediction, profile);
+  return evaluation;
 }
 
 export function summarizeBacktest(profile, evaluations) {
@@ -176,7 +239,7 @@ export async function runFePredictionBacktest(prisma, options = {}) {
   const targetYear = options.targetYear || "2025-26";
   const profiles = options.profiles || FE_BACKTEST_PROFILES;
 
-  const profileReports = await Promise.all(profiles.map(async (profile) => {
+  const profileWork = await Promise.all(profiles.map(async (profile) => {
     const seatTypes = eligibleSeatTypesAcrossUniversities(profile);
     const rows = await prisma.cutoff.findMany({
       where: {
@@ -229,8 +292,13 @@ export async function runFePredictionBacktest(prisma, options = {}) {
       .map((group) => evaluateBacktestGroup(group, profile, trainingYears, targetYear))
       .filter(Boolean);
 
-    return summarizeBacktest(profile, evaluations);
+    return {
+      report: summarizeBacktest(profile, evaluations),
+      evaluations
+    };
   }));
+  const profileReports = profileWork.map((item) => item.report);
+  const allEvaluations = profileWork.flatMap((item) => item.evaluations);
 
   const testedOptions = profileReports.reduce((sum, profile) => sum + profile.testedOptions, 0);
   const weightedAverage = (field) => {
@@ -240,6 +308,10 @@ export async function runFePredictionBacktest(prisma, options = {}) {
         testedOptions
     );
   };
+  const causeCounts = allEvaluations.reduce((counts, evaluation) => {
+    counts[evaluation.likelyCause] = (counts[evaluation.likelyCause] || 0) + 1;
+    return counts;
+  }, {});
 
   return {
     generatedAt: new Date().toISOString(),
@@ -257,9 +329,13 @@ export async function runFePredictionBacktest(prisma, options = {}) {
         profileReports.reduce((sum, profile) => sum + profile.meanAbsoluteError * profile.testedOptions, 0) /
           Math.max(testedOptions, 1),
         2
-      )
+      ),
+      largeErrors: allEvaluations.filter((evaluation) => evaluation.absoluteError >= 4).length,
+      eligibilityConflicts: allEvaluations.filter((evaluation) => evaluation.eligibilityConflict).length
     },
     profiles: profileReports,
+    likelyCauses: causeCounts,
+    breakdowns: buildAccuracyBreakdowns(allEvaluations),
     unavailableProfiles: UNAVAILABLE_BACKTEST_PROFILES
   };
 }

@@ -42,7 +42,7 @@ COLLEGE_RE = re.compile(r"^(?P<code>\d{4,5})\s*-\s*(?P<name>.+)$")
 STATUS_RE = re.compile(r"^(?P<status>.+?)\s+CAP Seats:(?P<cap_seats>\d+)$")
 YEAR_RE = re.compile(r"Admissions A\.Y\.\s*(20\d{2}-\d{2})")
 BRANCH_RE = re.compile(
-    r"^(?P<branch_code>\d{9,10})\s+"
+    r"^(?P<branch_code>\d{9,10}[A-Z]?)\s+"
     r"(?P<branch_name>.+?)\s+"
     r"(?P<sanctioned_intake>\d+)\s+"
     r"(?P<maharashtra_seats>\d+)\s+"

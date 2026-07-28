@@ -6,15 +6,18 @@ import {
   ArrowLeft,
   ArrowRight,
   BarChart3,
+  Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
-  SlidersHorizontal
+  SlidersHorizontal,
+  X
 } from "lucide-react";
 import { ResultCard } from "../../components/ResultCard";
 import { SiteHeader } from "../../components/SiteHeader";
 import { getPageRange, getPaginationItems } from "../../lib/pagination";
+import { resultModes } from "../../lib/resultDiversity";
 import { explainSeatType } from "../../lib/seatTypes";
 
 const PAGE_SIZE = 10;
@@ -198,6 +201,10 @@ function CompactMultiSelect({
   const matchingOptions = options
     .filter((option) => option.label.toLowerCase().includes(query.trim().toLowerCase()))
     .slice(0, 50);
+  const selectedOptions = selectedValues.map((value) => ({
+    value,
+    label: options.find((option) => option.value === value)?.label || value
+  }));
 
   useEffect(() => {
     function closeWhenClickingOutside(event) {
@@ -214,11 +221,6 @@ function CompactMultiSelect({
     <div ref={containerRef} className="relative grid min-w-0 w-full gap-2 text-sm">
       <label className="font-medium" htmlFor={inputId}>{label}</label>
       <div className="focus-within:ring-2 focus-within:ring-[#7db9ca] flex min-h-11 w-full min-w-0 max-w-full items-center gap-2 overflow-hidden rounded border border-line bg-white px-3">
-        {!query && selectedValues.length ? (
-          <span className="max-w-[48%] shrink-0 truncate rounded bg-panel px-2 py-1 text-xs font-medium text-ink">
-            {selectedSummary(selectedValues, options, emptyText)}
-          </span>
-        ) : null}
         <input
           id={inputId}
           aria-autocomplete="list"
@@ -246,6 +248,30 @@ function CompactMultiSelect({
           {open ? <ChevronUp aria-hidden="true" size={17} /> : <ChevronDown aria-hidden="true" size={17} />}
         </button>
       </div>
+
+      {selectedOptions.length ? (
+        <div className="flex flex-wrap gap-2" aria-label={`Selected ${label.toLowerCase()}`}>
+          {selectedOptions.map((option) => (
+            <div
+              key={option.value}
+              className="flex min-h-9 max-w-full items-center gap-2 border border-line bg-panel px-2 text-xs text-ink"
+            >
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center border border-action bg-white text-action">
+                <Check aria-hidden="true" size={14} strokeWidth={2.5} />
+              </span>
+              <span className="min-w-0 break-words font-medium">{option.label}</span>
+              <button
+                aria-label={`Remove ${option.label}`}
+                className="focus-ring flex h-7 w-7 shrink-0 items-center justify-center text-slate-500 hover:bg-white hover:text-danger"
+                type="button"
+                onClick={() => onToggle(option.value)}
+              >
+                <X aria-hidden="true" size={15} />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       {open ? (
         <div className="absolute left-0 right-0 top-full z-30 mt-1 rounded border border-line bg-white p-2 shadow-lg">
@@ -277,8 +303,15 @@ function CompactMultiSelect({
                     setOpen(true);
                   }}
                 >
-                  <span className="min-w-0 break-words">{option.label}</span>
-                  {selected ? <span className="shrink-0 text-xs text-action">Selected</span> : null}
+                  <span
+                    aria-hidden="true"
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center border ${
+                      selected ? "border-action bg-action text-white" : "border-slate-300 bg-white"
+                    }`}
+                  >
+                    {selected ? <Check size={14} strokeWidth={2.5} /> : null}
+                  </span>
+                  <span className="min-w-0 flex-1 break-words">{option.label}</span>
                 </button>
               );
             })}
@@ -299,6 +332,7 @@ export default function FePredictorPage() {
   const [instituteCount, setInstituteCount] = useState(null);
   const [results, setResults] = useState([]);
   const [selectedZone, setSelectedZone] = useState("ALL");
+  const [selectedResultMode, setSelectedResultMode] = useState("BEST_BRANCH_PER_COLLEGE");
   const [seatTypes, setSeatTypes] = useState([]);
   const [totalResults, setTotalResults] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -373,7 +407,7 @@ export default function FePredictorPage() {
     requestAnimationFrame(() => predictorFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
-  function buildStudentInput(page, zone) {
+  function buildStudentInput(page, zone, resultMode) {
     return {
       exam: form.exam,
       percentile: Number(form.percentile),
@@ -386,6 +420,7 @@ export default function FePredictorPage() {
       preferredCities: form.cities,
       collegeTypes: form.collegeTypes,
       autonomousOnly: form.autonomousOnly,
+      resultMode,
       zone,
       page,
       pageSize: PAGE_SIZE,
@@ -396,7 +431,12 @@ export default function FePredictorPage() {
     };
   }
 
-  async function requestPrediction({ page = 1, zone = selectedZone, scrollToResults = true } = {}) {
+  async function requestPrediction({
+    page = 1,
+    zone = selectedZone,
+    resultMode = selectedResultMode,
+    scrollToResults = true
+  } = {}) {
     if (!canPredict) {
       setShowValidation(true);
       return;
@@ -411,7 +451,7 @@ export default function FePredictorPage() {
         headers: {
           "content-type": "application/json"
         },
-        body: JSON.stringify(buildStudentInput(page, zone))
+        body: JSON.stringify(buildStudentInput(page, zone, resultMode))
       });
 
       const data = await response.json();
@@ -462,6 +502,13 @@ export default function FePredictorPage() {
   async function selectPage(page) {
     if (loading || page < 1 || page > totalPages || page === currentPage) return;
     await requestPrediction({ page, zone: selectedZone });
+  }
+
+  async function selectResultMode(resultMode) {
+    setSelectedResultMode(resultMode);
+    if (hasPredicted) {
+      await requestPrediction({ page: 1, zone: selectedZone, resultMode, scrollToResults: false });
+    }
   }
 
   return (
@@ -779,22 +826,45 @@ export default function FePredictorPage() {
 
         <section ref={resultsTopRef} className="grid min-w-0 scroll-mt-20 content-start gap-4">
           <div className="overflow-hidden rounded-lg border border-line bg-white">
-            <div className="flex flex-wrap items-start justify-between gap-3 p-4 md:p-5">
+            <div className={`grid items-start gap-4 p-4 md:p-5 ${hasPredicted ? "md:grid-cols-[minmax(0,1fr)_96px]" : ""}`}>
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase text-action">Prediction workspace</p>
                 <h2 className="mt-1 text-xl font-semibold">
                   {hasPredicted ? "Your college-branch options" : "Ready for your profile"}
                 </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                  {hasPredicted
-                    ? `${form.percentile} percentile | ${form.category} | ${form.branches.length ? selectedSummary(form.branches, branchOptions, "All branches") : "All branches"} | ${form.cities.length ? form.cities.join(", ") : "All Maharashtra"}`
-                    : "Complete the required eligibility fields, then run the predictor to see your closest official cutoff matches."}
-                </p>
+                {hasPredicted ? (
+                  <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2 xl:grid-cols-4">
+                    <div>
+                      <dt className="text-xs text-slate-500">Percentile</dt>
+                      <dd className="mt-0.5 font-semibold text-ink">{form.percentile}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-slate-500">Category</dt>
+                      <dd className="mt-0.5 font-semibold text-ink">{form.category}</dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-xs text-slate-500">Branch preference</dt>
+                      <dd className="mt-0.5 break-words font-semibold text-ink">
+                        {selectedSummary(form.branches, branchOptions, "All branches")}
+                      </dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-xs text-slate-500">Location</dt>
+                      <dd className="mt-0.5 break-words font-semibold text-ink">
+                        {form.cities.length ? form.cities.join(", ") : "All Maharashtra"}
+                      </dd>
+                    </div>
+                  </dl>
+                ) : (
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                    Complete the required eligibility fields, then run the predictor to see your closest official cutoff matches.
+                  </p>
+                )}
               </div>
               {hasPredicted ? (
-                <div className="shrink-0 text-right">
+                <div className="min-w-24 shrink-0 border-l-2 border-action pl-3 text-left">
                   <p className="text-2xl font-semibold text-ink">{totalResults}</p>
-                  <p className="text-xs text-slate-500">matching options</p>
+                  <p className="text-xs uppercase text-slate-500">Matches</p>
                 </div>
               ) : null}
             </div>
@@ -816,21 +886,54 @@ export default function FePredictorPage() {
                   </div>
                 </div>
 
-                <div className="p-4 md:px-5">
-                  <div className="scrollbar-hidden flex max-w-full gap-2 overflow-x-auto pb-1" aria-label="Admission zone filters">
-                    {zoneFilters.map((zone) => (
-                      <FilterButton
-                        key={zone.value}
-                        active={selectedZone === zone.value}
-                        onClick={() => {
-                          if (!loading) selectZone(zone.value);
-                        }}
-                      >
-                        {zone.label} ({zoneCounts[zone.value] || 0})
-                      </FilterButton>
-                    ))}
+                <div className="divide-y divide-line">
+                  <div className="grid gap-3 px-4 py-4 lg:grid-cols-[180px_minmax(0,1fr)] lg:items-center md:px-5">
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-500">Result grouping</p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                        {selectedResultMode === "BEST_BRANCH_PER_COLLEGE"
+                          ? "One strongest branch from every college."
+                          : selectedResultMode === "BEST_COLLEGES_FIRST"
+                            ? "Strong colleges, up to two branches each."
+                            : "Every branch, rotated across colleges."}
+                      </p>
+                    </div>
+                    <div className="scrollbar-hidden flex max-w-full gap-2 overflow-x-auto pb-1 lg:flex-wrap lg:overflow-visible" aria-label="Result grouping mode">
+                      {resultModes.map((mode) => (
+                        <FilterButton
+                          key={mode.value}
+                          active={selectedResultMode === mode.value}
+                          onClick={() => {
+                            if (!loading) selectResultMode(mode.value);
+                          }}
+                        >
+                          {mode.label}
+                        </FilterButton>
+                      ))}
+                    </div>
                   </div>
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+
+                  <div className="grid gap-3 px-4 py-4 lg:grid-cols-[180px_minmax(0,1fr)] lg:items-center md:px-5">
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-500">Admission chance</p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">Filter options by their cutoff margin.</p>
+                    </div>
+                    <div className="scrollbar-hidden flex max-w-full gap-2 overflow-x-auto pb-1 lg:flex-wrap lg:overflow-visible" aria-label="Admission zone filters">
+                      {zoneFilters.map((zone) => (
+                        <FilterButton
+                          key={zone.value}
+                          active={selectedZone === zone.value}
+                          onClick={() => {
+                            if (!loading) selectZone(zone.value);
+                          }}
+                        >
+                          {zone.label} ({zoneCounts[zone.value] || 0})
+                        </FilterButton>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 bg-panel px-4 py-3 text-xs text-slate-500 md:px-5">
                     <p>
                       {totalResults
                         ? `Page ${currentPage} of ${totalPages} | ${getPageRange(currentPage, PAGE_SIZE, totalResults).start}-${getPageRange(currentPage, PAGE_SIZE, totalResults).end} shown`

@@ -33,3 +33,25 @@ test("strength index stays separate from admission margin", () => {
 test("strength index is hidden without historical demand data", () => {
   assert.equal(calculateStrengthIndex({ historicalDemandScore: null }), null);
 });
+
+test("one-year history receives a conservative confidence adjustment", () => {
+  const analysis = analyzeCutoffHistory([
+    { year: "2025-26", round: 3, cutoff: 88, seatType: "GOPENH" }
+  ], 90);
+
+  assert.equal(analysis.confidence, "LIMITED");
+  assert.equal(analysis.margin, 2);
+  assert.equal(analysis.conservativePenalty, 2);
+  assert.equal(analysis.adjustedMargin, 0);
+});
+
+test("high volatility cannot be labeled high confidence", () => {
+  const analysis = analyzeCutoffHistory([
+    { year: "2023-24", round: 3, cutoff: 70, seatType: "GOPENH" },
+    { year: "2024-25", round: 3, cutoff: 90, seatType: "GOPENH" },
+    { year: "2025-26", round: 3, cutoff: 75, seatType: "GOPENH" }
+  ], 85);
+
+  assert.equal(analysis.confidence, "LIMITED");
+  assert.ok(analysis.conservativePenalty > 0);
+});

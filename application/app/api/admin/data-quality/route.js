@@ -45,7 +45,8 @@ export async function GET() {
               totalApprovedFee: true,
               naacStatus: true,
               nbaStatus: true,
-              dataQualityNote: true
+              dataQualityNote: true,
+              ownershipType: true
             }
           },
           fees: {
@@ -71,7 +72,11 @@ export async function GET() {
           admissionRoute: "FE",
           needsReview: false
         },
-        select: { instituteCode: true }
+        select: {
+          instituteCode: true,
+          capSeats: true,
+          reviewReason: true
+        }
       }),
       prisma.cutoff.count({ where: { needsReview: true } }),
       prisma.cutoff.findMany({
@@ -105,6 +110,11 @@ export async function GET() {
 
     const activeCodes = new Set(colleges.map((college) => college.instituteCode));
     const matrixCodes = new Set(latestMatrices.map((matrix) => matrix.instituteCode));
+    const detailedMatrixCodes = new Set(
+      latestMatrices
+        .filter((matrix) => matrix.capSeats !== null)
+        .map((matrix) => matrix.instituteCode)
+    );
     const cutoffCodes = new Set(publishedCutoffCodes.map((row) => row.institute_code));
     const deprecatedCodes = new Set(Object.keys(CURRENT_INSTITUTE_CODE_ALIASES));
 
@@ -116,7 +126,18 @@ export async function GET() {
       .map((college) => record(college, "No university affiliation"));
     const missingFees = colleges
       .filter((college) => !college.fees.length && !college.profile?.totalApprovedFee)
-      .map((college) => record(college, "No matched FRA fee record"));
+    const missingFraFees = missingFees
+      .filter((college) =>
+        !/government|university|deemed/i.test(college.profile?.ownershipType || "")
+      )
+      .map((college) => record(college, "No published 2025-26 or 2024-25 FRA engineering fee matched"));
+    const missingInstituteFees = missingFees
+      .filter((college) =>
+        /government|university|deemed/i.test(college.profile?.ownershipType || "")
+      )
+      .map((college) =>
+        record(college, "Verify from the institute or university fee notice; this ownership type is not covered by the FRA import")
+      );
     const missingAccreditation = colleges
       .filter((college) =>
         isMissingQualityValue(college.profile?.naacStatus) &&
@@ -126,6 +147,15 @@ export async function GET() {
     const missingSeatMatrix = colleges
       .filter((college) => !matrixCodes.has(college.instituteCode))
       .map((college) => record(college, "No verified 2025-26 FE seat matrix"));
+    const intakeOnlySeatMatrix = colleges
+      .filter((college) =>
+        matrixCodes.has(college.instituteCode) &&
+        !detailedMatrixCodes.has(college.instituteCode)
+      )
+      .map((college) => record(
+        college,
+        "Official branch intake is available; detailed CAP category distribution was not published in the consolidated PDF"
+      ));
     const missingCutoffs = colleges
       .filter((college) => !cutoffCodes.has(college.instituteCode))
       .map((college) => record(college, "No published cutoff record"));
@@ -224,6 +254,13 @@ export async function GET() {
         records: missingSeatMatrix
       }),
       issue({
+        id: "intake-only-seat-matrix",
+        severity: "WARNING",
+        title: "Detailed CAP seat distribution is unavailable",
+        description: "The official institute summary verifies branch intake, but CAP, category and quota seat counts remain blank.",
+        records: intakeOnlySeatMatrix
+      }),
+      issue({
         id: "missing-cutoff",
         severity: "WARNING",
         title: "Published cutoff coverage is missing",
@@ -231,11 +268,18 @@ export async function GET() {
         records: missingCutoffs
       }),
       issue({
-        id: "missing-fee",
+        id: "missing-fra-fee",
         severity: "INFO",
-        title: "Approved fee record is unavailable",
-        description: "Fee information is useful for comparison but does not affect admission eligibility.",
-        records: missingFees
+        title: "Published FRA engineering fee is unavailable",
+        description: "The official FRA API has no matched 2025-26 or 2024-25 engineering fee for these unaided institutes.",
+        records: missingFraFees
+      }),
+      issue({
+        id: "missing-institute-fee",
+        severity: "INFO",
+        title: "Institute or university fee notice is needed",
+        description: "Government, university and deemed-university fees must be verified from their own official notices.",
+        records: missingInstituteFees
       }),
       issue({
         id: "missing-accreditation",
@@ -280,7 +324,7 @@ export async function GET() {
         },
         {
           id: "seat-matrix",
-          label: "2025-26 seat matrix",
+          label: "2025-26 branch intake",
           covered: colleges.filter((college) => matrixCodes.has(college.instituteCode)).length,
           total: colleges.length,
           percent: coveragePercent(colleges.filter((college) => matrixCodes.has(college.instituteCode)).length, colleges.length)
@@ -303,7 +347,9 @@ export async function GET() {
       issues: actionableIssues,
       metadata: {
         currentCollegeCodes: activeCodes.size,
-        latestSeatMatrixRows: latestMatrices.length
+        latestSeatMatrixRows: latestMatrices.length,
+        detailedSeatMatrixColleges: detailedMatrixCodes.size,
+        intakeOnlySeatMatrixColleges: intakeOnlySeatMatrix.length
       }
     });
   } catch (error) {

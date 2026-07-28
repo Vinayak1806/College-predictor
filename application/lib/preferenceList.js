@@ -7,6 +7,13 @@ export const preferenceZones = [
   { value: "BACKUP", label: "Backup" }
 ];
 
+const preferenceZoneOrder = {
+  AMBITIOUS: 0,
+  TARGET: 1,
+  SAFE: 2,
+  BACKUP: 3
+};
+
 export function preferenceItemId(instituteCode, branchCode) {
   return `${String(instituteCode).trim()}:${String(branchCode).trim()}`;
 }
@@ -62,6 +69,47 @@ export function movePreferenceItem(items, fromIndex, toIndex) {
   const [movedItem] = nextItems.splice(fromIndex, 1);
   nextItems.splice(toIndex, 0, movedItem);
   return nextItems;
+}
+
+export function organizePreferenceItems(items) {
+  return items
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => {
+      const zoneDifference = (preferenceZoneOrder[a.item.zone] ?? 99) -
+        (preferenceZoneOrder[b.item.zone] ?? 99);
+      return zoneDifference || a.index - b.index;
+    })
+    .map(({ item }) => item);
+}
+
+export function preferenceListWarnings(items) {
+  const warnings = [];
+  const seenIds = new Set();
+  const duplicateIds = new Set();
+
+  for (const item of items) {
+    if (seenIds.has(item.id)) duplicateIds.add(item.id);
+    seenIds.add(item.id);
+  }
+  if (duplicateIds.size) {
+    warnings.push(`${duplicateIds.size} duplicate college-branch choice${duplicateIds.size === 1 ? "" : "s"} found.`);
+  }
+
+  for (let earlierIndex = 0; earlierIndex < items.length; earlierIndex += 1) {
+    for (let laterIndex = earlierIndex + 1; laterIndex < items.length; laterIndex += 1) {
+      const earlierRisk = preferenceZoneOrder[items[earlierIndex].zone] ?? 99;
+      const laterRisk = preferenceZoneOrder[items[laterIndex].zone] ?? 99;
+
+      if (earlierRisk > laterRisk) {
+        warnings.push(
+          `Preference ${earlierIndex + 1} (${items[earlierIndex].zone.toLowerCase()}) is safer than preference ${laterIndex + 1} (${items[laterIndex].zone.toLowerCase()}). Check whether that order matches your real preference.`
+        );
+        if (warnings.length >= 4) return warnings;
+      }
+    }
+  }
+
+  return warnings;
 }
 
 export function readPreferenceList() {

@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { evaluateBacktestGroup, summarizeBacktest } from "./predictionBacktest.js";
+import {
+  buildAccuracyBreakdowns,
+  evaluateBacktestGroup,
+  summarizeBacktest
+} from "./predictionBacktest.js";
 
 const profile = {
   id: "obc-male",
@@ -68,4 +72,21 @@ test("profile summary reports exact and nearby zone accuracy", () => {
   assert.equal(summary.exactZoneAccuracy, 33.3);
   assert.equal(summary.adjacentZoneAccuracy, 66.7);
   assert.equal(summary.meanAbsoluteError, 3);
+});
+
+test("accuracy breakdown groups errors by requested dimension", () => {
+  const evaluations = Array.from({ length: 12 }, (_, index) => ({
+    category: index < 6 ? "OPEN" : "OBC",
+    targetSeatType: "GOPENH",
+    university: "Pune University",
+    branch: "Computer Engineering",
+    targetRound: 4,
+    zoneDistance: index % 2,
+    absoluteError: index < 6 ? 2 : 6
+  }));
+  const breakdowns = buildAccuracyBreakdowns(evaluations);
+
+  assert.equal(breakdowns.category.length, 0);
+  assert.equal(breakdowns.seatType[0].samples, 12);
+  assert.equal(breakdowns.seatType[0].adjacentZoneAccuracy, 100);
 });

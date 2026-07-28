@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   FileDown,
   GripVertical,
+  ListFilter,
   ListOrdered,
   Plus,
   Trash2
@@ -16,7 +17,9 @@ import { useEffect, useMemo, useState } from "react";
 import {
   addPreferenceItem,
   movePreferenceItem,
+  organizePreferenceItems,
   preferenceItemId,
+  preferenceListWarnings,
   preferenceZones,
   readPreferenceList,
   writePreferenceList
@@ -73,6 +76,7 @@ export function PreferenceListBuilder() {
     if (items.length > 0 && items.length < 10) messages.push("Add more choices so one unexpected cutoff does not leave the list too short.");
     if (items.length > 0 && !counts.SAFE) messages.push("No Safe choice is included yet.");
     if (items.length > 0 && !counts.BACKUP) messages.push("Add at least one Backup choice before final submission.");
+    messages.push(...preferenceListWarnings(items));
     return messages;
   }, [counts, items.length]);
 
@@ -160,6 +164,11 @@ export function PreferenceListBuilder() {
     if (!window.confirm("Remove every choice from this CAP preference list?")) return;
     setItems([]);
     setNotice("Preference list cleared.");
+  }
+
+  function organizeByRisk() {
+    setItems((current) => organizePreferenceItems(current));
+    setNotice("Choices grouped as Ambitious, Target, Safe and Backup. Choices inside each group kept their previous order.");
   }
 
   return (
@@ -354,6 +363,14 @@ export function PreferenceListBuilder() {
           ) : null}
 
           <div className="preference-builder-controls grid gap-2 border-t border-line p-4">
+            <button
+              className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded border border-action bg-white px-4 text-sm font-semibold text-action disabled:opacity-50"
+              type="button"
+              disabled={!items.length}
+              onClick={organizeByRisk}
+            >
+              <ListFilter aria-hidden="true" size={17} /> Group by admission chance
+            </button>
             <button
               className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white disabled:opacity-50"
               type="button"

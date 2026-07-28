@@ -26,6 +26,11 @@ export const fePredictSchema = z.object({
   preferredCities: z.array(z.string()).default([]),
   collegeTypes: z.array(z.enum(["GOVERNMENT", "AIDED", "PRIVATE"])).default([]),
   autonomousOnly: z.boolean().default(false),
+  resultMode: z.enum([
+    "BEST_BRANCH_PER_COLLEGE",
+    "BEST_COLLEGES_FIRST",
+    "ALL_MATCHING_BRANCHES"
+  ]).default("BEST_BRANCH_PER_COLLEGE"),
   zone: z.enum(["ALL", "SAFE", "TARGET", "AMBITIOUS", "HIGHLY_AMBITIOUS"]).default("ALL"),
   page: z.number().int().min(1).default(1),
   pageSize: z.number().int().min(1).max(30).default(20),

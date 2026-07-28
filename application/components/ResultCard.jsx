@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, BookmarkCheck, Building2, MapPin, Scale } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, BookmarkCheck, Building2, MapPin, Scale } from "lucide-react";
 import { useState } from "react";
 import {
   addPreferenceItem,
@@ -219,6 +219,13 @@ export function ResultCard(props) {
         </div>
         <p className="text-xs text-slate-500 sm:text-right">{confidenceText}</p>
       </section>
+
+      {props.confidenceWarning ? (
+        <div className="flex items-start gap-2 border-t border-warning bg-amber-50 px-4 py-3 text-sm text-slate-700 md:px-5">
+          <AlertTriangle aria-hidden="true" className="mt-0.5 shrink-0 text-warning" size={17} />
+          <p>{props.confidenceWarning}</p>
+        </div>
+      ) : null}
 
       <details className="border-t border-line text-sm">
         <summary className="focus-ring cursor-pointer px-4 py-4 font-semibold text-action md:px-5">
