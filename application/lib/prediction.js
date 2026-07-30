@@ -65,6 +65,7 @@ export function analyzeCutoffHistory(records, studentScore) {
         seatType: bestRecord.seatType,
         section: bestRecord.section || "STANDARD",
         sourceUrl: bestRecord.sourceUrl || null,
+        sourceFilename: bestRecord.sourceFilename || null,
         sourcePage: bestRecord.sourcePage || null
       };
     })

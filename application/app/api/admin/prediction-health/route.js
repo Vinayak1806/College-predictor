@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
+import { checkAdminImportAccess } from "../../../../lib/adminImportAuth";
 import { prisma } from "../../../../lib/prisma";
 import { runFePredictionBacktest } from "../../../../lib/predictionBacktest";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request) {
+  const access = checkAdminImportAccess(request);
+  if (!access.allowed) return NextResponse.json({ error: access.error }, { status: access.status });
+
   try {
     return NextResponse.json(await runFePredictionBacktest(prisma));
   } catch (error) {

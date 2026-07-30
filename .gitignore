@@ -9,3 +9,4 @@ coverage/
 *.log
 .env
 database/backups/
+data/admin-imports/

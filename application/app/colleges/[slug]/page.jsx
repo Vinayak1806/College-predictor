@@ -23,19 +23,6 @@ function hasValue(value) {
   return value !== null && value !== undefined && value !== "" && value !== "N/A";
 }
 
-function hasVerifiedValue(value) {
-  if (!hasValue(value)) return false;
-
-  const text = String(value).toLowerCase();
-  return ![
-    "not available",
-    "not centrally verified",
-    "not scored",
-    "not verified",
-    "unknown"
-  ].some((missingText) => text.includes(missingText));
-}
-
 function formatNumber(value) {
   return Number(value).toFixed(2);
 }
@@ -137,6 +124,7 @@ function numberFromQuery(value) {
 export default async function CollegeDetailsPage({ params, searchParams }) {
   const { slug } = await params;
   const query = await searchParams;
+  const admissionRoute = query?.route === "DSE" ? "DSE" : "FE";
 
   const college = await prisma.college.findFirst({
     where: {
@@ -163,6 +151,7 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
   const [seatMatrices, cutoffs, profile, fees] = await Promise.all([
     prisma.seatMatrix.findMany({
       where: {
+        admissionRoute,
         instituteCode: college.instituteCode,
         branchCode: { in: branchCodes },
         needsReview: false
@@ -175,7 +164,7 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
         closingScore: { not: null },
         collegeBranch: { collegeId: college.id },
         dataset: {
-          admissionRoute: "FE",
+          admissionRoute,
           status: { in: ["VERIFIED", "PUBLISHED"] }
         }
       },
@@ -206,8 +195,14 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
     })
   ]);
 
-  const branches = getUniqueBranches(college.collegeBranches);
   const sortedCutoffs = sortCutoffs(cutoffs);
+  const routeBranchCodes = new Set([
+    ...seatMatrices.map((matrix) => matrix.branchCode),
+    ...cutoffs.map((cutoff) => cutoff.collegeBranch.branch.branchCode)
+  ]);
+  const branches = getUniqueBranches(
+    college.collegeBranches.filter((collegeBranch) => routeBranchCodes.has(collegeBranch.branch.branchCode))
+  );
   const availableYears = [...new Set(cutoffs.map((cutoff) => cutoff.dataset.academicYear))].sort().reverse();
   const branchDetails = branches.map((branch) => {
     const seatRows = seatMatrices
@@ -219,7 +214,10 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
         capSeats: matrix.capSeats,
         ewsSeats: matrix.ewsSeats,
         tfwsSeats: matrix.tfwsSeats,
-        allIndiaSeats: matrix.allIndiaSeats
+        lateralEntrySeats: matrix.lateralEntrySeats,
+        vacantSeats: matrix.vacantSeats,
+        pwdSeats: matrix.pwdSeats,
+        defenceSeats: matrix.defenceSeats
       }));
     const cutoffRows = sortedCutoffs
       .filter((cutoff) => cutoff.collegeBranch.branch.branchCode === branch.branchCode)
@@ -237,7 +235,9 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
       branchCode: branch.branchCode,
       branchName: branch.displayName,
       latestYear: latestSeat?.academicYear || null,
-      latestIntake: latestSeat?.sanctionedIntake ?? null,
+      latestIntake: admissionRoute === "DSE"
+        ? latestSeat?.lateralEntrySeats ?? null
+        : latestSeat?.sanctionedIntake ?? null,
       seatRows,
       cutoffRows
     };
@@ -272,12 +272,6 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
   const missingData = [];
 
   if (!approvedFee) missingData.push("Approved fee information is not available for this institute.");
-  if (!hasVerifiedValue(profile?.naacStatus) && !hasVerifiedValue(profile?.nbaStatus)) {
-    missingData.push("Accreditation information has not been independently verified.");
-  }
-  if (!hasVerifiedValue(profile?.placementData)) {
-    missingData.push("Standardized official placement information is not available.");
-  }
 
   return (
     <>
@@ -319,6 +313,12 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
             {hasValue(selectedSeat?.sanctionedIntake) ? (
               <Fact label="Approved branch intake" value={selectedSeat.sanctionedIntake} />
             ) : null}
+            {hasValue(selectedSeat?.lateralEntrySeats) ? (
+              <Fact label="DSE lateral-entry seats" value={selectedSeat.lateralEntrySeats} />
+            ) : null}
+            {hasValue(selectedSeat?.vacantSeats) ? (
+              <Fact label="Previous-intake vacancies" value={selectedSeat.vacantSeats} />
+            ) : null}
             {hasValue(selectedSeat?.capSeats) ? <Fact label="CAP seats for this branch" value={selectedSeat.capSeats} /> : null}
             {hasValue(profile?.preferenceBand) ? <Fact label="Student demand" value={profile.preferenceBand} /> : null}
             {hasValue(totalIntake) ? <Fact label="Approved college intake" value={totalIntake} /> : null}
@@ -343,8 +343,8 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
               </span>
             </div>
             <FactGrid columns="sm:grid-cols-3 lg:grid-cols-6">
-              <Fact label="Your percentile" value={formatNumber(score)} />
-              <Fact label="Closing percentile" value={formatNumber(closingCutoff)} />
+              <Fact label={admissionRoute === "DSE" ? "Your diploma percentage" : "Your percentile"} value={formatNumber(score)} />
+              <Fact label={admissionRoute === "DSE" ? "Closing diploma percentage" : "Closing percentile"} value={formatNumber(closingCutoff)} />
               <Fact
                 label="Cutoff margin"
                 value={`${margin >= 0 ? "+" : ""}${formatNumber(margin)}`}
@@ -360,6 +360,7 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
 
         <CollegeBranchExplorer
           branches={branchDetails}
+          admissionRoute={admissionRoute}
           initialBranchName={requestedBranchName}
           initialYear={typeof query?.year === "string" ? query.year : null}
           initialSeatType={seatTypeCode}
@@ -402,19 +403,6 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
             </aside>
           ) : null}
         </section>
-
-        {(hasVerifiedValue(profile?.naacStatus) ||
-          hasVerifiedValue(profile?.nbaStatus) ||
-          hasVerifiedValue(profile?.placementData)) ? (
-          <section className="mt-8">
-            <h2 className="text-lg font-semibold text-ink">Accreditation and outcomes</h2>
-            <FactGrid columns="sm:grid-cols-3">
-              {hasVerifiedValue(profile?.naacStatus) ? <Fact label="NAAC accreditation" value={profile.naacStatus} /> : null}
-              {hasVerifiedValue(profile?.nbaStatus) ? <Fact label="NBA accreditation" value={profile.nbaStatus} /> : null}
-              {hasVerifiedValue(profile?.placementData) ? <Fact label="Official placement data" value={profile.placementData} /> : null}
-            </FactGrid>
-          </section>
-        ) : null}
 
         {(profile?.sourceUrl || fees[0]?.sourceUrl || missingData.length) ? (
           <section className="mt-8 border-t border-line pt-5 text-sm">

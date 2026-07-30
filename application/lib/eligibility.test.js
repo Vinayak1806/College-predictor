@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   cutoffIsEligibleForCollege,
+  dseSeatTypeIsEligible,
   eligibleSeatTypesForCollege,
   universityEligibilityForCollege
 } from "./eligibility.js";
@@ -48,4 +49,43 @@ test("state-level records remain available across universities", () => {
     cutoffIsEligibleForCollege(student, "Mumbai University", "GOBCS", "STATE"),
     true
   );
+});
+
+test("DSE eligibility allows OPEN and category seats without university suffixes", () => {
+  assert.equal(dseSeatTypeIsEligible(student, {
+    category: "OPEN",
+    gender: "GENERAL",
+    specialType: null
+  }), true);
+  assert.equal(dseSeatTypeIsEligible(student, {
+    category: "OBC",
+    gender: "GENERAL",
+    specialType: null
+  }), true);
+  assert.equal(dseSeatTypeIsEligible(student, {
+    category: "SC",
+    gender: "GENERAL",
+    specialType: null
+  }), false);
+});
+
+test("DSE ladies and special seats require matching eligibility", () => {
+  assert.equal(dseSeatTypeIsEligible(student, {
+    category: "OBC",
+    gender: "LADIES",
+    specialType: null
+  }), false);
+  assert.equal(dseSeatTypeIsEligible(
+    { ...student, gender: "FEMALE" },
+    { category: "OBC", gender: "LADIES", specialType: null }
+  ), true);
+  assert.equal(dseSeatTypeIsEligible(student, {
+    category: "OPEN",
+    gender: "SPECIAL",
+    specialType: "PWD"
+  }), false);
+  assert.equal(dseSeatTypeIsEligible(
+    { ...student, pwd: true },
+    { category: "OPEN", gender: "SPECIAL", specialType: "PWD" }
+  ), true);
 });

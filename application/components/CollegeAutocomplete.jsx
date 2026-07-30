@@ -11,6 +11,7 @@ export function CollegeAutocomplete({
   placeholder = "Type a college name or institute code",
   selectionMode = "navigate",
   onSelect,
+  onQueryChange,
   className = "",
   inputClassName = "",
   showIcon = true
@@ -25,6 +26,7 @@ export function CollegeAutocomplete({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [searchReady, setSearchReady] = useState(false);
 
   useEffect(() => {
     function closeSuggestions(event) {
@@ -36,6 +38,12 @@ export function CollegeAutocomplete({
   }, []);
 
   useEffect(() => {
+    if (!searchReady) {
+      setSuggestions([]);
+      setLoading(false);
+      return undefined;
+    }
+
     const search = query.trim();
     if (search.length < 2) {
       setSuggestions([]);
@@ -66,10 +74,11 @@ export function CollegeAutocomplete({
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [query]);
+  }, [query, searchReady]);
 
   function chooseCollege(college) {
     setQuery(college.name);
+    setSearchReady(false);
     setOpen(false);
     onSelect?.(college);
     if (selectionMode === "navigate") router.push(`/colleges/${college.slug}`);
@@ -112,11 +121,13 @@ export function CollegeAutocomplete({
           role="combobox"
           value={query}
           onChange={(event) => {
+            setSearchReady(true);
             setQuery(event.target.value);
+            onQueryChange?.(event.target.value);
             setOpen(event.target.value.trim().length >= 2);
           }}
           onFocus={() => {
-            if (query.trim().length >= 2) setOpen(true);
+            if (searchReady && query.trim().length >= 2) setOpen(true);
           }}
           onKeyDown={handleKeyDown}
         />

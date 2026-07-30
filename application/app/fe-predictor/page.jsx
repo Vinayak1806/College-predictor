@@ -23,7 +23,6 @@ import { explainSeatType } from "../../lib/seatTypes";
 const PAGE_SIZE = 10;
 
 const defaultForm = {
-  exam: "MHT_CET",
   percentile: "89.20",
   academicYear: "",
   capRound: "",
@@ -347,7 +346,7 @@ export default function FePredictorPage() {
 
   const percentileNumber = Number(form.percentile);
   const percentileValid = form.percentile !== "" && Number.isFinite(percentileNumber) && percentileNumber >= 0 && percentileNumber <= 100;
-  const canPredict = Boolean(form.exam && percentileValid && form.category && form.gender && form.homeUniversity);
+  const canPredict = Boolean(percentileValid && form.category && form.gender && form.homeUniversity);
 
   useEffect(() => {
     async function loadReferenceData() {
@@ -409,7 +408,6 @@ export default function FePredictorPage() {
 
   function buildStudentInput(page, zone, resultMode) {
     return {
-      exam: form.exam,
       percentile: Number(form.percentile),
       academicYear: form.academicYear || undefined,
       capRound: form.capRound ? Number(form.capRound) : undefined,
@@ -548,19 +546,7 @@ export default function FePredictorPage() {
                 <p className="mt-1 text-xs text-slate-500">Use all years for a more stable prediction.</p>
               </div>
               <label className="grid min-w-0 gap-2 text-sm font-medium">
-              <span>Exam type<RequiredMark /></span>
-              <select
-                className="focus-ring min-h-11 w-full min-w-0 max-w-full rounded border border-line px-3"
-                value={form.exam}
-                onChange={(event) => updateField("exam", event.target.value)}
-              >
-                <option value="MHT_CET">MHT-CET</option>
-                <option value="JEE" disabled>JEE - coming after All India data</option>
-              </select>
-              </label>
-
-              <label className="grid min-w-0 gap-2 text-sm font-medium">
-              <span>Percentile<RequiredMark /></span>
+              <span>MHT-CET percentile<RequiredMark /></span>
               <input
                 aria-invalid={showValidation && !percentileValid}
                 className={`focus-ring min-h-11 w-full min-w-0 max-w-full rounded border px-3 ${showValidation && !percentileValid ? "border-danger" : "border-line"}`}
@@ -959,7 +945,7 @@ export default function FePredictorPage() {
               </>
             ) : (
               <div className="border-t border-line bg-panel px-4 py-5 text-sm text-slate-600 md:px-5">
-                Required: exam, percentile, category, gender and home university. Branch and city preferences are optional.
+                Required: MHT-CET percentile, category, gender and home university. Branch and city preferences are optional.
               </div>
             )}
           </div>

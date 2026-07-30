@@ -89,12 +89,6 @@ export async function POST(request) {
   }
 
   const input = validation.data;
-  if (input.exam === "JEE") {
-    return NextResponse.json(
-      { error: "JEE prediction will be enabled after verified All India quota records are connected." },
-      { status: 501 }
-    );
-  }
   if (input.percentile === undefined) {
     return NextResponse.json({ error: "MHT-CET percentile is required." }, { status: 400 });
   }
@@ -171,6 +165,7 @@ export async function POST(request) {
   const seatMatrices = branchCodes.length
     ? await prisma.seatMatrix.findMany({
         where: {
+          admissionRoute: "FE",
           academicYear: { in: years },
           branchCode: { in: branchCodes },
           needsReview: false
@@ -189,6 +184,7 @@ export async function POST(request) {
       seatType: row.seatType.code,
       section: row.section,
       sourceUrl: row.dataset.sourceUrl,
+      sourceFilename: row.dataset.sourceFilename,
       sourcePage: row.sourcePage
     }));
     const analysis = analyzeCutoffHistory(records, studentScore);
@@ -205,6 +201,7 @@ export async function POST(request) {
     const collegeType = normalizeOwnership(matrix?.collegeType || profile?.ownershipType || college.collegeType);
 
     const result = {
+      admissionRoute: "FE",
       collegeSlug: college.slug,
       instituteCode: college.instituteCode,
       college: college.name,
@@ -225,7 +222,6 @@ export async function POST(request) {
       capSeats: matrix?.capSeats || null,
       ewsSeats: matrix?.ewsSeats || null,
       tfwsSeats: matrix?.tfwsSeats || null,
-      allIndiaSeats: matrix?.allIndiaSeats || null,
       zone: analysis.zone,
       studentScore,
       closingCutoff: analysis.benchmarkCutoff,
@@ -246,6 +242,7 @@ export async function POST(request) {
       volatility: analysis.volatility,
       cutoffHistory: analysis.history,
       sourceUrl: analysis.latest.sourceUrl,
+      sourceFilename: analysis.latest.sourceFilename,
       sourcePage: analysis.latest.sourcePage,
       reason: `${analysis.yearsAnalyzed} comparable year${analysis.yearsAnalyzed === 1 ? " was" : "s were"} analyzed. The recent-weighted benchmark is ${analysis.benchmarkCutoff.toFixed(2)} and cutoff volatility is ${analysis.volatility.toFixed(2)}.`
     };

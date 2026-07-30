@@ -63,3 +63,19 @@ export function cutoffIsEligibleForCollege(input, collegeUniversity, seatType, s
 
   return eligibleSeatTypesForCollege(input, collegeUniversity).includes(seatType);
 }
+
+export function dseSeatTypeIsEligible(input, seatType) {
+  const category = input.category.toUpperCase();
+  const allowedCategories = new Set(["OPEN", category]);
+  const allowedGenders = input.gender === "FEMALE"
+    ? new Set(["GENERAL", "LADIES"])
+    : new Set(["GENERAL"]);
+  const specialType = seatType.specialType?.toUpperCase();
+
+  if (specialType === "EWS") return input.ews;
+  if (specialType === "PWD") return input.pwd;
+  if (specialType === "DEFENCE") return input.defence;
+  if (specialType) return false;
+
+  return allowedCategories.has(seatType.category) && allowedGenders.has(seatType.gender);
+}

@@ -1,8 +1,17 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { AdminSessionBar } from "../../components/AdminSessionBar";
 import { SiteHeader } from "../../components/SiteHeader";
+import { AdminImportCentre } from "../../components/AdminImportCentre";
 import { DataQualityDashboard } from "../../components/DataQualityDashboard";
 import { PredictionHealthDashboard } from "../../components/PredictionHealthDashboard";
+import { ADMIN_SESSION_COOKIE, checkAdminCookieAccess } from "../../lib/adminImportAuth";
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  const cookieStore = await cookies();
+  const access = checkAdminCookieAccess(cookieStore.get(ADMIN_SESSION_COOKIE)?.value);
+  if (!access.allowed) redirect("/admin/login");
+
   return (
     <>
       <SiteHeader />
@@ -14,7 +23,11 @@ export default function AdminPage() {
             Find records that can mislead predictions, then separate required corrections from optional college-research coverage.
           </p>
         </div>
+        <div className="mt-5">
+          <AdminSessionBar requiresToken={access.requiresToken} />
+        </div>
         <div className="mt-5 grid gap-5">
+          <AdminImportCentre />
           <PredictionHealthDashboard />
           <DataQualityDashboard />
         </div>

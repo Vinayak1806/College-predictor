@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { AlertTriangle, ArrowUpRight, BookmarkCheck, Building2, MapPin, Scale } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import {
+  addComparisonItem,
+  createComparisonItemFromResult,
+  readComparisonList,
+  writeComparisonList
+} from "../lib/comparisonList";
 import {
   addPreferenceItem,
   createPreferenceItemFromResult,
@@ -77,7 +84,9 @@ function DetailFact({ label, value }) {
 }
 
 export function ResultCard(props) {
+  const router = useRouter();
   const [capListStatus, setCapListStatus] = useState("");
+  const [compareStatus, setCompareStatus] = useState("");
   const marginText = `${props.margin >= 0 ? "+" : ""}${formatNumber(props.margin)}`;
   const marginTone = props.margin >= 0 ? "good" : props.margin >= -4 ? "warning" : "danger";
   const singleYear = (props.yearsAnalyzed || 1) === 1;
@@ -101,12 +110,13 @@ export function ResultCard(props) {
     OTHER_FOR_HOME: "Converted Other University allocation"
   }[props.cutoffSection];
   const comparisonText = props.margin >= 0
-    ? `Your percentile is ${formatNumber(Math.abs(props.margin))} points above the ${singleYear ? "official cutoff" : "prediction benchmark"}.`
-    : `Your percentile is ${formatNumber(Math.abs(props.margin))} points below the ${singleYear ? "official cutoff" : "prediction benchmark"}.`;
+    ? `Your ${props.scoreLabel || "percentile"} is ${formatNumber(Math.abs(props.margin))} points above the ${singleYear ? "official cutoff" : "prediction benchmark"}.`
+    : `Your ${props.scoreLabel || "percentile"} is ${formatNumber(Math.abs(props.margin))} points below the ${singleYear ? "official cutoff" : "prediction benchmark"}.`;
   const collegeHref = props.collegeSlug
     ? {
         pathname: `/colleges/${props.collegeSlug}`,
         query: {
+          route: props.admissionRoute || "FE",
           branch: props.branch,
           year: props.year,
           round: props.round,
@@ -124,6 +134,8 @@ export function ResultCard(props) {
     hasValue(props.collegeType) ? ["Ownership", props.collegeType] : null,
     typeof props.autonomous === "boolean" ? ["Academic status", props.autonomous ? "Autonomous" : "Non-autonomous"] : null,
     hasValue(props.sanctionedIntake) ? ["Branch intake", props.sanctionedIntake] : null,
+    hasValue(props.lateralEntrySeats) ? ["DSE lateral-entry seats", props.lateralEntrySeats] : null,
+    hasValue(props.vacantSeats) ? ["Previous-intake vacancies", props.vacantSeats] : null,
     hasValue(props.capSeats) ? ["CAP seats", props.capSeats] : null,
     hasValue(props.preferenceBand) ? ["Demand band", props.preferenceBand] : null,
     hasValue(props.latestFee) ? ["Approved annual fee", `${formatMoney(props.latestFee)}${props.latestFeeYear ? ` (${props.latestFeeYear})` : ""}`] : null
@@ -138,6 +150,25 @@ export function ResultCard(props) {
       setCapListStatus("Added to CAP List");
     } else {
       setCapListStatus("Already in CAP List");
+    }
+  }
+
+  function addToCompare() {
+    if (compareStatus === "View comparison") {
+      router.push("/compare");
+      return;
+    }
+
+    const item = createComparisonItemFromResult(props);
+    const result = addComparisonItem(readComparisonList(), item);
+
+    if (result.added) {
+      writeComparisonList(result.items);
+      setCompareStatus("View comparison");
+    } else if (result.reason === "DUPLICATE") {
+      setCompareStatus("View comparison");
+    } else {
+      router.push("/compare");
     }
   }
 
@@ -170,7 +201,7 @@ export function ResultCard(props) {
             <p className={`text-xl font-semibold ${props.margin >= 0 ? "text-success" : props.margin >= -4 ? "text-warning" : "text-danger"}`}>
               {marginText}
             </p>
-            <p className="text-xs text-slate-500">percentile margin</p>
+            <p className="text-xs text-slate-500">{props.scoreLabel || "percentile"} margin</p>
           </div>
         </div>
       </header>
@@ -187,7 +218,7 @@ export function ResultCard(props) {
           </div>
         </div>
         <dl className={`mt-3 grid divide-y divide-line bg-white sm:divide-x sm:divide-y-0 ${singleYear ? "sm:grid-cols-3" : "sm:grid-cols-4"}`}>
-          <Metric label="Your percentile" value={formatNumber(props.studentScore)} />
+          <Metric label={`Your ${props.scoreLabel || "percentile"}`} value={formatNumber(props.studentScore)} />
           <Metric
             label="Latest official cutoff"
             value={formatNumber(officialCutoff)}
@@ -260,7 +291,7 @@ export function ResultCard(props) {
             <p className="mt-3 text-slate-600"><span className="font-medium text-ink">Other eligible seats:</span> {otherSeatTypes.join(", ")}</p>
           ) : null}
           <p className="mt-3 text-xs leading-5 text-slate-500">
-            Historical demand is a research signal based mainly on previous FE cutoffs. It is not an official Maharashtra college rank.
+            Historical demand is a research signal based mainly on previous {props.admissionRoute || "FE"} cutoffs. It is not an official Maharashtra college rank.
           </p>
           {props.sourceUrl ? (
             <p className="mt-3 text-slate-600">
@@ -268,6 +299,11 @@ export function ResultCard(props) {
               <a className="font-medium text-action underline" href={props.sourceUrl} target="_blank" rel="noreferrer">
                 View cutoff record
               </a>
+            </p>
+          ) : props.sourceFilename ? (
+            <p className="mt-3 text-slate-600">
+              <span className="font-medium text-ink">Official source:</span> {props.sourceFilename}
+              {props.sourcePage ? `, PDF page ${props.sourcePage}` : ""}
             </p>
           ) : null}
         </div>
@@ -282,8 +318,12 @@ export function ResultCard(props) {
             View college <ArrowUpRight aria-hidden="true" size={17} />
           </Link>
         ) : null}
-        <button className="focus-ring inline-flex min-h-11 items-center gap-2 rounded border border-line bg-white px-4 text-sm font-medium" type="button">
-          <Scale aria-hidden="true" size={17} /> Compare
+        <button
+          className="focus-ring inline-flex min-h-11 items-center gap-2 rounded border border-line bg-white px-4 text-sm font-medium"
+          type="button"
+          onClick={addToCompare}
+        >
+          <Scale aria-hidden="true" size={17} /> {compareStatus || "Add to compare"}
         </button>
         <button
           className="focus-ring inline-flex min-h-11 items-center gap-2 rounded border border-line bg-white px-4 text-sm font-semibold"

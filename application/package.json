@@ -18,8 +18,6 @@
     "data:seat-matrix-fixes:apply": "node scripts/import-seat-matrix-fixes.js --apply",
     "data:fees": "node scripts/enrich-fra-fees.js",
     "data:fees:apply": "node scripts/enrich-fra-fees.js --apply",
-    "data:accreditation": "node scripts/collect-cet-accreditation.js",
-    "data:accreditation:apply": "node scripts/collect-cet-accreditation.js --apply",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev"
   },

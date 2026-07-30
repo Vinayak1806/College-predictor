@@ -205,6 +205,11 @@ model SeatMatrix {
   ewsSeats          Int?    @map("ews_seats")
   tfwsChoiceCode    String? @map("tfws_choice_code")
   tfwsSeats         Int?    @map("tfws_seats")
+  vacantSeats       Int?    @map("vacant_seats")
+  lateralEntrySeats Int?    @map("lateral_entry_seats")
+  pwdSeats          Int?    @map("pwd_seats")
+  defenceSeats      Int?    @map("defence_seats")
+  categorySeats     Json?   @map("category_seats")
   sourceFile        String  @map("source_file")
   sourcePage        Int     @map("source_page")
   verified          Boolean @default(false)
@@ -250,4 +255,47 @@ model PreferenceList {
   user      User?    @relation(fields: [userId], references: [id])
 
   @@map("preference_lists")
+}
+
+model AdminImport {
+  id               BigInt              @id @default(autoincrement())
+  documentType     String              @map("document_type")
+  admissionRoute   String?             @map("admission_route")
+  academicYear     String?             @map("academic_year")
+  capRound         Int?                @map("cap_round")
+  quota            String?
+  originalFilename String              @map("original_filename")
+  storedPath       String              @map("stored_path")
+  mimeType         String?             @map("mime_type")
+  fileSize         Int                 @map("file_size")
+  fileHash         String              @unique @map("file_hash")
+  sourceUrl        String?             @map("source_url")
+  status           String
+  summary          Json?
+  errorMessage     String?             @map("error_message")
+  createdAt        DateTime            @default(now()) @map("created_at")
+  processedAt      DateTime?           @map("processed_at")
+  publishedAt      DateTime?           @map("published_at")
+  rolledBackAt     DateTime?           @map("rolled_back_at")
+  records          AdminImportRecord[]
+
+  @@index([status, createdAt])
+  @@map("admin_imports")
+}
+
+model AdminImportRecord {
+  id                BigInt      @id @default(autoincrement())
+  importId          BigInt      @map("import_id")
+  rowNumber         Int         @map("row_number")
+  recordType        String      @map("record_type")
+  data              Json
+  valid             Boolean     @default(false)
+  needsReview       Boolean     @default(true) @map("needs_review")
+  issues            Json?
+  publishedRecordId BigInt?     @map("published_record_id")
+  adminImport       AdminImport @relation(fields: [importId], references: [id], onDelete: Cascade)
+
+  @@unique([importId, rowNumber])
+  @@index([importId, valid, needsReview])
+  @@map("admin_import_records")
 }

@@ -11,7 +11,11 @@ from pathlib import Path
 import pdfplumber
 
 from college_predictor.codes import normalize_branch_code, normalize_institute_code
-from college_predictor.seat_types import decode_seat_type, merge_wrapped_heading_tokens
+from college_predictor.seat_types import (
+    decode_seat_type,
+    merge_wrapped_heading_tokens,
+    normalize_seat_type,
+)
 
 
 FIELDNAMES = [
@@ -45,10 +49,19 @@ FIELDNAMES = [
 
 COLLEGE_RE = re.compile(r"^(?P<code>\d{4,5})\s*-\s*(?P<name>.+)$")
 BRANCH_RE = re.compile(r"^(?P<code>\d{9,10})\s*-\s*(?P<name>.+)$")
+DSE_COLLEGE_RE = re.compile(
+    r"^(?P<code>\d{4,5})\s+(?P<name>.+?)(?:\s+\((?P<status>[^()]*)\))?$"
+)
+DSE_BRANCH_RE = re.compile(
+    r"^Choice Code\s*:\s*(?P<code>\d{9,10}[A-Z]?)\s+Course Name\s*:\s*(?P<name>.+)$",
+    re.IGNORECASE,
+)
 YEAR_RE = re.compile(r"Admissions A\.Y\.\s*(20\d{2}-\d{2})")
 RANK_RE = re.compile(r"\b\d{1,6}\b")
 SCORE_RE = re.compile(r"\((\d+(?:\.\d+)?)\)")
 STAGE_RE = re.compile(r"^(?P<stage>[IVX]+(?:-Non)?)(?:\s+(?P<values>.*))?$")
+DSE_STAGE_RE = re.compile(r"^Stage-(?P<stage>[IVX]+(?:-Non)?)$", re.IGNORECASE)
+DSE_SCORE_RE = re.compile(r"^\((?P<score>\d+(?:\.\d+)?)%?\)$")
 
 SECTION_TYPES = {
     "Home University Seats Allotted to Home University Candidates": "HOME",
@@ -268,6 +281,122 @@ def parse_page(text: str, page_number: int, args: argparse.Namespace) -> list[di
     return records
 
 
+def group_words_into_lines(words: list[dict]) -> list[list[dict]]:
+    lines: list[list[dict]] = []
+    for word in sorted(words, key=lambda item: (round(float(item["top"]), 1), float(item["x0"]))):
+        if not lines or abs(float(lines[-1][0]["top"]) - float(word["top"])) > 1:
+            lines.append([word])
+        else:
+            lines[-1].append(word)
+    return [sorted(line, key=lambda item: float(item["x0"])) for line in lines]
+
+
+def word_center(word: dict) -> float:
+    return (float(word["x0"]) + float(word["x1"])) / 2
+
+
+def dse_header(line: list[dict]) -> list[tuple[str, float]]:
+    if not line or float(line[0]["x0"]) < 75:
+        return []
+
+    headers: list[tuple[str, float]] = []
+    for word in line:
+        code = normalize_seat_type(str(word["text"]))
+        if decode_seat_type(code) is None:
+            return []
+        headers.append((code, word_center(word)))
+    return headers
+
+
+def nearest_header(headers: list[tuple[str, float]], x_position: float) -> str | None:
+    if not headers:
+        return None
+    code, header_x = min(headers, key=lambda item: abs(item[1] - x_position))
+    return code if abs(header_x - x_position) <= 38 else None
+
+
+def parse_dse_page(words: list[dict], page_number: int, args: argparse.Namespace) -> list[dict[str, str]]:
+    lines = group_words_into_lines(words)
+    all_words = [word for line in lines for word in line]
+    ctx = Context(section="STATE")
+    headers: list[tuple[str, float]] = []
+    records: list[dict[str, str]] = []
+
+    for line in lines:
+        text = " ".join(str(word["text"]) for word in line).strip()
+
+        college_match = DSE_COLLEGE_RE.match(text)
+        if college_match and float(line[0]["x0"]) < 50:
+            ctx.institute_code = normalize_institute_code(college_match.group("code"))
+            ctx.college_name = college_match.group("name").strip()
+            ctx.college_status = (college_match.group("status") or "").strip()
+            ctx.branch_code = ""
+            ctx.branch_name = ""
+            headers = []
+            continue
+
+        branch_match = DSE_BRANCH_RE.match(text)
+        if branch_match:
+            ctx.branch_code = normalize_branch_code(branch_match.group("code"))
+            ctx.branch_name = branch_match.group("name").strip()
+            headers = []
+            continue
+
+        possible_headers = dse_header(line)
+        if possible_headers and ctx.branch_code:
+            headers = possible_headers
+            continue
+
+        stage_match = DSE_STAGE_RE.match(text)
+        if not stage_match or not headers or not ctx.branch_code:
+            continue
+
+        stage_top = float(line[0]["top"])
+        nearby = [
+            word
+            for word in all_words
+            if float(word["x0"]) >= 75 and abs(float(word["top"]) - stage_top) <= 10
+        ]
+        rank_words = [
+            word for word in nearby
+            if float(word["top"]) < stage_top and re.fullmatch(r"\d{1,7}", str(word["text"]))
+        ]
+        score_words = [
+            word for word in nearby
+            if DSE_SCORE_RE.fullmatch(str(word["text"]))
+        ]
+
+        for rank_word in rank_words:
+            seat_type = nearest_header(headers, word_center(rank_word))
+            score_word = min(
+                score_words,
+                key=lambda word: abs(word_center(word) - word_center(rank_word)),
+                default=None,
+            )
+            score_match = DSE_SCORE_RE.fullmatch(str(score_word["text"])) if score_word else None
+            reasons: list[str] = []
+            if not seat_type:
+                reasons.append("COLUMN_ALIGNMENT_UNCERTAIN")
+            if score_word is None or abs(word_center(score_word) - word_center(rank_word)) > 20:
+                reasons.append("RANK_SCORE_COUNT_MISMATCH")
+
+            records.append(
+                make_record(
+                    ctx=ctx,
+                    seat_type=seat_type or "",
+                    stage=stage_match.group("stage").upper(),
+                    rank=str(rank_word["text"]),
+                    score=score_match.group("score") if score_match and not reasons else "",
+                    args=args,
+                    page_number=page_number,
+                    needs_review=bool(reasons),
+                    reasons=reasons,
+                )
+            )
+
+    return records
+
+
 def validate_records(records: list[dict[str, str]]) -> Counter:
     counts: Counter = Counter()
     seen: set[tuple[str, ...]] = set()
@@ -307,6 +436,8 @@ def validate_records(records: list[dict[str, str]]) -> Counter:
             row["institute_code"],
             row["branch_code"],
             row["seat_type"],
+            row["stage"],
+            row["section"],
         )
         if unique_key in seen:
             issues.add("DUPLICATE_UNIQUE_KEY")
@@ -373,7 +504,10 @@ def main() -> None:
         pages_to_process = min(args.limit_pages or len(pdf.pages), len(pdf.pages))
         for page_number, page in enumerate(pdf.pages[:pages_to_process], start=1):
             text = page.extract_text() or ""
-            rows.extend(parse_page(text, page_number, args))
+            if args.route == "DSE":
+                rows.extend(parse_dse_page(page.extract_words() or [], page_number, args))
+            else:
+                rows.extend(parse_page(text, page_number, args))
 
     counts = validate_records(rows)
     write_csv(rows, Path(args.output))

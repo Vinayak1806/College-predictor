@@ -9,6 +9,10 @@ CATEGORIES = {
     "SC",
     "ST",
     "VJ",
+    "NTA",
+    "NTB",
+    "NTC",
+    "NTD",
     "NT1",
     "NT2",
     "NT3",
@@ -23,6 +27,7 @@ SPECIAL_TYPES = {
     "TFWS": ("TFWS", "SPECIAL", "STATE"),
     "EWS": ("EWS", "SPECIAL", "STATE"),
     "ORPHAN": ("ORPHAN", "SPECIAL", "STATE"),
+    "ORP": ("ORPHAN", "SPECIAL", "STATE"),
 }
 
 MINORITY_TYPES = {
@@ -77,14 +82,17 @@ def decode_seat_type(raw_code: str) -> SeatTypeInfo | None:
         category, gender, university_type = MINORITY_TYPES[code]
         return SeatTypeInfo(code, category, gender, university_type, "MINORITY")
 
-    university_type = "UNKNOWN"
+    university_type = "STATE"
     body = code
     if code[-1:] in UNIVERSITY_SUFFIX:
         university_type = UNIVERSITY_SUFFIX[code[-1]]
         body = code[:-1]
 
     special = None
-    if body.startswith("PWD"):
+    if body.startswith("PWDR"):
+        special = "PWD"
+        body = body[4:]
+    elif body.startswith("PWD"):
         special = "PWD"
         body = body[3:]
     elif body.startswith("DEFR"):
@@ -93,6 +101,9 @@ def decode_seat_type(raw_code: str) -> SeatTypeInfo | None:
     elif body.startswith("DEF"):
         special = "DEFENCE"
         body = body[3:]
+
+    if special and body in {"", "O"}:
+        body = "OPEN"
 
     gender = "SPECIAL" if special else "UNKNOWN"
     if body.startswith("G"):

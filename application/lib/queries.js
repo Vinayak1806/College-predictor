@@ -20,15 +20,21 @@ export function cutoffInclude() {
   };
 }
 
-export async function getPublishedCutoffs(where, page = 1, pageSize = 20) {
-  return prisma.cutoff.findMany({
+export async function getPublishedCutoffs(where, page = 1, pageSize = 20, orderBy) {
+  const query = {
     where: {
       needsReview: false,
       dataset: { status: { in: ["VERIFIED", "PUBLISHED"] } },
       ...where
     },
     include: cutoffInclude(),
-    orderBy: [{ dataset: { academicYear: "desc" } }, { dataset: { capRound: "desc" } }],
+    orderBy: orderBy || [{ dataset: { academicYear: "desc" } }, { dataset: { capRound: "desc" } }],
     ...pagination(page, pageSize)
-  });
+  };
+
+  const [data, total] = await Promise.all([
+    prisma.cutoff.findMany(query),
+    prisma.cutoff.count({ where: query.where })
+  ]);
+  return { data, total };
 }

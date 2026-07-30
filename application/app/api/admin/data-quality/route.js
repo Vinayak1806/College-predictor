@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { checkAdminImportAccess } from "../../../../lib/adminImportAuth";
 import { CURRENT_INSTITUTE_CODE_ALIASES } from "../../../../lib/instituteCodes";
 import {
   coveragePercent,
@@ -30,7 +31,10 @@ function issue({ id, severity, title, description, records, count = records.leng
   };
 }
 
-export async function GET() {
+export async function GET(request) {
+  const access = checkAdminImportAccess(request);
+  if (!access.allowed) return NextResponse.json({ error: access.error }, { status: access.status });
+
   try {
     const [colleges, cities, latestMatrices, cutoffReviewCount, cutoffReviewRows, datasetCount, publishedCutoffCodes] = await Promise.all([
       prisma.college.findMany({
@@ -43,8 +47,6 @@ export async function GET() {
           profile: {
             select: {
               totalApprovedFee: true,
-              naacStatus: true,
-              nbaStatus: true,
               dataQualityNote: true,
               ownershipType: true
             }
@@ -138,12 +140,6 @@ export async function GET() {
       .map((college) =>
         record(college, "Verify from the institute or university fee notice; this ownership type is not covered by the FRA import")
       );
-    const missingAccreditation = colleges
-      .filter((college) =>
-        isMissingQualityValue(college.profile?.naacStatus) &&
-        isMissingQualityValue(college.profile?.nbaStatus)
-      )
-      .map((college) => record(college, "NAAC and NBA not verified"));
     const missingSeatMatrix = colleges
       .filter((college) => !matrixCodes.has(college.instituteCode))
       .map((college) => record(college, "No verified 2025-26 FE seat matrix"));
@@ -280,13 +276,6 @@ export async function GET() {
         title: "Institute or university fee notice is needed",
         description: "Government, university and deemed-university fees must be verified from their own official notices.",
         records: missingInstituteFees
-      }),
-      issue({
-        id: "missing-accreditation",
-        severity: "INFO",
-        title: "Accreditation has not been verified",
-        description: "NAAC and NBA data should remain blank until an official source is attached.",
-        records: missingAccreditation
       })
     ];
 
@@ -335,13 +324,6 @@ export async function GET() {
           covered: colleges.length - missingFees.length,
           total: colleges.length,
           percent: coveragePercent(colleges.length - missingFees.length, colleges.length)
-        },
-        {
-          id: "accreditation",
-          label: "NAAC or NBA",
-          covered: colleges.length - missingAccreditation.length,
-          total: colleges.length,
-          percent: coveragePercent(colleges.length - missingAccreditation.length, colleges.length)
         }
       ],
       issues: actionableIssues,

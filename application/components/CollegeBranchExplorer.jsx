@@ -65,7 +65,7 @@ function FilterButton({ active, children, onClick }) {
   );
 }
 
-export function CollegeBranchExplorer({ branches, initialBranchName, initialYear, initialSeatType }) {
+export function CollegeBranchExplorer({ branches, initialBranchName, initialYear, initialSeatType, admissionRoute = "FE" }) {
   const initialBranch = initialBranchName
     ? branches.find((branch) => branch.branchName.toLowerCase() === initialBranchName.toLowerCase())
     : null;
@@ -139,7 +139,7 @@ export function CollegeBranchExplorer({ branches, initialBranchName, initialYear
                 <span className="mt-1 block text-xs text-slate-500">
                   {branch.branchCode}
                   {branch.latestYear ? ` | ${branch.latestYear}` : ""}
-                  {hasValue(branch.latestIntake) ? ` | Intake ${branch.latestIntake}` : ""}
+                  {hasValue(branch.latestIntake) ? ` | ${admissionRoute === "DSE" ? "Lateral seats" : "Intake"} ${branch.latestIntake}` : ""}
                 </span>
               </button>
             ))}
@@ -163,6 +163,12 @@ export function CollegeBranchExplorer({ branches, initialBranchName, initialYear
                   {hasValue(latestSeat?.academicYear) ? <InfoBox label="Latest seat year" value={latestSeat.academicYear} /> : null}
                   {hasValue(latestSeat?.sanctionedIntake) ? (
                     <InfoBox label="Approved branch intake" value={latestSeat.sanctionedIntake} />
+                  ) : null}
+                  {hasValue(latestSeat?.lateralEntrySeats) ? (
+                    <InfoBox label="DSE lateral-entry seats" value={latestSeat.lateralEntrySeats} />
+                  ) : null}
+                  {hasValue(latestSeat?.vacantSeats) ? (
+                    <InfoBox label="Previous-intake vacancies" value={latestSeat.vacantSeats} />
                   ) : null}
                   {hasValue(latestSeat?.capSeats) ? (
                     <InfoBox label="CAP seats for this branch" value={latestSeat.capSeats} />
@@ -231,9 +237,14 @@ export function CollegeBranchExplorer({ branches, initialBranchName, initialYear
                         {hasValue(row.sanctionedIntake) ? (
                           <InfoBox label="Approved intake" value={row.sanctionedIntake} />
                         ) : null}
+                        {hasValue(row.lateralEntrySeats) ? (
+                          <InfoBox label="DSE lateral-entry seats" value={row.lateralEntrySeats} />
+                        ) : null}
+                        {hasValue(row.vacantSeats) ? (
+                          <InfoBox label="Previous-intake vacancies" value={row.vacantSeats} />
+                        ) : null}
                         {hasValue(row.capSeats) ? <InfoBox label="CAP seats" value={row.capSeats} /> : null}
                         {hasValue(row.ewsSeats) ? <InfoBox label="EWS seats" value={row.ewsSeats} /> : null}
-                        {hasValue(row.allIndiaSeats) ? <InfoBox label="All India seats" value={row.allIndiaSeats} /> : null}
                       </dl>
                     </article>
                   ))}

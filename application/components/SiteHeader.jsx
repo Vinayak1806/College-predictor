@@ -8,6 +8,7 @@ import { useState } from "react";
 const links = [
   ["Home", "/"],
   ["FE Predictor", "/fe-predictor"],
+  ["DSE Predictor", "/dse-predictor"],
   ["Explore Colleges", "/colleges"],
   ["Cutoffs", "/cutoffs"],
   ["College Index", "/college-index"],
@@ -58,7 +59,10 @@ export function SiteHeader() {
           >
             <Search aria-hidden="true" size={19} />
           </Link>
-          <Link className="focus-ring hidden min-h-11 items-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white hover:bg-[#11566d] sm:inline-flex" href="/fe-predictor">
+          <Link
+            className="focus-ring hidden min-h-11 items-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white hover:bg-[#11566d] sm:inline-flex"
+            href={pathname.startsWith("/dse-predictor") ? "/dse-predictor" : "/fe-predictor"}
+          >
             <BarChart3 aria-hidden="true" size={17} />
             Predict
           </Link>

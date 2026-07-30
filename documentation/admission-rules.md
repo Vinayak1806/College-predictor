@@ -3,11 +3,11 @@
 Scope for the initial build:
 
 - Maharashtra B.E./B.Tech colleges.
-- FE admission from MHT-CET percentile or JEE rank/score data when available.
+- FE admission from MHT-CET percentile.
 - DSE admission from diploma percentage or DSE merit number when DSE files are
   added.
 - CAP rounds I to IV.
-- Maharashtra State and All India quotas.
+- Maharashtra State quota records.
 - Category, gender, Home University, Other Than Home University, and State
   Level seat types.
 
@@ -19,7 +19,6 @@ prediction.
 Do not compare:
 
 - DSE percentage with FE percentile.
-- JEE rank with MHT-CET percentile.
 - Rank-based cutoffs with score-based cutoffs using the same comparator.
 - Different admission years as if they are identical.
 
@@ -75,4 +74,3 @@ Example mappings:
 These mappings are implemented in `data-pipeline/college_predictor/seat_types.py`
 and should be checked against the latest official admission brochure before any
 dataset is marked as published.
-

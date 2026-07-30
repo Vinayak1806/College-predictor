@@ -66,10 +66,6 @@ export const FE_BACKTEST_PROFILES = [
 
 export const UNAVAILABLE_BACKTEST_PROFILES = [
   {
-    label: "JEE All India candidate",
-    reason: "Verified All India quota cutoff records are not connected yet."
-  },
-  {
     label: "DSE OPEN and OBC",
     reason: "Verified DSE cutoff datasets are not imported yet."
   }
