@@ -32,7 +32,7 @@ function issue({ id, severity, title, description, records, count = records.leng
 }
 
 export async function GET(request) {
-  const access = checkAdminImportAccess(request);
+  const access = await checkAdminImportAccess(request);
   if (!access.allowed) return NextResponse.json({ error: access.error }, { status: access.status });
 
   try {

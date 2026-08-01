@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analyzeCutoffHistory, calculateStrengthIndex } from "./prediction.js";
+import { analyzeCutoffHistory, calculateStrengthIndex, explainAdmissionZone } from "./prediction.js";
 
 test("cutoff history keeps the latest round and best eligible seat for each year", () => {
   const analysis = analyzeCutoffHistory([
@@ -43,6 +43,21 @@ test("one-year history receives a conservative confidence adjustment", () => {
   assert.equal(analysis.margin, 2);
   assert.equal(analysis.conservativePenalty, 2);
   assert.equal(analysis.adjustedMargin, 0);
+  assert.equal(analysis.selectedCutoffMargin, 2);
+  assert.match(explainAdmissionZone(analysis), /selected cutoff difference of \+2\.00/);
+  assert.match(explainAdmissionZone(analysis), /final prediction margin of \+0\.00/);
+});
+
+test("multi-year zone explanation separates the selected cutoff from the benchmark", () => {
+  const analysis = analyzeCutoffHistory([
+    { year: "2023-24", round: 3, cutoff: 75, seatType: "GOPENH" },
+    { year: "2024-25", round: 3, cutoff: 80, seatType: "GOPENH" },
+    { year: "2025-26", round: 3, cutoff: 90, seatType: "GOPENH" }
+  ], 89);
+
+  assert.equal(analysis.selectedCutoffMargin, -1);
+  assert.match(explainAdmissionZone(analysis), /3-year prediction benchmark/);
+  assert.match(explainAdmissionZone(analysis), /benchmark difference/);
 });
 
 test("high volatility cannot be labeled high confidence", () => {

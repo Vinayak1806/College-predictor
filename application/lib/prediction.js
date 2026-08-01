@@ -20,9 +20,35 @@ export const zoneOrder = {
   HIGHLY_AMBITIOUS: 3
 };
 
+const zoneLabels = {
+  SAFE: "Safe",
+  TARGET: "Target",
+  AMBITIOUS: "Ambitious",
+  HIGHLY_AMBITIOUS: "Highly Ambitious"
+};
+
 function round(value, digits = 2) {
   const factor = 10 ** digits;
   return Math.round(value * factor) / factor;
+}
+
+function signed(value) {
+  return `${value >= 0 ? "+" : ""}${Number(value).toFixed(2)}`;
+}
+
+export function explainAdmissionZone(analysis) {
+  if (!analysis) return "Admission zone details are unavailable.";
+
+  const zone = zoneLabels[analysis.zone] || analysis.zone;
+  const adjustment = analysis.conservativePenalty > 0
+    ? ` A ${analysis.conservativePenalty.toFixed(2)}-point confidence adjustment gives a final prediction margin of ${signed(analysis.adjustedMargin)}.`
+    : ` No confidence adjustment was needed, so the final prediction margin remains ${signed(analysis.adjustedMargin)}.`;
+
+  if (analysis.yearsAnalyzed === 1) {
+    return `${zone} starts from the selected cutoff difference of ${signed(analysis.selectedCutoffMargin)}.${adjustment}`;
+  }
+
+  return `${zone} uses the ${analysis.yearsAnalyzed}-year prediction benchmark of ${analysis.benchmarkCutoff.toFixed(2)}. Your benchmark difference is ${signed(analysis.margin)}.${adjustment}`;
 }
 
 function standardDeviation(values) {
@@ -90,9 +116,11 @@ export function analyzeCutoffHistory(records, studentScore) {
   const volatilityPenalty = Math.min(volatility, 6) * 0.5;
   const conservativePenalty = historyPenalty + volatilityPenalty;
   const adjustedMargin = margin - conservativePenalty;
+  const latest = history.at(-1);
 
   return {
     benchmarkCutoff: round(benchmarkCutoff),
+    selectedCutoffMargin: round(scoreMargin(studentScore, latest.cutoff)),
     margin: round(margin),
     adjustedMargin: round(adjustedMargin),
     conservativePenalty: round(conservativePenalty),
@@ -103,7 +131,7 @@ export function analyzeCutoffHistory(records, studentScore) {
     zone: classifyMargin(adjustedMargin),
     yearsAnalyzed: history.length,
     history,
-    latest: history.at(-1),
+    latest,
     eligibleSeatTypes: [...new Set(records.map((record) => record.seatType))].sort()
   };
 }
@@ -130,6 +158,10 @@ export function compareUsefulResults(a, b) {
 
   const strengthDifference = (b.strengthIndex ?? -1) - (a.strengthIndex ?? -1);
   if (strengthDifference !== 0) return strengthDifference;
+
+  const confidenceOrder = { HIGH: 0, MEDIUM: 1, LIMITED: 2 };
+  const confidenceDifference = (confidenceOrder[a.dataConfidence] ?? 3) - (confidenceOrder[b.dataConfidence] ?? 3);
+  if (confidenceDifference !== 0) return confidenceDifference;
 
   return Math.abs(a.margin) - Math.abs(b.margin);
 }

@@ -95,6 +95,12 @@ function normalizeOwnership(value) {
   return text;
 }
 
+function profileIsAutonomous(value) {
+  const status = String(value || "").trim().toLowerCase();
+  const explicitlyNonAutonomous = status.includes("non-autonomous") || status.includes("non autonomous");
+  return !explicitlyNonAutonomous && status.includes("autonomous");
+}
+
 function findMinorityStatus(profileValue, collegeValue, ownershipValue) {
   if (hasValue(profileValue)) return profileValue;
   if (hasValue(collegeValue)) return collegeValue;
@@ -125,6 +131,7 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
   const { slug } = await params;
   const query = await searchParams;
   const admissionRoute = query?.route === "DSE" ? "DSE" : "FE";
+  const predictorHref = admissionRoute === "DSE" ? "/dse-predictor" : "/fe-predictor";
 
   const college = await prisma.college.findFirst({
     where: {
@@ -257,7 +264,7 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
   const approvedFeeYear = latestFee?.academicYear || profile?.feeYear || null;
   const officialWebsite = profile?.officialWebsite || college.officialWebsite;
   const isAutonomous =
-    profile?.autonomyStatus?.toLowerCase().includes("autonomous") ||
+    profileIsAutonomous(profile?.autonomyStatus) ||
     seatMatrices.some((matrix) => matrix.autonomous) ||
     college.autonomous;
   const score = numberFromQuery(query?.score);
@@ -277,12 +284,20 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
     <>
       <SiteHeader />
       <main className="mx-auto max-w-7xl px-4 py-8">
-        <Link className="text-sm font-medium text-action underline" href="/fe-predictor">
-          Back to predictor
-        </Link>
+        <div className="flex flex-wrap items-center gap-4 text-sm font-medium">
+          <Link className="text-action underline" href={`/colleges?route=${admissionRoute}`}>
+            Back to {admissionRoute} colleges
+          </Link>
+          <Link className="text-slate-600 underline" href={predictorHref}>
+            Open {admissionRoute} predictor
+          </Link>
+        </div>
 
         <header className="mt-4 border-y border-line bg-white px-4 py-5 sm:px-5">
-          <p className="text-sm font-medium text-slate-500">Institute code: {college.instituteCode}</p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm font-medium text-slate-500">Institute code: {college.instituteCode}</p>
+            <span className="rounded bg-cyan-50 px-3 py-1 text-xs font-semibold text-action">{admissionRoute} admission data</span>
+          </div>
           <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
               <h1 className="text-2xl font-semibold text-ink">{college.name}</h1>
@@ -302,6 +317,21 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
             ) : null}
           </div>
         </header>
+
+        <nav className="mt-4 inline-grid min-h-11 grid-cols-2 overflow-hidden rounded border border-line bg-white" aria-label="College admission data route">
+          {["FE", "DSE"].map((route) => (
+            <Link
+              key={route}
+              aria-current={admissionRoute === route ? "page" : undefined}
+              className={`focus-ring flex min-h-11 items-center justify-center border-r border-line px-4 text-sm font-semibold last:border-r-0 ${
+                admissionRoute === route ? "bg-action text-white" : "text-slate-700 hover:bg-panel"
+              }`}
+              href={`/colleges/${college.slug}?route=${route}`}
+            >
+              {route} admission
+            </Link>
+          ))}
+        </nav>
 
         <section className="mt-6">
           <h2 className="text-lg font-semibold text-ink">College and branch strength</h2>

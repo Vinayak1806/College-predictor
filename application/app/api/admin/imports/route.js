@@ -12,7 +12,7 @@ function denied(access) {
 }
 
 export async function GET(request) {
-  const access = checkAdminImportAccess(request);
+  const access = await checkAdminImportAccess(request);
   if (!access.allowed) return denied(access);
 
   const imports = await prisma.adminImport.findMany({
@@ -27,7 +27,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const access = checkAdminImportAccess(request);
+  const access = await checkAdminImportAccess(request);
   if (!access.allowed) return denied(access);
 
   try {
@@ -63,4 +63,3 @@ export async function POST(request) {
     );
   }
 }
-

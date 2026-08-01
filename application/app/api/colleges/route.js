@@ -7,9 +7,27 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const query = listQuerySchema.parse(Object.fromEntries(searchParams));
   const currentCodeQuery = currentInstituteCodeSearch(query.q);
+  const routeFilter = query.route
+    ? {
+      collegeBranches: {
+        some: {
+          cutoffs: {
+            some: {
+              needsReview: false,
+              dataset: {
+                admissionRoute: query.route,
+                status: { in: ["VERIFIED", "PUBLISHED"] }
+              }
+            }
+          }
+        }
+      }
+    }
+    : {};
   const collegeRecords = await prisma.college.findMany({
     where: {
       profile: { is: { currentCap2025: "Yes" } },
+      ...routeFilter,
       OR: query.q
         ? [
             { name: { contains: query.q, mode: "insensitive" } },

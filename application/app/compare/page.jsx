@@ -13,11 +13,11 @@ import {
   X
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CollegeAutocomplete } from "../../components/CollegeAutocomplete";
 import { SiteHeader } from "../../components/SiteHeader";
 import {
-  clearComparisonList,
   readComparisonList,
   writeComparisonList
 } from "../../lib/comparisonList";
@@ -67,6 +67,10 @@ function formatMoney(value) {
   return hasValue(value) ? `Rs. ${Number(value).toLocaleString("en-IN")}` : "Not available";
 }
 
+function normalizeAdmissionRoute(value) {
+  return value === "DSE" ? "DSE" : "FE";
+}
+
 function Fact({ label, value, note, tone = "normal" }) {
   const toneClass = {
     normal: "text-ink",
@@ -85,18 +89,21 @@ function Fact({ label, value, note, tone = "normal" }) {
 
 function ComparisonCard({ item, position }) {
   const prediction = item.prediction;
+  const isDse = item.admissionRoute === "DSE";
   const missing = [
     !item.branch ? "Select a branch to compare cutoff and seat information." : null,
-    item.branch && !item.latestOpenCutoff ? "OPEN general cutoff history is unavailable for this branch." : null,
+    item.branch && !item.latestOpenCutoff ? `${item.admissionRoute} OPEN general cutoff history is unavailable for this branch.` : null,
     !item.approvedFee ? "Approved annual fee is not available." : null
   ].filter(Boolean);
   const marginTone = prediction?.margin >= 0 ? "good" : "warning";
+  const collegeParams = new URLSearchParams({ route: item.admissionRoute });
+  if (item.branch) collegeParams.set("branch", item.branch.name);
 
   return (
     <article className="min-w-0 overflow-hidden rounded-lg border border-line bg-white">
       <div className={`h-1 ${prediction?.zone === "SAFE" ? "bg-success" : prediction?.zone === "TARGET" ? "bg-action" : prediction ? "bg-warning" : "bg-slate-300"}`} />
       <header className="min-h-[178px] p-4 md:p-5">
-        <p className="text-xs font-semibold uppercase text-slate-500">Choice {position} | Institute {item.instituteCode}</p>
+        <p className="text-xs font-semibold uppercase text-slate-500">{item.admissionRoute} choice {position} | Institute {item.instituteCode}</p>
         <h2 className="mt-2 text-lg font-semibold leading-6 text-ink">{item.name}</h2>
         <p className="mt-2 font-semibold text-action">{item.branch?.name || "College overview"}</p>
         <div className="mt-3 grid gap-1 text-xs text-slate-500">
@@ -133,21 +140,36 @@ function ComparisonCard({ item, position }) {
           <Fact
             label="Historical Demand Index"
             value={hasValue(item.historicalDemandIndex) ? `${Math.round(item.historicalDemandIndex)} / 100` : "Not available"}
-            note={item.demandBand ? `${item.demandBand} demand band` : "Based on previous FE cutoff demand"}
+            note={item.demandBand ? `${item.demandBand} demand band` : `Based on previous ${item.admissionRoute} cutoff demand`}
           />
           <Fact
-            label="Latest OPEN reference cutoff"
+            label={`Latest ${item.admissionRoute} OPEN cutoff`}
             value={formatNumber(item.latestOpenCutoff?.closingScore)}
             note={item.latestOpenCutoff
               ? `${item.latestOpenCutoff.year}, CAP Round ${item.latestOpenCutoff.round} | ${item.latestOpenCutoff.seatType}`
               : "Choose a branch with published OPEN general records"}
           />
-          <div className="grid grid-cols-2 gap-x-5 divide-x divide-line">
-            <Fact label="Approved branch intake" value={item.branch?.sanctionedIntake ?? "Not available"} note={item.branch?.academicYear || undefined} />
-            <div className="pl-5">
-              <Fact label="CAP seats" value={item.branch?.capSeats ?? "Not available"} />
+          {isDse ? (
+            <div className={`grid gap-x-5 ${hasValue(item.branch?.vacantSeats) ? "grid-cols-2 divide-x divide-line" : "grid-cols-1"}`}>
+              <Fact
+                label="DSE lateral-entry seats"
+                value={item.branch?.lateralEntrySeats ?? "Not available"}
+                note={item.branch?.academicYear || undefined}
+              />
+              {hasValue(item.branch?.vacantSeats) ? (
+                <div className="pl-5">
+                  <Fact label="Previous-intake vacancies" value={item.branch.vacantSeats} />
+                </div>
+              ) : null}
             </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-x-5 divide-x divide-line">
+              <Fact label="Approved branch intake" value={item.branch?.sanctionedIntake ?? "Not available"} note={item.branch?.academicYear || undefined} />
+              <div className="pl-5">
+                <Fact label="CAP seats" value={item.branch?.capSeats ?? "Not available"} />
+              </div>
+            </div>
+          )}
         </dl>
       </section>
 
@@ -197,7 +219,7 @@ function ComparisonCard({ item, position }) {
       ) : null}
 
       <footer className="flex flex-wrap gap-2 border-t border-line px-4 py-4 md:px-5">
-        <Link className="focus-ring inline-flex min-h-11 items-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white" href={`/colleges/${item.slug}${item.branch ? `?branch=${encodeURIComponent(item.branch.name)}` : ""}`}>
+        <Link className="focus-ring inline-flex min-h-11 items-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white" href={`/colleges/${item.slug}?${collegeParams.toString()}`}>
           College details <ArrowRight aria-hidden="true" size={17} />
         </Link>
         {item.officialWebsite ? (
@@ -211,28 +233,40 @@ function ComparisonCard({ item, position }) {
 }
 
 export default function ComparePage() {
+  const router = useRouter();
+  const [admissionRoute, setAdmissionRoute] = useState("FE");
+  const [routeReady, setRouteReady] = useState(false);
   const [slots, setSlots] = useState(() => Array.from({ length: MAX_COLLEGES }, emptySlot));
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [hydrated, setHydrated] = useState(false);
 
-  async function getBranches(slug) {
-    const response = await fetch(`/api/colleges/${encodeURIComponent(slug)}/branches`);
+  async function getBranches(slug, route) {
+    const response = await fetch(`/api/colleges/${encodeURIComponent(slug)}/branches?route=${route}`);
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.error || "Could not load branches");
     return payload.data || [];
   }
 
   useEffect(() => {
+    const requestedRoute = new URLSearchParams(window.location.search).get("route");
+    setAdmissionRoute(normalizeAdmissionRoute(requestedRoute));
+    setRouteReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!routeReady) return undefined;
     let active = true;
 
     async function restoreSavedItems() {
-      const saved = readComparisonList();
+      const saved = readComparisonList().filter((item) =>
+        normalizeAdmissionRoute(item.admissionRoute) === admissionRoute
+      );
       const restored = await Promise.all(saved.map(async (item) => {
         let branches = [];
         try {
-          branches = await getBranches(item.collegeSlug);
+          branches = await getBranches(item.collegeSlug, admissionRoute);
         } catch {
           branches = [];
         }
@@ -259,17 +293,22 @@ export default function ComparePage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [admissionRoute, routeReady]);
 
   function persist(nextSlots) {
-    writeComparisonList(nextSlots.filter((slot) => slot.college).map((slot) => ({
+    const otherRouteItems = readComparisonList().filter((item) =>
+      normalizeAdmissionRoute(item.admissionRoute) !== admissionRoute
+    );
+    const currentRouteItems = nextSlots.filter((slot) => slot.college).map((slot) => ({
+      admissionRoute,
       instituteCode: slot.college.instituteCode,
       college: slot.college.name,
       collegeSlug: slot.college.slug,
       branchCode: slot.branchCode,
       branch: slot.branches.find((branch) => branch.branchCode === slot.branchCode)?.name || "",
       prediction: slot.prediction
-    })));
+    }));
+    writeComparisonList([...otherRouteItems, ...currentRouteItems]);
   }
 
   async function chooseCollege(index, college) {
@@ -281,7 +320,7 @@ export default function ComparePage() {
     ));
 
     try {
-      const branches = await getBranches(college.slug);
+      const branches = await getBranches(college.slug, admissionRoute);
       setSlots((current) => {
         const next = current.map((slot, slotIndex) =>
           slotIndex === index
@@ -322,10 +361,21 @@ export default function ComparePage() {
   }
 
   function clearAll() {
-    clearComparisonList();
+    writeComparisonList(readComparisonList().filter((item) =>
+      normalizeAdmissionRoute(item.admissionRoute) !== admissionRoute
+    ));
     setSlots(Array.from({ length: MAX_COLLEGES }, emptySlot));
     setResults([]);
     setMessage("");
+  }
+
+  function changeAdmissionRoute(route) {
+    if (route === admissionRoute) return;
+    setHydrated(false);
+    setResults([]);
+    setMessage("");
+    setAdmissionRoute(route);
+    router.replace(`/compare?route=${route}`, { scroll: false });
   }
 
   async function compareColleges() {
@@ -348,6 +398,7 @@ export default function ComparePage() {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
+          admissionRoute,
           selections: selected.map((slot) => ({
             instituteCode: slot.college.instituteCode,
             branchCode: slot.branchCode || undefined
@@ -383,18 +434,40 @@ export default function ComparePage() {
           <p className="text-xs font-semibold uppercase text-action">Decision workspace</p>
           <h1 className="mt-1 text-2xl font-semibold text-ink md:text-3xl">Compare college and branch choices</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-            Compare up to three options using official cutoff history, approved seats, fees and verified college facts.
+            Compare up to three options using route-specific cutoff history, approved seats, fees and verified college facts.
           </p>
         </header>
 
-        <section className="mt-6 overflow-visible rounded-lg border border-line bg-white">
+        <section className="mt-6 border-y border-line bg-white px-4 py-4 md:px-5" aria-label="Admission route">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase text-slate-500">Admission route</p>
+              <p className="mt-1 text-sm text-slate-600">All colleges, branches, cutoffs and seats below use the selected route.</p>
+            </div>
+            <div className="grid grid-cols-2 rounded border border-line bg-panel p-1" role="group" aria-label="Choose admission route">
+              {[{ code: "FE", label: "First Year" }, { code: "DSE", label: "Direct Second Year" }].map((route) => (
+                <button
+                  key={route.code}
+                  className={`focus-ring min-h-11 rounded px-4 text-sm font-semibold ${admissionRoute === route.code ? "bg-action text-white" : "text-slate-700 hover:bg-white"}`}
+                  type="button"
+                  aria-pressed={admissionRoute === route.code}
+                  onClick={() => changeAdmissionRoute(route.code)}
+                >
+                  {route.label} ({route.code})
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-5 overflow-visible rounded-lg border border-line bg-white">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-4 md:px-5">
             <div>
-              <h2 className="font-semibold text-ink">Choose colleges</h2>
-              <p className="mt-1 text-sm text-slate-500">A branch is optional, but required for cutoff and seat comparison.</p>
+              <h2 className="font-semibold text-ink">Choose {admissionRoute} colleges</h2>
+              <p className="mt-1 text-sm text-slate-500">A branch is optional, but required for {admissionRoute} cutoff and seat comparison.</p>
             </div>
             <button className="focus-ring inline-flex min-h-11 items-center gap-2 rounded border border-line px-3 text-sm font-semibold text-slate-700" type="button" onClick={clearAll}>
-              <Trash2 aria-hidden="true" size={16} /> Clear all
+              <Trash2 aria-hidden="true" size={16} /> Clear {admissionRoute} choices
             </button>
           </div>
 
@@ -410,6 +483,7 @@ export default function ComparePage() {
                   ) : null}
                 </div>
                 <CollegeAutocomplete
+                  admissionRoute={admissionRoute}
                   defaultValue={slot.college?.name || ""}
                   selectionMode="fill"
                   showIcon
@@ -434,7 +508,7 @@ export default function ComparePage() {
                     value={slot.branchCode}
                     onChange={(event) => changeBranch(index, event.target.value)}
                   >
-                    <option value="">{slot.loadingBranches ? "Loading branches..." : "College overview"}</option>
+                    <option value="">{slot.loadingBranches ? `Loading ${admissionRoute} branches...` : "College overview"}</option>
                     {slot.branches.map((branch) => (
                       <option key={branch.branchCode} value={branch.branchCode}>{branch.name}</option>
                     ))}
@@ -442,7 +516,7 @@ export default function ComparePage() {
                 </label>
                 {slot.prediction ? (
                   <p className="mt-3 inline-flex rounded border border-line bg-panel px-2.5 py-1 text-xs font-medium text-slate-600">
-                    Saved from your prediction
+                    Saved from your {admissionRoute} prediction
                   </p>
                 ) : null}
               </div>
@@ -459,7 +533,7 @@ export default function ComparePage() {
               {loading ? <RefreshCw aria-hidden="true" className="animate-spin" size={17} /> : <GitCompareArrows aria-hidden="true" size={18} />}
               {loading ? "Comparing..." : "Compare choices"}
             </button>
-            <p className="text-xs text-slate-500">Historical information supports research; it does not guarantee allotment.</p>
+            <p className="text-xs text-slate-500">{admissionRoute} historical information supports research; it does not guarantee allotment.</p>
           </div>
         </section>
 
@@ -478,7 +552,7 @@ export default function ComparePage() {
                 <h2 className="mt-1 text-xl font-semibold text-ink">{results.length} choices side by side</h2>
               </div>
               <p className="max-w-xl text-xs leading-5 text-slate-500">
-                Historical Demand Index measures previous FE admission demand. It is not an official college ranking.
+                Historical Demand Index measures previous {admissionRoute} admission demand. It is not an official college ranking.
               </p>
             </div>
             <div className={`mt-4 grid items-start gap-4 ${results.length === 2 ? "lg:grid-cols-2" : "lg:grid-cols-3"}`}>
@@ -492,7 +566,7 @@ export default function ComparePage() {
             <BarChart3 aria-hidden="true" className="mx-auto text-action" size={26} />
             <div>
               <h2 className="font-semibold text-ink">Your comparison will appear here</h2>
-              <p className="mt-1 text-sm text-slate-500">Select at least two colleges, then compare their strongest available facts.</p>
+              <p className="mt-1 text-sm text-slate-500">Select at least two {admissionRoute} colleges, then compare their strongest available facts.</p>
             </div>
           </section>
         )}

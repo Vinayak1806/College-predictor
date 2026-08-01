@@ -2,30 +2,43 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   adminSessionCookie,
-  checkAdminCookieAccess,
+  adminSessionHash,
   verifyAdminToken
 } from "./adminImportAuth.js";
 
-test("rejects an incorrect configured admin token", () => {
+function withAdminToken(value, callback) {
   const previous = process.env.ADMIN_IMPORT_TOKEN;
-  process.env.ADMIN_IMPORT_TOKEN = "correct-token";
+  if (value === undefined) delete process.env.ADMIN_IMPORT_TOKEN;
+  else process.env.ADMIN_IMPORT_TOKEN = value;
   try {
-    assert.equal(verifyAdminToken("wrong-token").allowed, false);
+    callback();
   } finally {
     if (previous === undefined) delete process.env.ADMIN_IMPORT_TOKEN;
     else process.env.ADMIN_IMPORT_TOKEN = previous;
   }
+}
+
+test("rejects an incorrect configured admin token without revealing which part failed", () => {
+  withAdminToken("correct-token-that-is-longer-than-32-characters", () => {
+    const result = verifyAdminToken("wrong-token");
+    assert.equal(result.allowed, false);
+    assert.equal(result.error, "Admin sign-in failed.");
+  });
 });
 
-test("accepts the signed HTTP-only admin session value", () => {
-  const previous = process.env.ADMIN_IMPORT_TOKEN;
-  process.env.ADMIN_IMPORT_TOKEN = "correct-token";
-  try {
-    const cookie = adminSessionCookie("correct-token");
-    assert.equal(cookie.options.httpOnly, true);
-    assert.equal(checkAdminCookieAccess(cookie.value).allowed, true);
-  } finally {
-    if (previous === undefined) delete process.env.ADMIN_IMPORT_TOKEN;
-    else process.env.ADMIN_IMPORT_TOKEN = previous;
-  }
+test("admin access fails closed when the server token is missing", () => {
+  withAdminToken(undefined, () => {
+    const result = verifyAdminToken("");
+    assert.equal(result.allowed, false);
+    assert.equal(result.status, 503);
+  });
+});
+
+test("admin session cookies are HTTP-only and contain an opaque random value", () => {
+  const opaqueToken = "a-random-session-value";
+  const cookie = adminSessionCookie(opaqueToken);
+  assert.equal(cookie.options.httpOnly, true);
+  assert.equal(cookie.options.sameSite, "strict");
+  assert.equal(cookie.value, opaqueToken);
+  assert.notEqual(adminSessionHash(opaqueToken), opaqueToken);
 });

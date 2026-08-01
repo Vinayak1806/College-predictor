@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { checkAdminImportAccess } from "../../../../lib/adminImportAuth";
 
 export async function GET(request) {
-  const access = checkAdminImportAccess(request);
+  const access = await checkAdminImportAccess(request);
   if (!access.allowed) return NextResponse.json({ error: access.error }, { status: access.status });
 
   return NextResponse.json({

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Building2, MapPin, Search, University } from "lucide-react";
+import { ArrowRight, Building2, GraduationCap, MapPin, Search, University } from "lucide-react";
 import { CollegeAutocomplete } from "../../components/CollegeAutocomplete";
 import { SiteHeader } from "../../components/SiteHeader";
 import { currentInstituteCodeSearch } from "../../lib/instituteCodes";
@@ -22,84 +22,235 @@ function normalizeOwnership(value) {
   return text;
 }
 
+function isAutonomous(profileValue, collegeValue) {
+  const status = String(profileValue || "").trim().toLowerCase();
+  const explicitlyNonAutonomous = status.includes("non-autonomous") || status.includes("non autonomous");
+  return (!explicitlyNonAutonomous && status.includes("autonomous")) || Boolean(collegeValue);
+}
+
 function collegeIdentity(college) {
   const code = String(college.instituteCode || "").replace(/^0+/, "");
   if (code) return `code:${code}`;
   return `name:${college.name.toLowerCase()}|city:${college.city?.name?.toLowerCase() || ""}`;
 }
 
-function collegeDataScore(college) {
-  return (college.profile ? 10 : 0) + college._count.collegeBranches;
+function routeHref(route, search) {
+  const params = new URLSearchParams({ route });
+  if (search) params.set("q", search);
+  return `/colleges?${params.toString()}`;
+}
+
+function normalizedInstituteCode(value) {
+  return String(value || "").replace(/^0+/, "") || String(value || "");
+}
+
+function buildMatrixSummaries(rows) {
+  const summaries = new Map();
+
+  for (const row of rows) {
+    const code = normalizedInstituteCode(row.instituteCode);
+    const current = summaries.get(code) || {
+      branches: new Map(),
+      years: new Set(),
+      latestYear: null,
+      latestSeats: 0
+    };
+    current.branches.set(row.branchCode, row.branchName);
+    current.years.add(row.academicYear);
+
+    if (!current.latestYear || row.academicYear > current.latestYear) {
+      current.latestYear = row.academicYear;
+      current.latestSeats = Number(row.routeSeats || 0);
+    } else if (row.academicYear === current.latestYear) {
+      current.latestSeats += Number(row.routeSeats || 0);
+    }
+
+    summaries.set(code, current);
+  }
+
+  return summaries;
 }
 
 export default async function CollegesPage({ searchParams }) {
   const query = await searchParams;
   const search = typeof query?.q === "string" ? query.q.trim() : "";
+  const admissionRoute = query?.route === "DSE" ? "DSE" : "FE";
   const currentCodeQuery = currentInstituteCodeSearch(search);
+  const routeCutoffFilter = {
+    needsReview: false,
+    dataset: {
+      admissionRoute,
+      status: { in: ["VERIFIED", "PUBLISHED"] }
+    }
+  };
+  const routeCollegeFilter = {
+    collegeBranches: {
+      some: {
+        cutoffs: { some: routeCutoffFilter }
+      }
+    }
+  };
+  const searchFilter = search
+    ? {
+      OR: [
+        { name: { contains: search, mode: "insensitive" } },
+        { instituteCode: { contains: search, mode: "insensitive" } },
+        { city: { name: { contains: search, mode: "insensitive" } } },
+        ...(currentCodeQuery ? [{ instituteCode: currentCodeQuery }] : [])
+      ]
+    }
+    : {};
 
-  const collegeRecords = await prisma.college.findMany({
-    where: {
-      profile: { is: { currentCap2025: "Yes" } },
-      ...(search
-        ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            { instituteCode: { contains: search, mode: "insensitive" } },
-            { city: { name: { contains: search, mode: "insensitive" } } },
-            ...(currentCodeQuery ? [{ instituteCode: currentCodeQuery }] : [])
-          ]
+  const [collegeRecords, totalMatchingColleges, matrixRows] = await Promise.all([
+    prisma.college.findMany({
+      where: {
+        profile: { is: { currentCap2025: "Yes" } },
+        ...routeCollegeFilter,
+        ...searchFilter
+      },
+      include: {
+        city: true,
+        university: true,
+        profile: true,
+        collegeBranches: {
+          where: {
+            cutoffs: { some: routeCutoffFilter }
+          },
+          select: {
+            branch: {
+              select: {
+                branchCode: true,
+                displayName: true
+              }
+            }
+          }
         }
-        : {})
-    },
-    include: {
-      city: true,
-      university: true,
-      profile: true,
-      _count: { select: { collegeBranches: true } }
-    },
-    orderBy: [{ name: "asc" }],
-    take: 80
-  });
+      },
+      orderBy: [{ name: "asc" }],
+      take: 80
+    }),
+    prisma.college.count({
+      where: {
+        profile: { is: { currentCap2025: "Yes" } },
+        ...routeCollegeFilter,
+        ...searchFilter
+      }
+    }),
+    prisma.seatMatrix.findMany({
+      where: {
+        admissionRoute,
+        needsReview: false
+      },
+      select: {
+        instituteCode: true,
+        branchCode: true,
+        branchName: true,
+        academicYear: true,
+        capSeats: true,
+        lateralEntrySeats: true
+      }
+    })
+  ]);
 
   const collegeMap = new Map();
   for (const college of collegeRecords) {
     const key = collegeIdentity(college);
-    const current = collegeMap.get(key);
-    if (!current || collegeDataScore(college) > collegeDataScore(current)) {
-      collegeMap.set(key, college);
-    }
+    if (!collegeMap.has(key)) collegeMap.set(key, college);
   }
   const colleges = Array.from(collegeMap.values()).slice(0, 30);
+  const matrixSummaries = buildMatrixSummaries(matrixRows.map((row) => ({
+    ...row,
+    routeSeats: admissionRoute === "DSE"
+      ? row.lateralEntrySeats ?? row.capSeats
+      : row.capSeats
+  })));
+  const routeYears = [...new Set(matrixRows.map((row) => row.academicYear))].sort().reverse();
+  const routeBranchCount = new Set(
+    matrixRows.map((row) => row.branchName.trim().toLowerCase()).filter(Boolean)
+  ).size;
+  const routeDescription = admissionRoute === "DSE"
+    ? "Direct second-year degree options based on official diploma-percentage cutoffs and lateral-entry seats."
+    : "First-year degree options based on official FE CAP cutoffs, branches and approved admission seats.";
 
   return (
     <>
       <SiteHeader />
       <main className="mx-auto max-w-7xl px-4 py-8 md:py-12">
-        <header className="max-w-3xl">
-          <p className="text-xs font-semibold uppercase text-action">College research</p>
+        <header className="max-w-3xl border-l-4 border-action pl-4">
+          <p className="text-xs font-semibold uppercase text-action">{admissionRoute} college research</p>
           <h1 className="mt-2 text-3xl font-bold text-ink md:text-4xl">Explore Maharashtra engineering colleges</h1>
-          <p className="mt-3 text-sm leading-6 text-slate-600">Search by college name, institute code or city, then open one profile for branches, seats and official cutoff history.</p>
+          <p className="mt-3 text-sm leading-6 text-slate-600">{routeDescription}</p>
         </header>
 
-        <form className="relative z-20 mt-7 flex max-w-3xl rounded border border-line bg-white shadow-sm" action="/colleges">
+        <div className="mt-6 grid gap-4 md:grid-cols-[300px_minmax(0,1fr)] md:items-stretch">
+          <nav className="grid min-h-11 grid-cols-2 overflow-hidden rounded border border-line bg-white" aria-label="Admission route">
+            {["FE", "DSE"].map((route) => (
+              <Link
+                key={route}
+                aria-current={admissionRoute === route ? "page" : undefined}
+                className={`focus-ring flex min-h-11 items-center justify-center gap-2 border-r border-line px-4 text-sm font-semibold last:border-r-0 ${
+                  admissionRoute === route ? "bg-action text-white" : "text-slate-700 hover:bg-panel"
+                }`}
+                href={routeHref(route, search)}
+              >
+                <GraduationCap aria-hidden="true" size={17} />
+                {route === "FE" ? "FE Degree" : "DSE Degree"}
+              </Link>
+            ))}
+          </nav>
+
+          <dl className="grid grid-cols-3 border-y border-line py-3 text-center">
+            <div className="border-r border-line px-2">
+              <dt className="text-lg font-semibold text-ink">{totalMatchingColleges}</dt>
+              <dd className="mt-1 text-xs text-slate-500">Institutes</dd>
+            </div>
+            <div className="border-r border-line px-2">
+              <dt className="text-lg font-semibold text-ink">{routeBranchCount}</dt>
+              <dd className="mt-1 text-xs text-slate-500">Branch types</dd>
+            </div>
+            <div className="px-2">
+              <dt className="text-lg font-semibold text-ink">{routeYears.length}</dt>
+              <dd className="mt-1 text-xs text-slate-500">Data years</dd>
+            </div>
+          </dl>
+        </div>
+
+        <form className="relative z-20 mt-7 flex rounded border border-line bg-white shadow-sm" action="/colleges">
+          <input type="hidden" name="route" value={admissionRoute} />
           <label className="sr-only" htmlFor="college-search">Search colleges</label>
-          <CollegeAutocomplete id="college-search" name="q" defaultValue={search} className="flex min-h-12 flex-1 items-center px-4" placeholder="Example: COEP, Pune or institute code 16006" />
+          <CollegeAutocomplete
+            id="college-search"
+            name="q"
+            admissionRoute={admissionRoute}
+            defaultValue={search}
+            className="flex min-h-12 flex-1 items-center px-4"
+            placeholder="Example: COEP, Pune or institute code 16006"
+          />
           <button className="focus-ring min-h-12 rounded-r bg-action px-5 text-sm font-semibold text-white hover:bg-[#11566d]" type="submit">Search</button>
         </form>
 
         <div className="mt-8 flex flex-wrap items-end justify-between gap-3 border-b border-line pb-3">
           <div>
             <h2 className="font-semibold text-ink">{search ? `Results for "${search}"` : "Browse colleges"}</h2>
-            <p className="mt-1 text-xs text-slate-500">Showing up to 30 structured college records.</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Showing {colleges.length} of {totalMatchingColleges} institutes with official {admissionRoute} records.
+            </p>
           </div>
-          <span className="rounded bg-panel px-3 py-2 text-sm font-semibold text-slate-700">{colleges.length} found</span>
+          <span className="rounded bg-panel px-3 py-2 text-sm font-semibold text-slate-700">{admissionRoute} data</span>
         </div>
 
         {colleges.length ? (
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {colleges.map((college) => {
               const ownership = normalizeOwnership(college.profile?.ownershipType || college.collegeType);
-              const autonomous = college.profile?.autonomyStatus?.toLowerCase().includes("autonomous") || college.autonomous;
+              const autonomous = isAutonomous(college.profile?.autonomyStatus, college.autonomous);
+              const matrixSummary = matrixSummaries.get(normalizedInstituteCode(college.instituteCode));
+              const routeBranches = [...new Map(
+                college.collegeBranches.map(({ branch }) => [branch.branchCode, branch.displayName])
+              ).values()];
+              const branchNames = routeBranches.slice(0, 3);
+              const remainingBranches = Math.max(0, routeBranches.length - branchNames.length);
+              const collegeHref = `/colleges/${college.slug}?route=${admissionRoute}`;
 
               return (
                 <article key={college.id.toString()} className="group rounded border border-line bg-white p-4 shadow-sm transition hover:border-[#9bcbd6] hover:shadow-md">
@@ -108,7 +259,7 @@ export default async function CollegesPage({ searchParams }) {
                     <span className="text-xs font-semibold text-slate-400">{college.instituteCode}</span>
                   </div>
                   <h3 className="mt-4 text-base font-semibold leading-6 text-ink">
-                    <Link className="group-hover:text-action group-hover:underline" href={`/colleges/${college.slug}`}>{college.name}</Link>
+                    <Link className="group-hover:text-action group-hover:underline" href={collegeHref}>{college.name}</Link>
                   </h3>
                   <div className="mt-3 grid gap-1.5 text-xs text-slate-600">
                     {college.city?.name ? <p className="flex items-center gap-2"><MapPin aria-hidden="true" size={14} /> {college.city.name}</p> : null}
@@ -117,9 +268,23 @@ export default async function CollegesPage({ searchParams }) {
                   <div className="mt-4 flex flex-wrap gap-2 text-xs">
                     {ownership ? <span className="rounded bg-panel px-2 py-1 font-medium text-slate-700">{ownership}</span> : null}
                     {autonomous ? <span className="rounded bg-emerald-50 px-2 py-1 font-medium text-success">Autonomous</span> : null}
-                    <span className="rounded bg-panel px-2 py-1 font-medium text-slate-700">{college._count.collegeBranches} branch records</span>
+                    <span className="rounded bg-panel px-2 py-1 font-medium text-slate-700">{routeBranches.length} {admissionRoute} branches</span>
                   </div>
-                  <Link className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-action" href={`/colleges/${college.slug}`}>View college details <ArrowRight aria-hidden="true" size={16} /></Link>
+                  {branchNames.length ? (
+                    <p className="mt-4 text-xs leading-5 text-slate-600">
+                      <span className="font-semibold text-ink">Available branches:</span> {branchNames.join(", ")}
+                      {remainingBranches ? ` and ${remainingBranches} more` : ""}
+                    </p>
+                  ) : null}
+                  {matrixSummary?.latestYear ? (
+                    <p className="mt-2 text-xs text-slate-500">
+                      {matrixSummary.latestYear} seat matrix
+                      {matrixSummary.latestSeats > 0
+                        ? ` | ${matrixSummary.latestSeats} ${admissionRoute === "DSE" ? "lateral-entry" : "CAP"} seats`
+                        : ""}
+                    </p>
+                  ) : null}
+                  <Link className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-action" href={collegeHref}>View {admissionRoute} details <ArrowRight aria-hidden="true" size={16} /></Link>
                 </article>
               );
             })}

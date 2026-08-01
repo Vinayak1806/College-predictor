@@ -5,7 +5,9 @@ import {
   adminRecordCorrectionSchema,
   canonicalBranchCode,
   recordIssues,
-  sanitizeRecordCorrection
+  sanitizeRecordCorrection,
+  stagedRecordKey,
+  validateStagedRecords
 } from "./adminImportValidation.js";
 
 test("requires a CAP round for cutoff PDFs", () => {
@@ -47,11 +49,32 @@ test("unknown institutes are held for review", () => {
       seat_type: "GOPENS",
       closing_score: "90.25",
       closing_rank: "12000",
+      source_page: "1",
       review_reason: ""
     }
   });
 
   assert.deepEqual(result.issues, ["UNKNOWN_INSTITUTE_CODE"]);
+});
+
+test("a branch code from another institute is held for review", () => {
+  const result = recordIssues({
+    recordType: "CUTOFF",
+    knownInstituteCodes: new Set(["06179", "06155"]),
+    data: {
+      institute_code: "06179",
+      college_name: "Example College",
+      branch_code: "0615524510",
+      branch_name: "Computer Engineering",
+      seat_type: "GOPENS",
+      closing_score: "90.25",
+      closing_rank: "12000",
+      source_page: "1",
+      review_reason: ""
+    }
+  });
+
+  assert.deepEqual(result.issues, ["BRANCH_INSTITUTE_MISMATCH"]);
 });
 
 test("record correction accepts editable values and rejects an empty request", () => {
@@ -73,4 +96,52 @@ test("record correction removes unsupported fields", () => {
       closing_score: "99.25"
     }
   );
+});
+
+test("cutoff duplicate keys remain separate across institutes", () => {
+  const shared = {
+    academic_year: "2025-26",
+    cap_round: "1",
+    branch_name: "Computer Engineering",
+    seat_type: "GOPENS",
+    stage: "I",
+    section: "STANDARD"
+  };
+
+  const first = stagedRecordKey("CUTOFF", {
+    ...shared,
+    institute_code: "06179",
+    branch_code: "0617924510"
+  });
+  const second = stagedRecordKey("CUTOFF", {
+    ...shared,
+    institute_code: "06155",
+    branch_code: "0615524510"
+  });
+
+  assert.notEqual(first, second);
+});
+
+test("both copies of an exact staged duplicate require review", () => {
+  const data = {
+    institute_code: "06179",
+    college_name: "Example College",
+    academic_year: "2025-26",
+    cap_round: "1",
+    branch_code: "0617924510",
+    branch_name: "Computer Engineering",
+    seat_type: "GOPENS",
+    closing_score: "90.25",
+    closing_rank: "12000",
+    source_page: "1",
+    stage: "I",
+    section: "STANDARD"
+  };
+  const records = validateStagedRecords([
+    { recordType: "CUTOFF", data },
+    { recordType: "CUTOFF", data: { ...data } }
+  ], new Set(["06179"]));
+
+  assert.deepEqual(records[0].issues, ["DUPLICATE_IMPORT_KEY"]);
+  assert.deepEqual(records[1].issues, ["DUPLICATE_IMPORT_KEY"]);
 });

@@ -28,6 +28,7 @@ export const cutoffQuerySchema = z.object({
 });
 
 export const compareRequestSchema = z.object({
+  admissionRoute: z.enum(["FE", "DSE"]).default("FE"),
   selections: z.array(z.object({
     instituteCode: z.string().trim().min(4).max(10),
     branchCode: z.string().trim().max(30).optional()

@@ -9,6 +9,7 @@ export function CollegeAutocomplete({
   name,
   defaultValue = "",
   placeholder = "Type a college name or institute code",
+  admissionRoute,
   selectionMode = "navigate",
   onSelect,
   onQueryChange,
@@ -55,7 +56,9 @@ export function CollegeAutocomplete({
     const timer = window.setTimeout(async () => {
       setLoading(true);
       try {
-        const response = await fetch(`/api/colleges?q=${encodeURIComponent(search)}&pageSize=8`, {
+        const params = new URLSearchParams({ q: search, pageSize: "8" });
+        if (admissionRoute) params.set("route", admissionRoute);
+        const response = await fetch(`/api/colleges?${params.toString()}`, {
           signal: controller.signal
         });
         const data = await response.json();
@@ -74,14 +77,17 @@ export function CollegeAutocomplete({
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [query, searchReady]);
+  }, [admissionRoute, query, searchReady]);
 
   function chooseCollege(college) {
     setQuery(college.name);
     setSearchReady(false);
     setOpen(false);
     onSelect?.(college);
-    if (selectionMode === "navigate") router.push(`/colleges/${college.slug}`);
+    if (selectionMode === "navigate") {
+      const routeQuery = admissionRoute ? `?route=${encodeURIComponent(admissionRoute)}` : "";
+      router.push(`/colleges/${college.slug}${routeQuery}`);
+    }
   }
 
   function handleKeyDown(event) {

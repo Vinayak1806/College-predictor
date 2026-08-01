@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, GraduationCap, Menu, Search, X } from "lucide-react";
+import { BarChart3, CircleUserRound, GraduationCap, Menu, Search, X } from "lucide-react";
 import { useState } from "react";
 
 const links = [
@@ -51,6 +51,14 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <Link
+            href="/account"
+            aria-label="Student account"
+            title="Student account"
+            className="focus-ring flex h-11 w-11 items-center justify-center rounded border border-line text-slate-600 hover:bg-panel"
+          >
+            <CircleUserRound aria-hidden="true" size={20} />
+          </Link>
           <Link
             href="/colleges"
             aria-label="Search colleges"

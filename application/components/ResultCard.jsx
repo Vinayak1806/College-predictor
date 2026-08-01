@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, ArrowUpRight, BookmarkCheck, Building2, MapPin, Scale } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, BookmarkCheck, Building2, Info, MapPin, Scale } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
@@ -16,6 +16,7 @@ import {
   readPreferenceList,
   writePreferenceList
 } from "../lib/preferenceList";
+import { classifyMargin } from "../lib/prediction";
 import { explainSeatType } from "../lib/seatTypes";
 
 const zoneClass = {
@@ -37,12 +38,6 @@ const zoneText = {
   TARGET: "Target",
   AMBITIOUS: "Ambitious",
   HIGHLY_AMBITIOUS: "Highly Ambitious"
-};
-
-const trendText = {
-  RISING: "Rising",
-  STABLE: "Stable",
-  FALLING: "Falling"
 };
 
 function hasValue(value) {
@@ -87,10 +82,13 @@ export function ResultCard(props) {
   const router = useRouter();
   const [capListStatus, setCapListStatus] = useState("");
   const [compareStatus, setCompareStatus] = useState("");
-  const marginText = `${props.margin >= 0 ? "+" : ""}${formatNumber(props.margin)}`;
-  const marginTone = props.margin >= 0 ? "good" : props.margin >= -4 ? "warning" : "danger";
   const singleYear = (props.yearsAnalyzed || 1) === 1;
   const officialCutoff = hasValue(props.latestCutoff) ? props.latestCutoff : props.closingCutoff;
+  const selectedCutoffDifference = Number(props.studentScore) - Number(officialCutoff);
+  const selectedDifferenceText = `${selectedCutoffDifference >= 0 ? "+" : ""}${formatNumber(selectedCutoffDifference)}`;
+  const marginTone = selectedCutoffDifference >= 0 ? "good" : selectedCutoffDifference >= -4 ? "warning" : "danger";
+  const selectedCutoffZone = classifyMargin(selectedCutoffDifference);
+  const zoneNeedsExplanation = selectedCutoffZone !== props.zone;
   const seatTypeInfo = explainSeatType(props.seatType);
   const otherSeatTypes = (props.eligibleSeatTypes || []).filter((code) => code !== props.seatType);
   const eligibilityText = props.universityEligibility === "HOME"
@@ -109,9 +107,9 @@ export function ResultCard(props) {
     HOME_FOR_OTHER: "Converted Home University allocation",
     OTHER_FOR_HOME: "Converted Other University allocation"
   }[props.cutoffSection];
-  const comparisonText = props.margin >= 0
-    ? `Your ${props.scoreLabel || "percentile"} is ${formatNumber(Math.abs(props.margin))} points above the ${singleYear ? "official cutoff" : "prediction benchmark"}.`
-    : `Your ${props.scoreLabel || "percentile"} is ${formatNumber(Math.abs(props.margin))} points below the ${singleYear ? "official cutoff" : "prediction benchmark"}.`;
+  const comparisonText = selectedCutoffDifference >= 0
+    ? `Your ${props.scoreLabel || "percentile"} is ${formatNumber(Math.abs(selectedCutoffDifference))} points above the selected official cutoff.`
+    : `Your ${props.scoreLabel || "percentile"} is ${formatNumber(Math.abs(selectedCutoffDifference))} points below the selected official cutoff.`;
   const collegeHref = props.collegeSlug
     ? {
         pathname: `/colleges/${props.collegeSlug}`,
@@ -131,6 +129,8 @@ export function ResultCard(props) {
 
   const detailFacts = [
     hasValue(props.strengthIndex) ? ["Historical demand index", `${props.strengthIndex} / 100`] : null,
+    hasValue(props.closingCutoff) && !singleYear ? ["Multi-year prediction benchmark", formatNumber(props.closingCutoff)] : null,
+    hasValue(props.margin) && !singleYear ? ["Difference from prediction benchmark", `${props.margin >= 0 ? "+" : ""}${formatNumber(props.margin)}`] : null,
     hasValue(props.collegeType) ? ["Ownership", props.collegeType] : null,
     typeof props.autonomous === "boolean" ? ["Academic status", props.autonomous ? "Autonomous" : "Non-autonomous"] : null,
     hasValue(props.sanctionedIntake) ? ["Branch intake", props.sanctionedIntake] : null,
@@ -154,8 +154,9 @@ export function ResultCard(props) {
   }
 
   function addToCompare() {
+    const comparisonHref = `/compare?route=${props.admissionRoute === "DSE" ? "DSE" : "FE"}`;
     if (compareStatus === "View comparison") {
-      router.push("/compare");
+      router.push(comparisonHref);
       return;
     }
 
@@ -168,7 +169,7 @@ export function ResultCard(props) {
     } else if (result.reason === "DUPLICATE") {
       setCompareStatus("View comparison");
     } else {
-      router.push("/compare");
+      router.push(comparisonHref);
     }
   }
 
@@ -179,8 +180,8 @@ export function ResultCard(props) {
       <header className="grid gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start md:p-5">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold uppercase text-slate-500">
-            {props.position ? <span>Option {props.position}</span> : null}
             <span>Institute {props.instituteCode}</span>
+            {hasValue(props.strengthIndex) ? <span>Demand index {props.strengthIndex}/100</span> : null}
           </div>
           <h3 className="mt-2 max-w-3xl text-lg font-semibold leading-6 text-ink">
             {collegeHref ? (
@@ -198,46 +199,39 @@ export function ResultCard(props) {
             {zoneText[props.zone] || props.zone}
           </span>
           <div className="text-right">
-            <p className={`text-xl font-semibold ${props.margin >= 0 ? "text-success" : props.margin >= -4 ? "text-warning" : "text-danger"}`}>
-              {marginText}
+            <p className={`text-xl font-semibold ${selectedCutoffDifference >= 0 ? "text-success" : selectedCutoffDifference >= -4 ? "text-warning" : "text-danger"}`}>
+              {selectedDifferenceText}
             </p>
-            <p className="text-xs text-slate-500">{props.scoreLabel || "percentile"} margin</p>
+            <p className="text-xs text-slate-500">selected cutoff difference</p>
           </div>
         </div>
       </header>
 
       <section className="border-y border-line bg-panel px-4 py-4 md:px-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-medium uppercase text-slate-500">Admission match</p>
-            <p className="mt-1 text-sm font-semibold text-ink">{comparisonText}</p>
-          </div>
-          <div className="flex flex-wrap gap-2 text-xs text-slate-600">
-            {props.trend ? <span>{trendText[props.trend] || props.trend} cutoff</span> : null}
-            <span>{props.yearsAnalyzed || 1} year{props.yearsAnalyzed === 1 ? "" : "s"} analyzed</span>
-          </div>
+        <div>
+          <p className="text-xs font-medium uppercase text-slate-500">Admission match</p>
+          <p className="mt-1 text-sm font-semibold text-ink">{comparisonText}</p>
         </div>
-        <dl className={`mt-3 grid divide-y divide-line bg-white sm:divide-x sm:divide-y-0 ${singleYear ? "sm:grid-cols-3" : "sm:grid-cols-4"}`}>
+        <dl className="mt-3 grid divide-y divide-line bg-white sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           <Metric label={`Your ${props.scoreLabel || "percentile"}`} value={formatNumber(props.studentScore)} />
           <Metric
-            label="Latest official cutoff"
+            label="Selected official cutoff"
             value={formatNumber(officialCutoff)}
             note={`${props.year}, CAP Round ${props.round}`}
           />
-          {!singleYear ? (
-            <Metric
-              label="Prediction benchmark"
-              value={formatNumber(props.closingCutoff)}
-              note="Recent comparable years weighted more"
-            />
-          ) : null}
           <Metric
-            label="Your margin"
-            value={marginText}
+            label="Difference from selected cutoff"
+            value={selectedDifferenceText}
             tone={marginTone}
-            note="Positive means above the benchmark"
+            note="Positive means your score is above this cutoff"
           />
         </dl>
+        {zoneNeedsExplanation ? (
+          <div className="mt-3 flex items-start gap-2 border-l-2 border-action bg-cyan-50 px-3 py-2 text-xs leading-5 text-slate-700">
+            <Info aria-hidden="true" className="mt-0.5 shrink-0 text-action" size={15} />
+            <p>The admission status also considers multiple years and data confidence. Open the explanation below to see the calculation.</p>
+          </div>
+        ) : null}
       </section>
 
       <section className="grid gap-3 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center md:px-5">
@@ -264,6 +258,13 @@ export function ResultCard(props) {
         </summary>
         <div className="border-t border-line px-4 py-4 md:px-5">
           <p className="max-w-3xl leading-6 text-slate-600">{props.reason}</p>
+
+          {props.zoneExplanation ? (
+            <div className="mt-3 border-l-2 border-action pl-3">
+              <p className="text-xs font-semibold uppercase text-action">How the admission status was calculated</p>
+              <p className="mt-1 max-w-3xl leading-6 text-slate-600">{props.zoneExplanation}</p>
+            </div>
+          ) : null}
 
           {detailFacts.length ? (
             <dl className="mt-3 grid grid-cols-2 gap-x-5 border-y border-line sm:grid-cols-3 xl:grid-cols-4">

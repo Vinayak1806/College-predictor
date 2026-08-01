@@ -9,7 +9,8 @@ import { prisma } from "./prisma.js";
 import {
   canonicalBranchCode,
   recordIssues,
-  sanitizeRecordCorrection
+  sanitizeRecordCorrection,
+  validateStagedRecords
 } from "./adminImportValidation.js";
 
 const execFileAsync = promisify(execFile);
@@ -40,23 +41,6 @@ function publicSummary(summary) {
   if (!summary || typeof summary !== "object" || Array.isArray(summary)) return summary;
   const { rollback, ...visible } = summary;
   return visible;
-}
-
-function stagedRecordKey(recordType, data) {
-  return recordType === "CUTOFF"
-    ? [
-        data.academic_year,
-        data.cap_round,
-        canonicalBranchCode(data.branch_code),
-        data.seat_type,
-        data.stage,
-        data.section || "STANDARD"
-      ].join("|")
-    : [
-        data.academic_year,
-        data.admission_route,
-        canonicalBranchCode(data.branch_code)
-      ].join("|");
 }
 
 export function serializeAdminImport(adminImport, includeRecords = false) {
@@ -214,26 +198,17 @@ export async function createAndProcessImport({ file, metadata }) {
     ]);
     const knownInstituteCodes = new Set(colleges.map((college) => college.instituteCode));
     const issueCounts = {};
-    const duplicateKeys = new Set();
+    const checkedRecords = validateStagedRecords(rawRecords, knownInstituteCodes);
 
-    const stagedRecords = rawRecords.map((record, index) => {
-      const checked = recordIssues({
-        recordType: record.recordType,
-        data: record.data,
-        knownInstituteCodes
-      });
-      const data = checked.data;
-      const uniqueKey = stagedRecordKey(record.recordType, data);
-      if (duplicateKeys.has(uniqueKey)) checked.issues.push("DUPLICATE_IMPORT_KEY");
-      duplicateKeys.add(uniqueKey);
-      const issues = [...new Set(checked.issues)].sort();
+    const stagedRecords = checkedRecords.map((record, index) => {
+      const issues = record.issues;
       for (const issue of issues) issueCounts[issue] = (issueCounts[issue] || 0) + 1;
 
       return {
         importId: adminImport.id,
         rowNumber: index + 1,
         recordType: record.recordType,
-        data,
+        data: record.data,
         valid: issues.length === 0,
         needsReview: issues.length > 0,
         issues
@@ -282,14 +257,60 @@ export async function createAndProcessImport({ file, metadata }) {
 async function refreshImportReviewState(transaction, adminImport) {
   const records = await transaction.adminImportRecord.findMany({
     where: { importId: adminImport.id },
-    select: { valid: true, needsReview: true, issues: true }
+    orderBy: { rowNumber: "asc" }
   });
-  const publishableRecords = records.filter((record) => record.valid && !record.needsReview).length;
-  const recordsNeedingReview = records.filter((record) => record.needsReview).length;
-  const excludedRecords = records.filter((record) => !record.valid && !record.needsReview).length;
-  const issueCounts = {};
+  const colleges = await transaction.college.findMany({ select: { instituteCode: true } });
+  const knownInstituteCodes = new Set(colleges.map((college) => college.instituteCode));
+  const excludedRecords = records.filter((record) =>
+    !record.valid && !record.needsReview && (record.issues || []).includes("EXCLUDED_BY_ADMIN")
+  );
+  const excludedIds = new Set(excludedRecords.map((record) => record.id.toString()));
+  const checkedRecords = validateStagedRecords(
+    records
+      .filter((record) => !excludedIds.has(record.id.toString()))
+      .map((record) => ({ id: record.id, recordType: record.recordType, data: record.data })),
+    knownInstituteCodes
+  );
+  const checkedById = new Map(checkedRecords.map((record) => [record.id.toString(), record]));
 
   for (const record of records) {
+    const checked = checkedById.get(record.id.toString());
+    if (!checked) continue;
+    const valid = checked.issues.length === 0;
+    const needsReview = checked.issues.length > 0;
+    if (
+      JSON.stringify(record.data) !== JSON.stringify(checked.data) ||
+      JSON.stringify(record.issues || []) !== JSON.stringify(checked.issues) ||
+      record.valid !== valid ||
+      record.needsReview !== needsReview
+    ) {
+      await transaction.adminImportRecord.update({
+        where: { id: record.id },
+        data: {
+          data: checked.data,
+          issues: checked.issues,
+          valid,
+          needsReview
+        }
+      });
+    }
+  }
+
+  const finalRecords = records.map((record) => {
+    const checked = checkedById.get(record.id.toString());
+    if (!checked) return record;
+    return {
+      ...record,
+      valid: checked.issues.length === 0,
+      needsReview: checked.issues.length > 0,
+      issues: checked.issues
+    };
+  });
+  const publishableRecords = finalRecords.filter((record) => record.valid && !record.needsReview).length;
+  const recordsNeedingReview = finalRecords.filter((record) => record.needsReview).length;
+  const issueCounts = {};
+
+  for (const record of finalRecords) {
     if (!record.needsReview) continue;
     for (const issue of record.issues || []) {
       issueCounts[issue] = (issueCounts[issue] || 0) + 1;
@@ -302,10 +323,10 @@ async function refreshImportReviewState(transaction, adminImport) {
       status: recordsNeedingReview ? "NEEDS_REVIEW" : "VERIFIED",
       summary: {
         ...(adminImport.summary || {}),
-        totalRecords: records.length,
+        totalRecords: finalRecords.length,
         publishableRecords,
         recordsNeedingReview,
-        excludedRecords,
+        excludedRecords: excludedRecords.length,
         issueCounts
       }
     }
@@ -356,20 +377,6 @@ export async function updateAdminImportRecord(importId, recordId, correction) {
         data,
         knownInstituteCodes: new Set(colleges.map((college) => college.instituteCode))
       });
-      const otherRecords = await transaction.adminImportRecord.findMany({
-        where: {
-          importId: adminImport.id,
-          id: { not: record.id }
-        },
-        select: { recordType: true, data: true }
-      });
-      const uniqueKey = stagedRecordKey(record.recordType, checked.data);
-      if (otherRecords.some((other) =>
-        other.recordType === record.recordType &&
-        stagedRecordKey(other.recordType, other.data) === uniqueKey
-      )) {
-        checked.issues.push("DUPLICATE_IMPORT_KEY");
-      }
       const issues = [...new Set(checked.issues)].sort();
 
       await transaction.adminImportRecord.update({

@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { dseSeatTypeIsEligible } from "../../../../lib/eligibility";
 import { prisma } from "../../../../lib/prisma";
-import { analyzeCutoffHistory, calculateStrengthIndex, compareUsefulResults } from "../../../../lib/prediction";
+import { analyzeCutoffHistory, calculateStrengthIndex, compareUsefulResults, explainAdmissionZone } from "../../../../lib/prediction";
 import { applyResultMode } from "../../../../lib/resultDiversity";
+import { limitPublicRequest } from "../../../../lib/rateLimit";
 import { dsePredictSchema } from "../../../../lib/validation";
 
 function normalizeOwnership(value) {
@@ -54,6 +55,9 @@ function confidenceWarning(analysis, input) {
 }
 
 export async function POST(request) {
+  const limited = await limitPublicRequest(request, "prediction");
+  if (limited) return limited;
+
   let body;
   try {
     body = await request.json();
@@ -221,6 +225,7 @@ export async function POST(request) {
       sourceUrl: analysis.latest.sourceUrl,
       sourceFilename: analysis.latest.sourceFilename,
       sourcePage: analysis.latest.sourcePage,
+      zoneExplanation: explainAdmissionZone(analysis),
       reason: `${analysis.yearsAnalyzed} comparable DSE year${analysis.yearsAnalyzed === 1 ? " was" : "s were"} analyzed using official diploma-percentage cutoffs. The recent-weighted benchmark is ${analysis.benchmarkCutoff.toFixed(2)}%.`
     };
     result.strengthIndex = calculateStrengthIndex({ ...result, sanctionedIntake: result.capSeats });

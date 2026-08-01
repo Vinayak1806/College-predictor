@@ -6,7 +6,7 @@ import { prisma } from "../../../../../lib/prisma";
 export const runtime = "nodejs";
 
 export async function GET(request, { params }) {
-  const access = checkAdminImportAccess(request);
+  const access = await checkAdminImportAccess(request);
   if (!access.allowed) return NextResponse.json({ error: access.error }, { status: access.status });
 
   const { id } = await params;

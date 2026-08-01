@@ -6,7 +6,7 @@ import { adminRecordCorrectionSchema } from "../../../../../../../lib/adminImpor
 export const runtime = "nodejs";
 
 export async function PATCH(request, { params }) {
-  const access = checkAdminImportAccess(request);
+  const access = await checkAdminImportAccess(request);
   if (!access.allowed) return NextResponse.json({ error: access.error }, { status: access.status });
 
   const { id, recordId } = await params;

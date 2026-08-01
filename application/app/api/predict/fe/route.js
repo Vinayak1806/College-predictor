@@ -5,8 +5,9 @@ import {
   eligibleSeatTypesAcrossUniversities,
   universityEligibilityForCollege
 } from "../../../../lib/eligibility";
-import { analyzeCutoffHistory, calculateStrengthIndex, compareUsefulResults } from "../../../../lib/prediction";
+import { analyzeCutoffHistory, calculateStrengthIndex, compareUsefulResults, explainAdmissionZone } from "../../../../lib/prediction";
 import { applyResultMode } from "../../../../lib/resultDiversity";
+import { limitPublicRequest } from "../../../../lib/rateLimit";
 import { fePredictSchema } from "../../../../lib/validation";
 
 function normalizeOwnership(value) {
@@ -73,6 +74,9 @@ function confidenceWarning(analysis, input) {
 }
 
 export async function POST(request) {
+  const limited = await limitPublicRequest(request, "prediction");
+  if (limited) return limited;
+
   let body;
   try {
     body = await request.json();
@@ -244,6 +248,7 @@ export async function POST(request) {
       sourceUrl: analysis.latest.sourceUrl,
       sourceFilename: analysis.latest.sourceFilename,
       sourcePage: analysis.latest.sourcePage,
+      zoneExplanation: explainAdmissionZone(analysis),
       reason: `${analysis.yearsAnalyzed} comparable year${analysis.yearsAnalyzed === 1 ? " was" : "s were"} analyzed. The recent-weighted benchmark is ${analysis.benchmarkCutoff.toFixed(2)} and cutoff volatility is ${analysis.volatility.toFixed(2)}.`
     };
     result.strengthIndex = calculateStrengthIndex({ ...result, dataConfidence: analysis.confidence });

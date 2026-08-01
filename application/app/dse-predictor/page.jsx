@@ -18,9 +18,9 @@ import {
 import { ResultCard } from "../../components/ResultCard";
 import { SiteHeader } from "../../components/SiteHeader";
 import { getPageRange, getPaginationItems } from "../../lib/pagination";
-import { resultModes } from "../../lib/resultDiversity";
 
 const PAGE_SIZE = 10;
+const RESULT_MODE = "BEST_BRANCH_PER_COLLEGE";
 const categories = ["OPEN", "SC", "ST", "VJ", "NTA", "NTB", "NTC", "NTD", "OBC", "SEBC"];
 const diplomaBranches = [
   "Civil Engineering",
@@ -297,7 +297,6 @@ export default function DsePredictorPage() {
   const [form, setForm] = useState(initialForm);
   const [options, setOptions] = useState({ years: [], rounds: [], branches: [], cities: [] });
   const [instituteCount, setInstituteCount] = useState(null);
-  const [resultMode, setResultMode] = useState("BEST_BRANCH_PER_COLLEGE");
   const [zone, setZone] = useState("ALL");
   const [results, setResults] = useState([]);
   const [pagination, setPagination] = useState(null);
@@ -362,7 +361,7 @@ export default function DsePredictorPage() {
     setMobileStep(step);
   }
 
-  async function predict(page = 1, nextZone = zone, nextMode = resultMode) {
+  async function predict(page = 1, nextZone = zone) {
     setShowValidation(true);
     if (!canPredict) {
       setError("Complete the required DSE fields before predicting colleges.");
@@ -387,7 +386,7 @@ export default function DsePredictorPage() {
           preferredCities: form.cities,
           collegeTypes: form.collegeTypes,
           autonomousOnly: form.autonomousOnly,
-          resultMode: nextMode,
+          resultMode: RESULT_MODE,
           zone: nextZone,
           page,
           pageSize: PAGE_SIZE,
@@ -414,21 +413,16 @@ export default function DsePredictorPage() {
     }
   }
 
-  function changeMode(value) {
-    setResultMode(value);
-    if (hasPredicted) predict(1, zone, value);
-  }
-
   function changeZone(value) {
     setZone(value);
-    if (hasPredicted) predict(1, value, resultMode);
+    if (hasPredicted) predict(1, value);
   }
 
   return (
     <>
       <SiteHeader />
       <main className="mx-auto grid min-w-0 max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[340px_minmax(0,1fr)] lg:items-start xl:grid-cols-[360px_minmax(0,1fr)]">
-        <section className="min-w-0">
+        <section className="min-w-0 lg:self-stretch">
           <header className="border-l-4 border-action pl-4">
             <p className="text-xs font-semibold uppercase text-action">Direct second year engineering</p>
             <h1 className="mt-1 text-2xl font-semibold text-ink">DSE College Predictor</h1>
@@ -476,11 +470,6 @@ export default function DsePredictorPage() {
 
             <fieldset className={`${mobileStep === 1 ? "grid" : "hidden"} min-w-0 gap-4 md:grid`}>
               <legend className="sr-only">Diploma score and cutoff history</legend>
-              <div className="border-b border-line pb-2">
-                <p className="font-semibold text-ink">1. Diploma score and cutoff history</p>
-                <p className="mt-1 text-xs text-slate-500">Your diploma percentage is compared with official DSE cutoffs.</p>
-              </div>
-
               <label className="grid min-w-0 gap-2 text-sm font-medium">
                 <span>Diploma percentage<RequiredMark /></span>
                 <input
@@ -547,11 +536,6 @@ export default function DsePredictorPage() {
 
             <fieldset className={`${mobileStep === 2 ? "grid" : "hidden"} min-w-0 gap-4 md:grid`}>
               <legend className="sr-only">Admission eligibility</legend>
-              <div className="border-b border-line pb-2">
-                <p className="font-semibold text-ink">2. Admission eligibility</p>
-                <p className="mt-1 text-xs text-slate-500">These details decide which official DSE seat types can apply.</p>
-              </div>
-
               <div className="grid grid-cols-2 gap-2">
                 <label className="grid min-w-0 gap-2 text-sm font-medium">
                   <span>Category<RequiredMark /></span>
@@ -588,11 +572,6 @@ export default function DsePredictorPage() {
 
             <fieldset className={`${mobileStep === 3 ? "grid" : "hidden"} min-w-0 gap-4 md:grid`}>
               <legend className="sr-only">College preferences</legend>
-              <div className="border-b border-line pb-2">
-                <p className="font-semibold text-ink">3. College preferences</p>
-                <p className="mt-1 text-xs text-slate-500">Leave any selector empty to include every available option.</p>
-              </div>
-
               <CompactMultiSelect
                 label="Preferred B.E./B.Tech branches"
                 options={branchOptions}
@@ -679,8 +658,13 @@ export default function DsePredictorPage() {
                 </div>
               </dl>
               <div className="p-4">
-                <p className="text-xs font-medium uppercase text-slate-500">Result distribution</p>
-                <p className="mt-1 text-sm text-slate-600">{totalResults} college-branch options</p>
+                <div className="flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-medium uppercase text-slate-500">Results</p>
+                    <p className="mt-1 text-sm text-slate-600">{totalResults} college-branch options</p>
+                  </div>
+                  <p className="text-xs text-slate-500">Page {currentPage}/{totalPages}</p>
+                </div>
                 <button
                   className="focus-ring mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded border border-action text-sm font-semibold text-action hover:bg-cyan-50"
                   type="button"
@@ -697,8 +681,8 @@ export default function DsePredictorPage() {
           <div className="overflow-hidden rounded-lg border border-line bg-white">
             <div className={`grid items-start gap-4 p-4 md:p-5 ${hasPredicted ? "md:grid-cols-[minmax(0,1fr)_96px]" : ""}`}>
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase text-action">DSE prediction workspace</p>
-                <h2 className="mt-1 text-xl font-semibold">{hasPredicted ? "Your lateral-entry options" : "Ready for your DSE profile"}</h2>
+                <p className="text-xs font-semibold uppercase text-action">Prediction workspace</p>
+                <h2 className="mt-1 text-xl font-semibold">{hasPredicted ? "Your college-branch options" : "Ready for your profile"}</h2>
                 {hasPredicted ? (
                   <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2 xl:grid-cols-4">
                     <div>
@@ -750,26 +734,6 @@ export default function DsePredictorPage() {
                 <div className="divide-y divide-line">
                   <div className="grid gap-3 px-4 py-4 lg:grid-cols-[180px_minmax(0,1fr)] lg:items-center md:px-5">
                     <div>
-                      <p className="text-xs font-semibold uppercase text-slate-500">Result grouping</p>
-                      <p className="mt-1 text-xs leading-5 text-slate-500">
-                        {resultMode === "BEST_BRANCH_PER_COLLEGE"
-                          ? "One strongest branch from every college."
-                          : resultMode === "BEST_COLLEGES_FIRST"
-                            ? "Strong colleges, up to two branches each."
-                            : "Every matching branch, rotated across colleges."}
-                      </p>
-                    </div>
-                    <div className="scrollbar-hidden flex max-w-full gap-2 overflow-x-auto pb-1 lg:flex-wrap lg:overflow-visible">
-                      {resultModes.map((mode) => (
-                        <FilterButton key={mode.value} active={resultMode === mode.value} onClick={() => !loading && changeMode(mode.value)}>
-                          {mode.label}
-                        </FilterButton>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3 px-4 py-4 lg:grid-cols-[180px_minmax(0,1fr)] lg:items-center md:px-5">
-                    <div>
                       <p className="text-xs font-semibold uppercase text-slate-500">Admission chance</p>
                       <p className="mt-1 text-xs leading-5 text-slate-500">Filter options by their diploma cutoff margin.</p>
                     </div>
@@ -785,7 +749,7 @@ export default function DsePredictorPage() {
                   <div className="flex flex-wrap items-center justify-between gap-2 bg-panel px-4 py-3 text-xs text-slate-500 md:px-5">
                     <p>
                       {totalResults
-                        ? `Page ${currentPage} of ${totalPages} | ${getPageRange(currentPage, PAGE_SIZE, totalResults).start}-${getPageRange(currentPage, PAGE_SIZE, totalResults).end} shown`
+                        ? `Target first, then Safe and Ambitious | Page ${currentPage} of ${totalPages} | ${getPageRange(currentPage, PAGE_SIZE, totalResults).start}-${getPageRange(currentPage, PAGE_SIZE, totalResults).end} shown`
                         : "No options in this admission zone."}
                     </p>
                     <details>
@@ -796,18 +760,8 @@ export default function DsePredictorPage() {
                 </div>
               </>
             ) : (
-              <div className="grid gap-4 border-t border-line p-5 sm:grid-cols-3">
-                {[
-                  ["1", "Enter diploma score", "Use your official diploma percentage."],
-                  ["2", "Set eligibility", "Choose category, gender and special eligibility."],
-                  ["3", "Review matches", "Compare cutoff margins, seat types and confidence."]
-                ].map(([number, title, text]) => (
-                  <div key={number} className="border-l-2 border-action pl-3">
-                    <p className="text-xs font-semibold text-action">STEP {number}</p>
-                    <p className="mt-1 text-sm font-semibold">{title}</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">{text}</p>
-                  </div>
-                ))}
+              <div className="border-t border-line bg-panel px-4 py-5 text-sm text-slate-600 md:px-5">
+                Required: diploma percentage, diploma branch, category and gender. Degree branch and city preferences are optional.
               </div>
             )}
           </div>
@@ -820,11 +774,10 @@ export default function DsePredictorPage() {
           ) : null}
 
           <div className="grid gap-4">
-            {results.map((result, index) => (
+            {results.map((result) => (
               <ResultCard
                 key={`${result.instituteCode}-${result.branchCode}-${result.seatType}`}
                 {...result}
-                position={(currentPage - 1) * PAGE_SIZE + index + 1}
               />
             ))}
           </div>

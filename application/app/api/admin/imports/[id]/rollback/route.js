@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 export const maxDuration = 600;
 
 export async function POST(request, { params }) {
-  const access = checkAdminImportAccess(request);
+  const access = await checkAdminImportAccess(request);
   if (!access.allowed) return NextResponse.json({ error: access.error }, { status: access.status });
 
   try {
@@ -19,4 +19,3 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: error.message || "The import could not be rolled back." }, { status: error.status || 500 });
   }
 }
-

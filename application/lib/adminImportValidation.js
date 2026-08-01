@@ -108,6 +108,61 @@ export function canonicalBranchCode(value) {
   return `${currentInstituteCode(normalized.slice(0, 5))}${normalized.slice(5)}${suffix}`;
 }
 
+export function stagedRecordKey(recordType, data) {
+  const instituteCode = currentInstituteCode(data.institute_code);
+  const branchCode = canonicalBranchCode(data.branch_code);
+
+  return recordType === "CUTOFF"
+    ? [
+        instituteCode,
+        data.academic_year,
+        data.cap_round,
+        branchCode,
+        data.seat_type,
+        data.stage || "",
+        data.section || "STANDARD"
+      ].join("|")
+    : [
+        instituteCode,
+        data.academic_year,
+        data.admission_route,
+        branchCode
+      ].join("|");
+}
+
+export function validateStagedRecords(records, knownInstituteCodes) {
+  const checkedRecords = records.map((record) => {
+    const checked = recordIssues({
+      recordType: record.recordType,
+      data: record.data,
+      knownInstituteCodes
+    });
+
+    return {
+      ...record,
+      data: checked.data,
+      issues: checked.issues
+    };
+  });
+  const keyCounts = new Map();
+
+  for (const record of checkedRecords) {
+    const key = `${record.recordType}|${stagedRecordKey(record.recordType, record.data)}`;
+    keyCounts.set(key, (keyCounts.get(key) || 0) + 1);
+  }
+
+  return checkedRecords.map((record) => {
+    const key = `${record.recordType}|${stagedRecordKey(record.recordType, record.data)}`;
+    const issues = new Set(record.issues);
+    if (keyCounts.get(key) > 1) issues.add("DUPLICATE_IMPORT_KEY");
+
+    return {
+      ...record,
+      issues: [...issues].sort()
+    };
+  });
+}
+
 export function recordIssues({ recordType, data, knownInstituteCodes }) {
   const issues = new Set(
     String(data.review_reason || "")
@@ -121,8 +176,13 @@ export function recordIssues({ recordType, data, knownInstituteCodes }) {
   if (!instituteCode) issues.add("MISSING_INSTITUTE_CODE");
   if (instituteCode && !knownInstituteCodes.has(instituteCode)) issues.add("UNKNOWN_INSTITUTE_CODE");
   if (!branchCode) issues.add("MISSING_BRANCH_CODE");
+  if (instituteCode && branchCode && branchCode.slice(0, 5) !== instituteCode) {
+    issues.add("BRANCH_INSTITUTE_MISMATCH");
+  }
   if (!String(data.college_name || "").trim()) issues.add("MISSING_COLLEGE_NAME");
   if (!String(data.branch_name || "").trim()) issues.add("MISSING_BRANCH_NAME");
+  const sourcePage = Number(data.source_page);
+  if (!Number.isInteger(sourcePage) || sourcePage < 1) issues.add("INVALID_SOURCE_PAGE");
 
   if (recordType === "CUTOFF") {
     if (!String(data.seat_type || "").trim()) issues.add("MISSING_SEAT_TYPE");

@@ -17,10 +17,10 @@ import {
 import { ResultCard } from "../../components/ResultCard";
 import { SiteHeader } from "../../components/SiteHeader";
 import { getPageRange, getPaginationItems } from "../../lib/pagination";
-import { resultModes } from "../../lib/resultDiversity";
 import { explainSeatType } from "../../lib/seatTypes";
 
 const PAGE_SIZE = 10;
+const RESULT_MODE = "BEST_BRANCH_PER_COLLEGE";
 
 const defaultForm = {
   percentile: "89.20",
@@ -331,7 +331,6 @@ export default function FePredictorPage() {
   const [instituteCount, setInstituteCount] = useState(null);
   const [results, setResults] = useState([]);
   const [selectedZone, setSelectedZone] = useState("ALL");
-  const [selectedResultMode, setSelectedResultMode] = useState("BEST_BRANCH_PER_COLLEGE");
   const [seatTypes, setSeatTypes] = useState([]);
   const [totalResults, setTotalResults] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -406,7 +405,7 @@ export default function FePredictorPage() {
     requestAnimationFrame(() => predictorFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
-  function buildStudentInput(page, zone, resultMode) {
+  function buildStudentInput(page, zone) {
     return {
       percentile: Number(form.percentile),
       academicYear: form.academicYear || undefined,
@@ -418,7 +417,7 @@ export default function FePredictorPage() {
       preferredCities: form.cities,
       collegeTypes: form.collegeTypes,
       autonomousOnly: form.autonomousOnly,
-      resultMode,
+      resultMode: RESULT_MODE,
       zone,
       page,
       pageSize: PAGE_SIZE,
@@ -432,7 +431,6 @@ export default function FePredictorPage() {
   async function requestPrediction({
     page = 1,
     zone = selectedZone,
-    resultMode = selectedResultMode,
     scrollToResults = true
   } = {}) {
     if (!canPredict) {
@@ -449,7 +447,7 @@ export default function FePredictorPage() {
         headers: {
           "content-type": "application/json"
         },
-        body: JSON.stringify(buildStudentInput(page, zone, resultMode))
+        body: JSON.stringify(buildStudentInput(page, zone))
       });
 
       const data = await response.json();
@@ -502,13 +500,6 @@ export default function FePredictorPage() {
     await requestPrediction({ page, zone: selectedZone });
   }
 
-  async function selectResultMode(resultMode) {
-    setSelectedResultMode(resultMode);
-    if (hasPredicted) {
-      await requestPrediction({ page: 1, zone: selectedZone, resultMode, scrollToResults: false });
-    }
-  }
-
   return (
     <>
       <SiteHeader />
@@ -541,10 +532,6 @@ export default function FePredictorPage() {
 
             <fieldset data-step="1" className={`${mobileStep === 1 ? "grid" : "hidden"} min-w-0 gap-4 md:grid`}>
               <legend className="sr-only">Score and cutoff history</legend>
-              <div className="border-b border-line pb-2">
-                <p className="font-semibold text-ink">1. Score and cutoff history</p>
-                <p className="mt-1 text-xs text-slate-500">Use all years for a more stable prediction.</p>
-              </div>
               <label className="grid min-w-0 gap-2 text-sm font-medium">
               <span>MHT-CET percentile<RequiredMark /></span>
               <input
@@ -594,11 +581,6 @@ export default function FePredictorPage() {
 
             <fieldset data-step="2" className={`${mobileStep === 2 ? "grid" : "hidden"} min-w-0 gap-4 md:grid`}>
               <legend className="sr-only">Admission eligibility</legend>
-              <div className="mt-1 border-b border-line pb-2">
-                <p className="font-semibold text-ink">2. Admission eligibility</p>
-                <p className="mt-1 text-xs text-slate-500">These details decide which official seat types can apply.</p>
-              </div>
-
               <label className="grid min-w-0 gap-2 text-sm font-medium">
               <span>Category<RequiredMark /></span>
               <select
@@ -666,11 +648,6 @@ export default function FePredictorPage() {
 
             <fieldset data-step="3" className={`${mobileStep === 3 ? "grid" : "hidden"} min-w-0 gap-4 md:grid`}>
               <legend className="sr-only">College preferences</legend>
-              <div className="mt-1 border-b border-line pb-2">
-                <p className="font-semibold text-ink">3. College preferences</p>
-                <p className="mt-1 text-xs text-slate-500">Leave a selector empty when you want to see every option.</p>
-              </div>
-
               <CompactMultiSelect
               label="Preferred branches"
               options={branchOptions}
@@ -775,28 +752,10 @@ export default function FePredictorPage() {
               <div className="p-4">
                 <div className="flex items-end justify-between gap-3">
                   <div>
-                    <p className="text-xs font-medium uppercase text-slate-500">Result distribution</p>
+                    <p className="text-xs font-medium uppercase text-slate-500">Results</p>
                     <p className="mt-1 text-sm text-slate-600">{totalResults} college-branch options</p>
                   </div>
                   <p className="text-xs text-slate-500">Page {currentPage}/{totalPages}</p>
-                </div>
-                <div className="mt-3 grid gap-2.5">
-                  {zoneFilters.filter((zone) => zone.value !== "ALL").map((zone) => {
-                    const count = zoneCounts[zone.value] || 0;
-                    const percentage = totalResults ? Math.max(3, Math.round((count / totalResults) * 100)) : 0;
-
-                    return (
-                      <div key={zone.value}>
-                        <div className="flex items-center justify-between gap-3 text-xs">
-                          <span className="font-medium text-slate-700">{zone.label}</span>
-                          <span className="text-slate-500">{count}</span>
-                        </div>
-                        <div className="mt-1 h-1.5 overflow-hidden rounded bg-slate-100">
-                          <div className="h-full bg-action" style={{ width: `${percentage}%` }} />
-                        </div>
-                      </div>
-                    );
-                  })}
                 </div>
                 <button
                   className="focus-ring mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded border border-action bg-white px-4 text-sm font-semibold text-action hover:bg-cyan-50"
@@ -875,32 +834,6 @@ export default function FePredictorPage() {
                 <div className="divide-y divide-line">
                   <div className="grid gap-3 px-4 py-4 lg:grid-cols-[180px_minmax(0,1fr)] lg:items-center md:px-5">
                     <div>
-                      <p className="text-xs font-semibold uppercase text-slate-500">Result grouping</p>
-                      <p className="mt-1 text-xs leading-5 text-slate-500">
-                        {selectedResultMode === "BEST_BRANCH_PER_COLLEGE"
-                          ? "One strongest branch from every college."
-                          : selectedResultMode === "BEST_COLLEGES_FIRST"
-                            ? "Strong colleges, up to two branches each."
-                            : "Every branch, rotated across colleges."}
-                      </p>
-                    </div>
-                    <div className="scrollbar-hidden flex max-w-full gap-2 overflow-x-auto pb-1 lg:flex-wrap lg:overflow-visible" aria-label="Result grouping mode">
-                      {resultModes.map((mode) => (
-                        <FilterButton
-                          key={mode.value}
-                          active={selectedResultMode === mode.value}
-                          onClick={() => {
-                            if (!loading) selectResultMode(mode.value);
-                          }}
-                        >
-                          {mode.label}
-                        </FilterButton>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3 px-4 py-4 lg:grid-cols-[180px_minmax(0,1fr)] lg:items-center md:px-5">
-                    <div>
                       <p className="text-xs font-semibold uppercase text-slate-500">Admission chance</p>
                       <p className="mt-1 text-xs leading-5 text-slate-500">Filter options by their cutoff margin.</p>
                     </div>
@@ -922,7 +855,7 @@ export default function FePredictorPage() {
                   <div className="flex flex-wrap items-center justify-between gap-2 bg-panel px-4 py-3 text-xs text-slate-500 md:px-5">
                     <p>
                       {totalResults
-                        ? `Page ${currentPage} of ${totalPages} | ${getPageRange(currentPage, PAGE_SIZE, totalResults).start}-${getPageRange(currentPage, PAGE_SIZE, totalResults).end} shown`
+                        ? `Target first, then Safe and Ambitious | Page ${currentPage} of ${totalPages} | ${getPageRange(currentPage, PAGE_SIZE, totalResults).start}-${getPageRange(currentPage, PAGE_SIZE, totalResults).end} shown`
                         : "No options in this admission zone."}
                     </p>
                     {seatTypes.length ? (
@@ -967,7 +900,6 @@ export default function FePredictorPage() {
               <ResultCard
                 key={`${result.college}-${result.branch}-${result.seatType}-${index}`}
                 {...result}
-                position={(currentPage - 1) * PAGE_SIZE + index + 1}
               />
             ))}
           </div>

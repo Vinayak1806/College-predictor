@@ -9,7 +9,7 @@ import { ADMIN_SESSION_COOKIE, checkAdminCookieAccess } from "../../lib/adminImp
 
 export default async function AdminPage() {
   const cookieStore = await cookies();
-  const access = checkAdminCookieAccess(cookieStore.get(ADMIN_SESSION_COOKIE)?.value);
+  const access = await checkAdminCookieAccess(cookieStore.get(ADMIN_SESSION_COOKIE)?.value);
   if (!access.allowed) redirect("/admin/login");
 
   return (

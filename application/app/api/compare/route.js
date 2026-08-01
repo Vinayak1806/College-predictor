@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { json } from "../../../lib/http";
 import { prisma } from "../../../lib/prisma";
+import { limitPublicRequest } from "../../../lib/rateLimit";
 import { compareRequestSchema } from "../../../lib/validation";
 
-const openSeatPriority = ["GOPENS", "GOPENH", "LOPENS", "LOPENH"];
+const openSeatPriority = ["GOPENS", "GOPENH", "GOPEN", "LOPENS", "LOPENH", "LOPEN"];
 
 function hasValue(value) {
   return value !== null && value !== undefined && value !== "" && value !== "N/A";
@@ -90,6 +91,9 @@ function calculateTrend(history) {
 }
 
 export async function POST(request) {
+  const limited = await limitPublicRequest(request, "comparison");
+  if (limited) return limited;
+
   const parsed = compareRequestSchema.safeParse(await request.json());
   if (!parsed.success) {
     return NextResponse.json(
@@ -98,7 +102,7 @@ export async function POST(request) {
     );
   }
 
-  const selections = parsed.data.selections;
+  const { admissionRoute, selections } = parsed.data;
   const instituteCodes = [...new Set(selections.map((selection) => selection.instituteCode))];
   const branchCodes = [...new Set(selections.map((selection) => selection.branchCode).filter(Boolean))];
 
@@ -129,6 +133,7 @@ export async function POST(request) {
   const [seatMatrices, cutoffs] = branchCodes.length ? await Promise.all([
     prisma.seatMatrix.findMany({
       where: {
+        admissionRoute,
         needsReview: false,
         instituteCode: { in: instituteCodes },
         branchCode: { in: branchCodes }
@@ -140,7 +145,7 @@ export async function POST(request) {
         needsReview: false,
         closingScore: { not: null },
         dataset: {
-          admissionRoute: "FE",
+          admissionRoute,
           status: { in: ["VERIFIED", "PUBLISHED"] }
         },
         collegeBranch: {
@@ -179,12 +184,14 @@ export async function POST(request) {
           row.collegeBranch.branch.branchCode === selection.branchCode
         )
       : [];
+    if (branch && !matrix && !branchCutoffs.length) return [];
     const history = buildOpenHistory(branchCutoffs);
     const fee = college.fees[0];
     const profile = college.profile;
     const rawOwnership = profile?.ownershipType || matrix?.collegeType || college.collegeType;
 
     return [{
+      admissionRoute,
       instituteCode: college.instituteCode,
       name: college.name,
       slug: college.slug,
@@ -195,9 +202,9 @@ export async function POST(request) {
       autonomous: autonomyValue(college, profile, matrix),
       minority: profile?.minorityStatus || college.minorityType || null,
       officialWebsite: profile?.officialWebsite || college.officialWebsite || null,
-      historicalDemandIndex: profile?.fePreferenceProxy
-        ? Number(profile.fePreferenceProxy)
-        : null,
+      historicalDemandIndex: admissionRoute === "DSE"
+        ? (profile?.dsePreferenceProxy ? Number(profile.dsePreferenceProxy) : null)
+        : (profile?.fePreferenceProxy ? Number(profile.fePreferenceProxy) : null),
       demandBand: profile?.preferenceBand || null,
       totalIntake: profile?.totalIntake || null,
       approvedFee: fee?.totalApprovedFee || profile?.totalApprovedFee || null,
@@ -208,6 +215,8 @@ export async function POST(request) {
         academicYear: matrix?.academicYear || null,
         sanctionedIntake: matrix?.sanctionedIntake || null,
         capSeats: matrix?.capSeats || null,
+        lateralEntrySeats: matrix?.lateralEntrySeats || null,
+        vacantSeats: matrix?.vacantSeats || null,
         ewsSeats: matrix?.ewsSeats || null,
         tfwsSeats: matrix?.tfwsSeats || null
       } : null,
