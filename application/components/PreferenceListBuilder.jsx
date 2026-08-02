@@ -6,6 +6,7 @@ import {
   ArrowDown,
   ArrowUp,
   CheckCircle2,
+  CloudUpload,
   FileDown,
   GripVertical,
   ListFilter,
@@ -14,6 +15,7 @@ import {
   Trash2
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { saveCapListToAccount } from "../lib/accountStorage";
 import {
   addPreferenceItem,
   movePreferenceItem,
@@ -47,6 +49,7 @@ export function PreferenceListBuilder() {
   const [loadingBranches, setLoadingBranches] = useState(false);
   const [notice, setNotice] = useState("");
   const [draggedIndex, setDraggedIndex] = useState(null);
+  const [savingAccount, setSavingAccount] = useState(false);
 
   useEffect(() => {
     setItems(readPreferenceList());
@@ -169,6 +172,25 @@ export function PreferenceListBuilder() {
   function organizeByRisk() {
     setItems((current) => organizePreferenceItems(current));
     setNotice("Choices grouped as Ambitious, Target, Safe and Backup. Choices inside each group kept their previous order.");
+  }
+
+  async function saveToAccount() {
+    setSavingAccount(true);
+    setNotice("");
+    try {
+      const { response, payload } = await saveCapListToAccount(items);
+      if (response?.status === 401) {
+        setNotice("Sign in to save this CAP list to your account. Your browser copy is still safe.");
+      } else if (!response?.ok) {
+        setNotice(payload?.error || "Could not save this CAP list to your account.");
+      } else {
+        setNotice("CAP list saved to your account.");
+      }
+    } catch {
+      setNotice("Account save is unavailable right now. Your browser copy is still safe.");
+    } finally {
+      setSavingAccount(false);
+    }
   }
 
   return (
@@ -364,6 +386,14 @@ export function PreferenceListBuilder() {
 
           <div className="preference-builder-controls grid gap-2 border-t border-line p-4">
             <button
+              className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white disabled:opacity-50"
+              type="button"
+              disabled={!items.length || savingAccount}
+              onClick={saveToAccount}
+            >
+              <CloudUpload aria-hidden="true" size={17} /> {savingAccount ? "Saving..." : "Save to my account"}
+            </button>
+            <button
               className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded border border-action bg-white px-4 text-sm font-semibold text-action disabled:opacity-50"
               type="button"
               disabled={!items.length}
@@ -372,7 +402,7 @@ export function PreferenceListBuilder() {
               <ListFilter aria-hidden="true" size={17} /> Group by admission chance
             </button>
             <button
-              className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white disabled:opacity-50"
+              className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded border border-action bg-white px-4 text-sm font-semibold text-action disabled:opacity-50"
               type="button"
               disabled={!items.length}
               onClick={() => window.print()}

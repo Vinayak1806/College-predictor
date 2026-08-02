@@ -15,8 +15,10 @@ import {
   X
 } from "lucide-react";
 import { ResultCard } from "../../components/ResultCard";
+import { PredictorProfileBar } from "../../components/PredictorProfileBar";
 import { SiteHeader } from "../../components/SiteHeader";
 import { getPageRange, getPaginationItems } from "../../lib/pagination";
+import { readPendingPredictorForm, recordPredictionHistory } from "../../lib/predictorProfiles";
 import { explainSeatType } from "../../lib/seatTypes";
 
 const PAGE_SIZE = 10;
@@ -216,6 +218,11 @@ function CompactMultiSelect({
     return () => document.removeEventListener("pointerdown", closeWhenClickingOutside);
   }, []);
 
+  useEffect(() => {
+    const pendingForm = readPendingPredictorForm("FE");
+    if (pendingForm) setForm({ ...defaultForm, ...pendingForm });
+  }, []);
+
   return (
     <div ref={containerRef} className="relative grid min-w-0 w-full gap-2 text-sm">
       <label className="font-medium" htmlFor={inputId}>{label}</label>
@@ -405,6 +412,20 @@ export default function FePredictorPage() {
     requestAnimationFrame(() => predictorFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
+  function loadSavedProfile(formData) {
+    setForm({ ...defaultForm, ...formData });
+    setResults([]);
+    setHasPredicted(false);
+    setSelectedZone("ALL");
+    setCurrentPage(1);
+    setTotalPages(0);
+    setTotalResults(0);
+    setShowValidation(false);
+    setMessageType("info");
+    setMessage("Profile loaded. Review the details, then press Predict Colleges.");
+    setMobileStep(1);
+  }
+
   function buildStudentInput(page, zone) {
     return {
       percentile: Number(form.percentile),
@@ -466,6 +487,10 @@ export default function FePredictorPage() {
       setZoneCounts(data.zoneCounts || {});
       setHasPredicted(true);
 
+      if (page === 1 && zone === "ALL") {
+        void recordPredictionHistory("FE", form, data.pagination?.totalResults || 0, data.zoneCounts || {});
+      }
+
       if (!data.results?.length) {
         setMessageType("info");
         setMessage("No matching options found. Try removing a branch, city, or institute filter.");
@@ -520,6 +545,7 @@ export default function FePredictorPage() {
 
           <form ref={predictorFormRef} noValidate onSubmit={submitForm} className="mt-4 grid min-w-0 scroll-mt-20 gap-4 rounded-lg border border-line bg-white p-4">
             <p className="text-right text-xs text-slate-500"><span className="font-semibold text-danger">*</span> Required</p>
+            <PredictorProfileBar admissionRoute="FE" formData={form} onLoad={loadSavedProfile} />
             <div className="md:hidden">
               <div className="flex items-center justify-between text-xs font-semibold">
                 <span className="text-action">Step {mobileStep} of 3</span>

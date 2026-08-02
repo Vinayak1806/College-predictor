@@ -16,8 +16,10 @@ import {
   X
 } from "lucide-react";
 import { ResultCard } from "../../components/ResultCard";
+import { PredictorProfileBar } from "../../components/PredictorProfileBar";
 import { SiteHeader } from "../../components/SiteHeader";
 import { getPageRange, getPaginationItems } from "../../lib/pagination";
+import { readPendingPredictorForm, recordPredictionHistory } from "../../lib/predictorProfiles";
 
 const PAGE_SIZE = 10;
 const RESULT_MODE = "BEST_BRANCH_PER_COLLEGE";
@@ -116,6 +118,11 @@ function CompactMultiSelect({
 
     document.addEventListener("pointerdown", closeWhenClickingOutside);
     return () => document.removeEventListener("pointerdown", closeWhenClickingOutside);
+  }, []);
+
+  useEffect(() => {
+    const pendingForm = readPendingPredictorForm("DSE");
+    if (pendingForm) setForm({ ...initialForm, ...pendingForm });
   }, []);
 
   return (
@@ -361,6 +368,20 @@ export default function DsePredictorPage() {
     setMobileStep(step);
   }
 
+  function loadSavedProfile(formData) {
+    setForm({ ...initialForm, ...formData });
+    setResults([]);
+    setPagination(null);
+    setZoneCounts({});
+    setSeatTypes([]);
+    setAnalysis(null);
+    setHasPredicted(false);
+    setZone("ALL");
+    setShowValidation(false);
+    setError("");
+    setMobileStep(1);
+  }
+
   async function predict(page = 1, nextZone = zone) {
     setShowValidation(true);
     if (!canPredict) {
@@ -405,6 +426,9 @@ export default function DsePredictorPage() {
       setSeatTypes(data.seatTypes || []);
       setAnalysis(data.analysis || null);
       setHasPredicted(true);
+      if (page === 1 && nextZone === "ALL") {
+        void recordPredictionHistory("DSE", form, data.pagination?.totalResults || 0, data.zoneCounts || {});
+      }
       requestAnimationFrame(() => resultsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
     } catch (requestError) {
       setError(requestError.message);
@@ -455,6 +479,7 @@ export default function DsePredictorPage() {
             }}
           >
             <p className="text-right text-xs text-slate-500"><RequiredMark /> Required</p>
+            <PredictorProfileBar admissionRoute="DSE" formData={form} onLoad={loadSavedProfile} />
 
             <div className="md:hidden">
               <div className="flex items-center justify-between text-xs font-medium text-slate-500">

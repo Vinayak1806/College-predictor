@@ -35,7 +35,7 @@ export default function AdminLoginPage() {
 
   return (
     <>
-      <SiteHeader />
+      <SiteHeader showStudentAccount={false} />
       <main className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl place-items-center px-4 py-10">
         <section className="w-full max-w-md overflow-hidden rounded-lg border border-line bg-white">
           <div className="border-b border-line px-5 py-5">

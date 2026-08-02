@@ -4,6 +4,7 @@ import Link from "next/link";
 import { AlertTriangle, ArrowUpRight, BookmarkCheck, Building2, Info, MapPin, Scale } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { saveCapListToAccount, saveComparisonToAccount } from "../lib/accountStorage";
 import {
   addComparisonItem,
   createComparisonItemFromResult,
@@ -141,19 +142,34 @@ export function ResultCard(props) {
     hasValue(props.latestFee) ? ["Approved annual fee", `${formatMoney(props.latestFee)}${props.latestFeeYear ? ` (${props.latestFeeYear})` : ""}`] : null
   ].filter(Boolean);
 
-  function addToCapList() {
+  async function addToCapList() {
     const item = createPreferenceItemFromResult(props);
     const result = addPreferenceItem(readPreferenceList(), item);
+    const nextItems = result.items;
 
     if (result.added) {
-      writePreferenceList(result.items);
-      setCapListStatus("Added to CAP List");
-    } else {
-      setCapListStatus("Already in CAP List");
+      writePreferenceList(nextItems);
+    }
+
+    setCapListStatus(result.added ? "Added to CAP List" : "Already in CAP List");
+    try {
+      const { response } = await saveCapListToAccount(nextItems);
+      if (response?.ok) setCapListStatus("Saved to your account");
+      else if (response?.status !== 401) setCapListStatus("Saved on this device");
+    } catch {
+      setCapListStatus("Saved on this device");
     }
   }
 
-  function addToCompare() {
+  async function syncComparison(items, route) {
+    try {
+      await saveComparisonToAccount(items, route);
+    } catch {
+      // The browser copy remains available when account sync is unavailable.
+    }
+  }
+
+  async function addToCompare() {
     const comparisonHref = `/compare?route=${props.admissionRoute === "DSE" ? "DSE" : "FE"}`;
     if (compareStatus === "View comparison") {
       router.push(comparisonHref);
@@ -165,8 +181,10 @@ export function ResultCard(props) {
 
     if (result.added) {
       writeComparisonList(result.items);
+      await syncComparison(result.items, props.admissionRoute === "DSE" ? "DSE" : "FE");
       setCompareStatus("View comparison");
     } else if (result.reason === "DUPLICATE") {
+      await syncComparison(result.items, props.admissionRoute === "DSE" ? "DSE" : "FE");
       setCompareStatus("View comparison");
     } else {
       router.push(comparisonHref);

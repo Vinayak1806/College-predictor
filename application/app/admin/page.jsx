@@ -14,7 +14,7 @@ export default async function AdminPage() {
 
   return (
     <>
-      <SiteHeader />
+      <SiteHeader showStudentAccount={false} />
       <main className="mx-auto max-w-7xl px-4 py-6">
         <div className="max-w-3xl border-l-4 border-action pl-4">
           <p className="text-xs font-semibold uppercase text-action">Administration</p>

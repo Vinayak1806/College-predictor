@@ -1,30 +1,15 @@
 import { headers } from "next/headers";
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Bookmark, GitCompareArrows, ListOrdered } from "lucide-react";
+import { AccountSavedData } from "../../components/AccountSavedData";
 import { SignOutButton } from "../../components/SignOutButton";
 import { SiteHeader } from "../../components/SiteHeader";
 import { getStudentSession } from "../../lib/studentAuth";
-import { prisma } from "../../lib/prisma";
 
 export const metadata = { title: "My Account | CAP Predictor" };
 
 export default async function AccountPage() {
   const session = await getStudentSession(await headers());
   if (!session?.user?.id) redirect("/login?callbackURL=/account");
-
-  const userId = Number(session.user.id);
-  const [shortlists, preferenceLists, comparisons] = await Promise.all([
-    prisma.shortlist.count({ where: { userId } }),
-    prisma.preferenceList.count({ where: { userId } }),
-    prisma.savedComparison.count({ where: { userId } })
-  ]);
-
-  const tools = [
-    { label: "Saved colleges", value: shortlists, href: "/colleges", icon: Bookmark },
-    { label: "Saved CAP lists", value: preferenceLists, href: "/preference-list", icon: ListOrdered },
-    { label: "Saved comparisons", value: comparisons, href: "/compare", icon: GitCompareArrows }
-  ];
 
   return (
     <>
@@ -39,19 +24,7 @@ export default async function AccountPage() {
           <SignOutButton />
         </div>
 
-        <section className="mt-6 grid gap-4 sm:grid-cols-3" aria-label="Saved admission tools">
-          {tools.map(({ label, value, href, icon: Icon }) => (
-            <Link key={label} href={href} className="focus-ring rounded border border-line bg-white p-5 hover:border-action">
-              <Icon aria-hidden="true" className="text-action" size={20} />
-              <span className="mt-5 block text-3xl font-semibold text-ink">{value}</span>
-              <span className="mt-1 block text-sm text-slate-600">{label}</span>
-            </Link>
-          ))}
-        </section>
-
-        <div className="mt-6 border-l-4 border-action bg-cyan-50 px-4 py-3 text-sm leading-6 text-slate-700">
-          Guest predictions still stay in your browser. Saved records created after sign-in are connected only to this account.
-        </div>
+        <AccountSavedData />
       </main>
     </>
   );

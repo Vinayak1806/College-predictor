@@ -224,19 +224,21 @@ model SeatMatrix {
 }
 
 model User {
-  id               Int               @id @default(autoincrement())
-  name             String
-  email            String            @unique
-  emailVerified    Boolean           @default(false) @map("email_verified")
-  image            String?
-  role             String            @default("STUDENT")
-  createdAt        DateTime          @default(now()) @map("created_at")
-  updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at")
-  sessions         Session[]
-  accounts         Account[]
-  shortlists       Shortlist[]
-  preferenceLists  PreferenceList[]
-  savedComparisons SavedComparison[]
+  id                Int                 @id @default(autoincrement())
+  name              String
+  email             String              @unique
+  emailVerified     Boolean             @default(false) @map("email_verified")
+  image             String?
+  role              String              @default("STUDENT")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @default(now()) @updatedAt @map("updated_at")
+  sessions          Session[]
+  accounts          Account[]
+  shortlists        Shortlist[]
+  preferenceLists   PreferenceList[]
+  savedComparisons  SavedComparison[]
+  studentProfiles   StudentProfile[]
+  predictionHistory PredictionHistory[]
 
   @@map("users")
 }
@@ -349,6 +351,35 @@ model SavedComparison {
 
   @@index([userId, updatedAt])
   @@map("saved_comparisons")
+}
+
+model StudentProfile {
+  id             BigInt   @id @default(autoincrement())
+  userId         Int      @map("user_id")
+  name           String
+  admissionRoute String   @map("admission_route")
+  formData       Json     @map("form_data")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, admissionRoute, name])
+  @@index([userId, admissionRoute, updatedAt])
+  @@map("student_profiles")
+}
+
+model PredictionHistory {
+  id             BigInt   @id @default(autoincrement())
+  userId         Int      @map("user_id")
+  admissionRoute String   @map("admission_route")
+  formData       Json     @map("form_data")
+  resultCount    Int      @default(0) @map("result_count")
+  zoneCounts     Json?    @map("zone_counts")
+  createdAt      DateTime @default(now()) @map("created_at")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, admissionRoute, createdAt])
+  @@map("prediction_history")
 }
 
 model AdminImport {

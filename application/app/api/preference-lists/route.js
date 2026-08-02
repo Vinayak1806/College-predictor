@@ -4,10 +4,24 @@ import { prisma } from "../../../lib/prisma";
 import { requireStudent } from "../../../lib/studentAuth";
 
 const itemSchema = z.object({
-  collegeBranchId: z.coerce.string().min(1).max(30),
+  collegeBranchId: z.coerce.string().min(1).max(80),
+  id: z.string().trim().min(1).max(80),
+  instituteCode: z.string().trim().min(1).max(10),
+  collegeSlug: z.string().trim().min(1).max(300),
+  college: z.string().trim().min(1).max(300),
+  branchCode: z.string().trim().min(1).max(30),
+  branch: z.string().trim().min(1).max(200),
+  city: z.string().trim().max(100).optional().default(""),
   zone: z.enum(["AMBITIOUS", "TARGET", "SAFE", "BACKUP"]),
-  order: z.number().int().min(1).max(200)
-});
+  order: z.number().int().min(1).max(200),
+  cutoff: z.number().finite().nullable().optional().default(null),
+  margin: z.number().finite().nullable().optional().default(null),
+  seatType: z.string().trim().max(30).optional().default(""),
+  year: z.string().trim().max(20).optional().default(""),
+  round: z.number().int().min(1).max(10).nullable().optional().default(null),
+  source: z.string().trim().max(30).optional().default("MANUAL"),
+  addedAt: z.string().trim().max(40).optional().default("")
+}).strict();
 
 const listSchema = z.object({
   name: z.string().trim().min(1).max(80),
@@ -56,6 +70,31 @@ export async function POST(request) {
     data: { userId: student.userId, name: parsed.data.name, items: parsed.data.items }
   });
   return json(list, { status: 201 });
+}
+
+export async function PUT(request) {
+  const student = await requireStudent(request);
+  if (!student) return unauthorized();
+
+  const parsed = listSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return json({ error: "The CAP list is invalid.", details: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const existing = await prisma.preferenceList.findFirst({
+    where: { userId: student.userId, name: parsed.data.name },
+    select: { id: true }
+  });
+  const list = existing
+    ? await prisma.preferenceList.update({
+        where: { id: existing.id },
+        data: { items: parsed.data.items }
+      })
+    : await prisma.preferenceList.create({
+        data: { userId: student.userId, name: parsed.data.name, items: parsed.data.items }
+      });
+
+  return json({ data: list }, { status: existing ? 200 : 201 });
 }
 
 export async function PATCH(request) {

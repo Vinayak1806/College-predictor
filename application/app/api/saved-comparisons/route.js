@@ -7,8 +7,12 @@ const comparisonSchema = z.object({
   name: z.string().trim().min(1).max(80),
   items: z.array(z.object({
     instituteCode: z.string().trim().min(1).max(10),
-    branchCode: z.string().trim().min(1).max(30),
-    admissionRoute: z.enum(["FE", "DSE"])
+    college: z.string().trim().min(1).max(300),
+    collegeSlug: z.string().trim().min(1).max(300),
+    branchCode: z.string().trim().max(30),
+    branch: z.string().trim().max(200),
+    admissionRoute: z.enum(["FE", "DSE"]),
+    prediction: z.record(z.unknown()).nullable().optional().default(null)
   }).strict()).min(2).max(3)
 }).strict();
 
@@ -41,6 +45,31 @@ export async function POST(request) {
     data: { userId: student.userId, name: parsed.data.name, items: parsed.data.items }
   });
   return json(comparison, { status: 201 });
+}
+
+export async function PUT(request) {
+  const student = await requireStudent(request);
+  if (!student) return unauthorized();
+
+  const parsed = comparisonSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return json({ error: "The comparison is invalid.", details: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const existing = await prisma.savedComparison.findFirst({
+    where: { userId: student.userId, name: parsed.data.name },
+    select: { id: true }
+  });
+  const comparison = existing
+    ? await prisma.savedComparison.update({
+        where: { id: existing.id },
+        data: { items: parsed.data.items }
+      })
+    : await prisma.savedComparison.create({
+        data: { userId: student.userId, name: parsed.data.name, items: parsed.data.items }
+      });
+
+  return json({ data: comparison }, { status: existing ? 200 : 201 });
 }
 
 export async function DELETE(request) {

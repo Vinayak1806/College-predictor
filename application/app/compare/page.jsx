@@ -5,6 +5,7 @@ import {
   ArrowRight,
   BarChart3,
   Building2,
+  CloudUpload,
   ExternalLink,
   GitCompareArrows,
   MapPin,
@@ -17,6 +18,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CollegeAutocomplete } from "../../components/CollegeAutocomplete";
 import { SiteHeader } from "../../components/SiteHeader";
+import { saveComparisonToAccount } from "../../lib/accountStorage";
 import {
   readComparisonList,
   writeComparisonList
@@ -241,6 +243,7 @@ export default function ComparePage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [hydrated, setHydrated] = useState(false);
+  const [savingAccount, setSavingAccount] = useState(false);
 
   async function getBranches(slug, route) {
     const response = await fetch(`/api/colleges/${encodeURIComponent(slug)}/branches?route=${route}`);
@@ -426,6 +429,32 @@ export default function ComparePage() {
     }
   }
 
+  async function saveToAccount() {
+    const selectedCount = slots.filter((slot) => slot.college).length;
+    if (selectedCount < 2) {
+      setMessage("Select at least two colleges before saving the comparison.");
+      return;
+    }
+
+    persist(slots);
+    setSavingAccount(true);
+    setMessage("");
+    try {
+      const { response, payload } = await saveComparisonToAccount(readComparisonList(), admissionRoute);
+      if (response?.status === 401) {
+        setMessage("Sign in to save this comparison to your account. It is still saved in this browser.");
+      } else if (!response?.ok) {
+        setMessage(payload?.error || "Could not save this comparison to your account.");
+      } else {
+        setMessage("Comparison saved to your account.");
+      }
+    } catch {
+      setMessage("Account save is unavailable right now. This comparison is still saved in your browser.");
+    } finally {
+      setSavingAccount(false);
+    }
+  }
+
   return (
     <>
       <SiteHeader />
@@ -532,6 +561,14 @@ export default function ComparePage() {
             >
               {loading ? <RefreshCw aria-hidden="true" className="animate-spin" size={17} /> : <GitCompareArrows aria-hidden="true" size={18} />}
               {loading ? "Comparing..." : "Compare choices"}
+            </button>
+            <button
+              className="focus-ring inline-flex min-h-11 items-center gap-2 rounded border border-action bg-white px-4 text-sm font-semibold text-action disabled:cursor-not-allowed disabled:opacity-50"
+              type="button"
+              disabled={!hydrated || savingAccount || slots.filter((slot) => slot.college).length < 2}
+              onClick={saveToAccount}
+            >
+              <CloudUpload aria-hidden="true" size={17} /> {savingAccount ? "Saving..." : "Save to my account"}
             </button>
             <p className="text-xs text-slate-500">{admissionRoute} historical information supports research; it does not guarantee allotment.</p>
           </div>
