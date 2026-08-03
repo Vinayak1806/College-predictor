@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { CollegeBranchExplorer } from "../../../components/CollegeBranchExplorer";
 import { SiteHeader } from "../../../components/SiteHeader";
+import { SharePageButton } from "../../../components/SharePageButton";
 import { explainSeatType } from "../../../lib/seatTypes";
 import { prisma } from "../../../lib/prisma";
+import { absoluteUrl, SITE_NAME } from "../../../lib/site";
 
 const zoneClass = {
   SAFE: "border-success text-success",
@@ -18,6 +21,50 @@ const zoneText = {
   AMBITIOUS: "Ambitious",
   HIGHLY_AMBITIOUS: "Highly Ambitious"
 };
+
+const findCurrentCollege = cache((slug) => prisma.college.findFirst({
+  where: {
+    slug,
+    profile: { is: { currentCap2025: "Yes" } }
+  },
+  include: {
+    city: true,
+    university: true,
+    collegeBranches: {
+      include: { branch: true }
+    }
+  }
+}));
+
+export async function generateMetadata({ params }) {
+  const { slug } = await params;
+  const college = await findCurrentCollege(slug);
+
+  if (!college) {
+    return {
+      title: "College not found",
+      robots: { index: false, follow: false }
+    };
+  }
+
+  const location = college.city?.name ? ` in ${college.city.name}` : " in Maharashtra";
+  const title = `${college.name} Cutoffs, Fees & Branches`;
+  const description = `Explore FE and DSE CAP cutoffs, available engineering branches, intake, fees and university details for ${college.name}${location}. Institute code ${college.instituteCode}.`;
+  const canonical = absoluteUrl(`/colleges/${college.slug}`);
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      type: "website",
+      siteName: SITE_NAME,
+      title,
+      description,
+      url: canonical
+    }
+  };
+}
 
 function hasValue(value) {
   return value !== null && value !== undefined && value !== "" && value !== "N/A";
@@ -133,21 +180,7 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
   const admissionRoute = query?.route === "DSE" ? "DSE" : "FE";
   const predictorHref = admissionRoute === "DSE" ? "/dse-predictor" : "/fe-predictor";
 
-  const college = await prisma.college.findFirst({
-    where: {
-      slug,
-      profile: { is: { currentCap2025: "Yes" } }
-    },
-    include: {
-      city: true,
-      university: true,
-      collegeBranches: {
-        include: {
-          branch: true
-        }
-      }
-    }
-  });
+  const college = await findCurrentCollege(slug);
 
   if (!college) {
     notFound();
@@ -263,6 +296,24 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
   const approvedFee = latestFee?.totalApprovedFee ?? profile?.totalApprovedFee ?? null;
   const approvedFeeYear = latestFee?.academicYear || profile?.feeYear || null;
   const officialWebsite = profile?.officialWebsite || college.officialWebsite;
+  const canonicalUrl = absoluteUrl(`/colleges/${college.slug}`);
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "CollegeOrUniversity",
+    "@id": canonicalUrl,
+    name: college.name,
+    url: canonicalUrl,
+    identifier: college.instituteCode,
+    address: college.city?.name
+      ? {
+          "@type": "PostalAddress",
+          addressLocality: college.city.name,
+          addressRegion: "Maharashtra",
+          addressCountry: "IN"
+        }
+      : undefined,
+    sameAs: officialWebsite || undefined
+  };
   const isAutonomous =
     profileIsAutonomous(profile?.autonomyStatus) ||
     seatMatrices.some((matrix) => matrix.autonomous) ||
@@ -280,18 +331,56 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
 
   if (!approvedFee) missingData.push("Approved fee information is not available for this institute.");
 
+  const similarCandidates = await prisma.college.findMany({
+    where: {
+      id: { not: college.id },
+      profile: { is: { currentCap2025: "Yes" } },
+      OR: [
+        ...(college.cityId ? [{ cityId: college.cityId }] : []),
+        ...(college.universityId ? [{ universityId: college.universityId }] : [])
+      ]
+    },
+    include: { city: true, university: true, profile: true },
+    take: 12
+  });
+  const similarColleges = similarCandidates
+    .sort((a, b) => Number(b.profile?.fePreferenceProxy || 0) - Number(a.profile?.fePreferenceProxy || 0))
+    .slice(0, 4);
+  const breadcrumbData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: "Explore colleges", item: absoluteUrl("/colleges") },
+      { "@type": "ListItem", position: 3, name: college.name, item: canonicalUrl }
+    ]
+  };
+
   return (
     <>
       <SiteHeader />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData).replace(/</g, "\\u003c")
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbData).replace(/</g, "\\u003c")
+        }}
+      />
       <main className="mx-auto max-w-7xl px-4 py-8">
-        <div className="flex flex-wrap items-center gap-4 text-sm font-medium">
-          <Link className="text-action underline" href={`/colleges?route=${admissionRoute}`}>
-            Back to {admissionRoute} colleges
-          </Link>
-          <Link className="text-slate-600 underline" href={predictorHref}>
-            Open {admissionRoute} predictor
-          </Link>
-        </div>
+        <nav aria-label="Breadcrumb" className="text-sm text-slate-600">
+          <ol className="flex flex-wrap items-center gap-2">
+            <li><Link className="hover:text-action hover:underline" href="/">Home</Link></li>
+            <li aria-hidden="true">/</li>
+            <li><Link className="hover:text-action hover:underline" href={`/colleges?route=${admissionRoute}`}>Colleges</Link></li>
+            <li aria-hidden="true">/</li>
+            <li className="max-w-full truncate font-medium text-ink" aria-current="page">{college.name}</li>
+          </ol>
+        </nav>
 
         <header className="mt-4 border-y border-line bg-white px-4 py-5 sm:px-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -305,16 +394,22 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
                 {[college.city?.name, college.university?.name].filter(Boolean).join(" | ")}
               </p>
             </div>
-            {officialWebsite ? (
-              <a
-                className="focus-ring inline-flex min-h-11 items-center rounded bg-action px-4 text-sm font-semibold text-white"
-                href={officialWebsite}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Official website
-              </a>
-            ) : null}
+            <div className="flex flex-wrap gap-2">
+              <SharePageButton title={`${college.name} cutoffs and branches`} />
+              <Link className="focus-ring inline-flex min-h-11 items-center rounded border border-action px-4 text-sm font-semibold text-action" href={predictorHref}>
+                Open {admissionRoute} predictor
+              </Link>
+              {officialWebsite ? (
+                <a
+                  className="focus-ring inline-flex min-h-11 items-center rounded bg-action px-4 text-sm font-semibold text-white"
+                  href={officialWebsite}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Official website
+                </a>
+              ) : null}
+            </div>
           </div>
         </header>
 
@@ -455,6 +550,22 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
                   Official approved fee source
                 </a>
               ) : null}
+            </div>
+          </section>
+        ) : null}
+
+        {similarColleges.length ? (
+          <section className="mt-8 border-t border-line pt-6">
+            <h2 className="text-lg font-semibold text-ink">Similar colleges to explore</h2>
+            <p className="mt-1 text-sm text-slate-600">Current CAP institutes in the same city or university area, ordered by historical admission demand where available.</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {similarColleges.map((item) => (
+                <Link key={item.id.toString()} className="focus-ring rounded border border-line bg-white p-4 hover:border-action" href={`/colleges/${item.slug}?route=${admissionRoute}`}>
+                  <span className="block text-xs font-semibold uppercase text-slate-500">Institute {item.instituteCode}</span>
+                  <span className="mt-2 block text-sm font-semibold text-ink">{item.name}</span>
+                  <span className="mt-2 block text-xs text-slate-600">{[item.city?.name, item.university?.name].filter(Boolean).join(" | ")}</span>
+                </Link>
+              ))}
             </div>
           </section>
         ) : null}

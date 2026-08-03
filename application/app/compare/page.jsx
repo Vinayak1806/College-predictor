@@ -19,6 +19,7 @@ import { useEffect, useState } from "react";
 import { CollegeAutocomplete } from "../../components/CollegeAutocomplete";
 import { SiteHeader } from "../../components/SiteHeader";
 import { saveComparisonToAccount } from "../../lib/accountStorage";
+import { trackAnalyticsEvent } from "../../lib/analytics";
 import {
   readComparisonList,
   writeComparisonList
@@ -420,6 +421,10 @@ export default function ComparePage() {
       }));
       setResults(withPredictions);
       persist(slots);
+      trackAnalyticsEvent("comparison_completed", {
+        admission_route: admissionRoute,
+        option_count: withPredictions.length
+      });
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
       setMessage(error.message);

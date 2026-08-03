@@ -3,7 +3,10 @@ import { SiteHeader } from "../../components/SiteHeader";
 import { GoogleSignInButton } from "../../components/GoogleSignInButton";
 import { studentAuthConfigured } from "../../lib/auth";
 
-export const metadata = { title: "Student Login | CAP Predictor" };
+export const metadata = {
+  title: "Student Login",
+  robots: { index: false, follow: false }
+};
 
 function safeCallback(value) {
   return value?.startsWith("/") && !value.startsWith("//") ? value : "/account";

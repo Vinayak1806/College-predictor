@@ -8,6 +8,7 @@ import {
   normalizeCollegeName
 } from "../../../../lib/dataQuality";
 import { prisma } from "../../../../lib/prisma";
+import { createRequestId, logServerError, publicServerError } from "../../../../lib/observability";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +37,7 @@ export async function GET(request) {
   if (!access.allowed) return NextResponse.json({ error: access.error }, { status: access.status });
 
   try {
-    const [colleges, cities, latestMatrices, cutoffReviewCount, cutoffReviewRows, datasetCount, publishedCutoffCodes] = await Promise.all([
+    const [colleges, cities, latestMatrices, latestDseMatrices, cutoffReviewCount, cutoffReviewRows, datasetCount, publishedCutoffCodes] = await Promise.all([
       prisma.college.findMany({
         where: { profile: { is: { currentCap2025: "Yes" } } },
         select: {
@@ -44,11 +45,13 @@ export async function GET(request) {
           name: true,
           city: { select: { name: true, district: true, region: true } },
           university: { select: { name: true } },
+          officialWebsite: true,
           profile: {
             select: {
               totalApprovedFee: true,
               dataQualityNote: true,
-              ownershipType: true
+              ownershipType: true,
+              officialWebsite: true
             }
           },
           fees: {
@@ -79,6 +82,14 @@ export async function GET(request) {
           capSeats: true,
           reviewReason: true
         }
+      }),
+      prisma.seatMatrix.findMany({
+        where: {
+          academicYear: "2025-26",
+          admissionRoute: "DSE",
+          needsReview: false
+        },
+        select: { instituteCode: true }
       }),
       prisma.cutoff.count({ where: { needsReview: true } }),
       prisma.cutoff.findMany({
@@ -112,6 +123,7 @@ export async function GET(request) {
 
     const activeCodes = new Set(colleges.map((college) => college.instituteCode));
     const matrixCodes = new Set(latestMatrices.map((matrix) => matrix.instituteCode));
+    const dseMatrixCodes = new Set(latestDseMatrices.map((matrix) => matrix.instituteCode));
     const detailedMatrixCodes = new Set(
       latestMatrices
         .filter((matrix) => matrix.capSeats !== null)
@@ -143,6 +155,12 @@ export async function GET(request) {
     const missingSeatMatrix = colleges
       .filter((college) => !matrixCodes.has(college.instituteCode))
       .map((college) => record(college, "No verified 2025-26 FE seat matrix"));
+    const missingDseSeatMatrix = colleges
+      .filter((college) => !dseMatrixCodes.has(college.instituteCode))
+      .map((college) => record(college, "No verified 2025-26 DSE seat matrix"));
+    const missingOfficialWebsites = colleges
+      .filter((college) => !college.officialWebsite && !college.profile?.officialWebsite)
+      .map((college) => record(college, "Verify the institute-owned website before importing"));
     const intakeOnlySeatMatrix = colleges
       .filter((college) =>
         matrixCodes.has(college.instituteCode) &&
@@ -250,6 +268,13 @@ export async function GET(request) {
         records: missingSeatMatrix
       }),
       issue({
+        id: "missing-dse-seat-matrix",
+        severity: "WARNING",
+        title: "Latest DSE seat matrix is missing",
+        description: "Lateral-entry and vacancy information cannot be shown for these current institutes.",
+        records: missingDseSeatMatrix
+      }),
+      issue({
         id: "intake-only-seat-matrix",
         severity: "WARNING",
         title: "Detailed CAP seat distribution is unavailable",
@@ -276,6 +301,13 @@ export async function GET(request) {
         title: "Institute or university fee notice is needed",
         description: "Government, university and deemed-university fees must be verified from their own official notices.",
         records: missingInstituteFees
+      }),
+      issue({
+        id: "missing-official-website",
+        severity: "INFO",
+        title: "Verified official college website is missing",
+        description: "Only institute-owned domains should be imported; search-directory and aggregator links are not accepted.",
+        records: missingOfficialWebsites
       })
     ];
 
@@ -313,10 +345,17 @@ export async function GET(request) {
         },
         {
           id: "seat-matrix",
-          label: "2025-26 branch intake",
+          label: "2025-26 FE branch intake",
           covered: colleges.filter((college) => matrixCodes.has(college.instituteCode)).length,
           total: colleges.length,
           percent: coveragePercent(colleges.filter((college) => matrixCodes.has(college.instituteCode)).length, colleges.length)
+        },
+        {
+          id: "dse-seat-matrix",
+          label: "2025-26 DSE seats",
+          covered: colleges.filter((college) => dseMatrixCodes.has(college.instituteCode)).length,
+          total: colleges.length,
+          percent: coveragePercent(colleges.filter((college) => dseMatrixCodes.has(college.instituteCode)).length, colleges.length)
         },
         {
           id: "fees",
@@ -335,8 +374,10 @@ export async function GET(request) {
       }
     });
   } catch (error) {
+    const requestId = createRequestId();
+    logServerError("admin.data-quality", error, { requestId });
     return NextResponse.json(
-      { error: "Could not generate the data-quality report.", detail: error.message },
+      publicServerError("Could not generate the data-quality report.", requestId),
       { status: 500 }
     );
   }

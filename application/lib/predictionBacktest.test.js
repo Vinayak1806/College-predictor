@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   buildAccuracyBreakdowns,
+  evaluateDseBacktestGroup,
   evaluateBacktestGroup,
   summarizeBacktest
 } from "./predictionBacktest.js";
@@ -50,6 +51,31 @@ test("backtest holds out the target year and compares admission zones", () => {
   assert.equal(evaluation.actualZone, "TARGET");
   assert.equal(evaluation.zoneDistance, 0);
   assert.equal(evaluation.absoluteError, 2.33);
+});
+
+test("DSE backtest applies category and gender eligibility", () => {
+  const dseProfile = {
+    id: "dse-obc-female",
+    label: "DSE OBC female",
+    diplomaPercentage: 89.2,
+    category: "OBC",
+    gender: "FEMALE",
+    ews: false,
+    pwd: false,
+    defence: false
+  };
+  const dseRow = (year, cutoff, code, category, gender) => ({
+    ...row(year, 2, cutoff, code),
+    seatType: { code, category, gender, specialType: null }
+  });
+  const evaluation = evaluateDseBacktestGroup([
+    dseRow("2024-25", 88, "LOBC", "OBC", "LADIES"),
+    dseRow("2025-26", 89, "LOBC", "OBC", "LADIES"),
+    dseRow("2025-26", 70, "GST", "ST", "GENERAL")
+  ], dseProfile, ["2024-25"], "2025-26");
+
+  assert.equal(evaluation.targetSeatType, "LOBC");
+  assert.equal(evaluation.actualCutoff, 89);
 });
 
 test("backtest ignores groups without every training year", () => {

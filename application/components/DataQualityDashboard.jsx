@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   Database,
+  Download,
   RefreshCw,
   Search,
   ShieldAlert
@@ -70,6 +71,30 @@ export function DataQualityDashboard() {
       .filter((issue) => !search || issue.records.length > 0 || issue.title.toLowerCase().includes(search));
   }, [query, report, severity]);
 
+  function downloadIssueCsv() {
+    const rows = [["severity", "issue", "institute_code", "college_or_record", "city", "problem"]];
+    for (const qualityIssue of visibleIssues) {
+      for (const affectedRecord of qualityIssue.records) {
+        rows.push([
+          qualityIssue.severity,
+          qualityIssue.title,
+          affectedRecord.instituteCode || "",
+          affectedRecord.name || "",
+          affectedRecord.city || "",
+          affectedRecord.value || ""
+        ]);
+      }
+    }
+
+    const csv = rows.map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `cap-data-quality-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   if (loading && !report) {
     return (
       <div className="rounded-lg border border-line bg-white p-10 text-center">
@@ -108,15 +133,25 @@ export function DataQualityDashboard() {
               {report.summary.activeColleges} current CAP institutes checked against published records.
             </p>
           </div>
-          <button
-            className="focus-ring flex min-h-11 items-center gap-2 rounded border border-line bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-panel disabled:opacity-50"
-            type="button"
-            disabled={loading}
-            onClick={loadReport}
-          >
-            <RefreshCw aria-hidden="true" className={loading ? "animate-spin" : ""} size={17} />
-            Refresh audit
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              className="focus-ring flex min-h-11 items-center gap-2 rounded border border-line bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-panel disabled:opacity-50"
+              type="button"
+              disabled={!visibleIssues.length}
+              onClick={downloadIssueCsv}
+            >
+              <Download aria-hidden="true" size={17} /> Download issue CSV
+            </button>
+            <button
+              className="focus-ring flex min-h-11 items-center gap-2 rounded border border-line bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-panel disabled:opacity-50"
+              type="button"
+              disabled={loading}
+              onClick={loadReport}
+            >
+              <RefreshCw aria-hidden="true" className={loading ? "animate-spin" : ""} size={17} />
+              Refresh audit
+            </button>
+          </div>
         </div>
 
         <dl className="grid grid-cols-2 border-y border-line bg-panel lg:grid-cols-4">

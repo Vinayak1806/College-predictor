@@ -8,7 +8,9 @@ import { prisma } from "../../lib/prisma";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Explore Maharashtra Engineering Colleges"
+  title: "Explore Maharashtra Engineering Colleges",
+  description: "Search current Maharashtra engineering colleges by name, institute code, city or university, then review branches, cutoffs, seats and fees.",
+  alternates: { canonical: "/colleges" }
 };
 
 function normalizeOwnership(value) {

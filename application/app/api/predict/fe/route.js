@@ -9,6 +9,9 @@ import { analyzeCutoffHistory, calculateStrengthIndex, compareUsefulResults, exp
 import { applyResultMode } from "../../../../lib/resultDiversity";
 import { limitPublicRequest } from "../../../../lib/rateLimit";
 import { fePredictSchema } from "../../../../lib/validation";
+import { CutoffQueryTooLargeError, findCutoffsInBatches } from "../../../../lib/cutoffQuery";
+import { createRequestId, logServerError, publicServerError } from "../../../../lib/observability";
+import { readResponseCache, responseCacheKey, writeResponseCache } from "../../../../lib/responseCache";
 
 function normalizeOwnership(value) {
   if (!value) return null;
@@ -73,10 +76,7 @@ function confidenceWarning(analysis, input) {
   return null;
 }
 
-export async function POST(request) {
-  const limited = await limitPublicRequest(request, "prediction");
-  if (limited) return limited;
-
+async function createPrediction(request) {
   let body;
   try {
     body = await request.json();
@@ -107,7 +107,7 @@ export async function POST(request) {
   ]);
   const studentScore = input.percentile;
 
-  const rows = await prisma.cutoff.findMany({
+  const rows = await findCutoffsInBatches({
     where: {
       needsReview: false,
       closingScore: {
@@ -147,9 +147,7 @@ export async function POST(request) {
           branch: true
         }
       }
-    },
-    orderBy: { closingScore: "desc" },
-    take: 4000
+    }
   });
 
   // Home/Other University eligibility depends on each result college, so it is
@@ -292,4 +290,42 @@ export async function POST(request) {
       selectedRound: input.capRound || "Latest comparable round"
     }
   });
+}
+
+export async function POST(request) {
+  const limited = await limitPublicRequest(request, "prediction");
+  if (limited) return limited;
+
+  const cacheKey = responseCacheKey("prediction:FE", await request.clone().text());
+  const cached = readResponseCache(cacheKey);
+  if (cached) {
+    const response = NextResponse.json(cached);
+    response.headers.set("X-Prediction-Cache", "HIT");
+    return response;
+  }
+
+  try {
+    const response = await createPrediction(request);
+    if (response.ok) {
+      const payload = await response.clone().json();
+      writeResponseCache(cacheKey, payload);
+      response.headers.set("X-Prediction-Cache", "MISS");
+    }
+    return response;
+  } catch (error) {
+    const requestId = createRequestId();
+    logServerError("predict.fe", error, { requestId });
+
+    if (error instanceof CutoffQueryTooLargeError) {
+      return NextResponse.json(
+        publicServerError("This search is too broad. Select a branch, city, year, or CAP round and try again.", requestId),
+        { status: 422 }
+      );
+    }
+
+    return NextResponse.json(
+      publicServerError("The FE prediction could not be completed. Please try again.", requestId),
+      { status: 500 }
+    );
+  }
 }

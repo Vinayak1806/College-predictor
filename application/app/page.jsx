@@ -18,6 +18,11 @@ import { getPublicStats } from "../lib/publicStats";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  alternates: { canonical: "/" },
+  openGraph: { url: "/" }
+};
+
 const steps = [
   { icon: GraduationCap, title: "Enter your profile", text: "Add percentile, category, gender and home university." },
   { icon: SlidersHorizontal, title: "Choose preferences", text: "Select branches, cities, ownership and autonomy." },
@@ -35,7 +40,7 @@ const features = [
 const questions = [
   ["Does a Safe result guarantee admission?", "No. Safe, Target and Ambitious are historical comparison zones, not guarantees. Actual allotment depends on the current CAP process and available seats."],
   ["Why does the predictor ask for my home university?", "Home and Other Than Home University seat eligibility changes for each college. Selecting the actual university lets the system apply the correct seat codes."],
-  ["Is DSE prediction available?", "The DSE interface is being prepared, but predictions will remain disabled until official DSE cutoff datasets are imported and validated."],
+  ["Is DSE prediction available?", "Yes. The DSE predictor uses published 2024-25 and 2025-26 Direct Second Year CAP cutoff records. Because fewer historical years are available than FE, DSE results show conservative confidence warnings."],
   ["Is the College Index an official ranking?", "No. It is a transparent historical-demand research signal. It does not claim to measure teaching quality, placements or campus life."]
 ];
 

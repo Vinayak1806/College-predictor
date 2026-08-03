@@ -15,8 +15,8 @@ import {
   X
 } from "lucide-react";
 import { ResultCard } from "../../components/ResultCard";
-import { PredictorProfileBar } from "../../components/PredictorProfileBar";
 import { SiteHeader } from "../../components/SiteHeader";
+import { trackAnalyticsEvent } from "../../lib/analytics";
 import { getPageRange, getPaginationItems } from "../../lib/pagination";
 import { readPendingPredictorForm, recordPredictionHistory } from "../../lib/predictorProfiles";
 import { explainSeatType } from "../../lib/seatTypes";
@@ -412,20 +412,6 @@ export default function FePredictorPage() {
     requestAnimationFrame(() => predictorFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
-  function loadSavedProfile(formData) {
-    setForm({ ...defaultForm, ...formData });
-    setResults([]);
-    setHasPredicted(false);
-    setSelectedZone("ALL");
-    setCurrentPage(1);
-    setTotalPages(0);
-    setTotalResults(0);
-    setShowValidation(false);
-    setMessageType("info");
-    setMessage("Profile loaded. Review the details, then press Predict Colleges.");
-    setMobileStep(1);
-  }
-
   function buildStudentInput(page, zone) {
     return {
       percentile: Number(form.percentile),
@@ -489,6 +475,14 @@ export default function FePredictorPage() {
 
       if (page === 1 && zone === "ALL") {
         void recordPredictionHistory("FE", form, data.pagination?.totalResults || 0, data.zoneCounts || {});
+        trackAnalyticsEvent("prediction_completed", {
+          admission_route: "FE",
+          result_count: data.pagination?.totalResults || 0,
+          branch_filter_count: form.branches.length,
+          city_filter_count: form.cities.length,
+          ownership_filter_count: form.collegeTypes.length,
+          autonomous_only: form.autonomousOnly
+        });
       }
 
       if (!data.results?.length) {
@@ -545,7 +539,6 @@ export default function FePredictorPage() {
 
           <form ref={predictorFormRef} noValidate onSubmit={submitForm} className="mt-4 grid min-w-0 scroll-mt-20 gap-4 rounded-lg border border-line bg-white p-4">
             <p className="text-right text-xs text-slate-500"><span className="font-semibold text-danger">*</span> Required</p>
-            <PredictorProfileBar admissionRoute="FE" formData={form} onLoad={loadSavedProfile} />
             <div className="md:hidden">
               <div className="flex items-center justify-between text-xs font-semibold">
                 <span className="text-action">Step {mobileStep} of 3</span>

@@ -8,5 +8,11 @@ dist/
 coverage/
 *.log
 .env
+.env.*
+!.env.example
 database/backups/
 data/admin-imports/
+application/data/admin-imports/
+application/uploads/
+*.pem
+*.key

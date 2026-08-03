@@ -50,6 +50,7 @@ export function PreferenceListBuilder() {
   const [notice, setNotice] = useState("");
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [savingAccount, setSavingAccount] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   useEffect(() => {
     setItems(readPreferenceList());
@@ -190,6 +191,36 @@ export function PreferenceListBuilder() {
       setNotice("Account save is unavailable right now. Your browser copy is still safe.");
     } finally {
       setSavingAccount(false);
+    }
+  }
+
+  async function downloadPdf() {
+    setDownloadingPdf(true);
+    setNotice("");
+    try {
+      const response = await fetch("/api/preference-lists/pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items })
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Could not create the PDF.");
+      }
+
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "cap-predictor-preference-list.pdf";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setNotice("Your CAP preference-list PDF was downloaded.");
+    } catch (error) {
+      setNotice(error.message || "Could not create the PDF.");
+    } finally {
+      setDownloadingPdf(false);
     }
   }
 
@@ -404,10 +435,10 @@ export function PreferenceListBuilder() {
             <button
               className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded border border-action bg-white px-4 text-sm font-semibold text-action disabled:opacity-50"
               type="button"
-              disabled={!items.length}
-              onClick={() => window.print()}
+              disabled={!items.length || downloadingPdf}
+              onClick={downloadPdf}
             >
-              <FileDown aria-hidden="true" size={17} /> Print / Save PDF
+              <FileDown aria-hidden="true" size={17} /> {downloadingPdf ? "Creating PDF..." : "Download PDF"}
             </button>
             <button
               className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded border border-line px-4 text-sm font-semibold text-danger disabled:opacity-50"

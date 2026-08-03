@@ -1,6 +1,12 @@
 import { SiteHeader } from "../../components/SiteHeader";
 import { PreferenceListBuilder } from "../../components/PreferenceListBuilder";
 
+export const metadata = {
+  title: "CAP Preference-List Builder",
+  description: "Arrange saved Maharashtra engineering college and branch choices into an admission preference list.",
+  robots: { index: false, follow: false }
+};
+
 export default function PreferenceListPage() {
   return (
     <>

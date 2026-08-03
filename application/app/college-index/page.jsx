@@ -20,7 +20,9 @@ function normalizeOwnership(value) {
 }
 
 export const metadata = {
-  title: "Maharashtra FE Historical Demand Index"
+  title: "Maharashtra FE Historical Demand Index",
+  description: "Compare historical admission demand across current Maharashtra engineering colleges using verified FE CAP cutoff records.",
+  alternates: { canonical: "/college-index" }
 };
 
 export default async function CollegeIndexPage() {

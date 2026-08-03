@@ -3,9 +3,13 @@ import { redirect } from "next/navigation";
 import { AccountSavedData } from "../../components/AccountSavedData";
 import { SignOutButton } from "../../components/SignOutButton";
 import { SiteHeader } from "../../components/SiteHeader";
+import { DeleteAccountPanel } from "../../components/DeleteAccountPanel";
 import { getStudentSession } from "../../lib/studentAuth";
 
-export const metadata = { title: "My Account | CAP Predictor" };
+export const metadata = {
+  title: "My Account",
+  robots: { index: false, follow: false }
+};
 
 export default async function AccountPage() {
   const session = await getStudentSession(await headers());
@@ -25,6 +29,7 @@ export default async function AccountPage() {
         </div>
 
         <AccountSavedData />
+        <DeleteAccountPanel />
       </main>
     </>
   );

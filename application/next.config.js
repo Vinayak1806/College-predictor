@@ -14,8 +14,8 @@ export default function nextConfig(phase) {
     "img-src 'self' data: https:",
     "font-src 'self' data:",
     "style-src 'self' 'unsafe-inline'",
-    `script-src 'self' 'unsafe-inline'${development ? " 'unsafe-eval'" : ""}`,
-    `connect-src 'self'${development ? " ws: wss:" : ""}`,
+    `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com${development ? " 'unsafe-eval'" : ""}`,
+    `connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com${development ? " ws: wss:" : ""}`,
     ...(secureDeployment ? ["upgrade-insecure-requests"] : [])
   ].join("; ");
 

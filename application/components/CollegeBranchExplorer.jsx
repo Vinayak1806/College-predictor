@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { explainSeatType, matchesSeatGroup, seatTypeGroups } from "../lib/seatTypes";
 
 function hasValue(value) {
@@ -96,6 +97,20 @@ export function CollegeBranchExplorer({ branches, initialBranchName, initialYear
     return matchesYear && matchesGroup && matchesSeatType;
   });
   const latestSeat = selectedBranch?.seatRows[0];
+  const trendData = useMemo(() => {
+    if (!selectedBranch || selectedSeatType === "ALL") return [];
+
+    const latestByYear = new Map();
+    for (const row of selectedBranch.cutoffRows) {
+      if (row.seatType !== selectedSeatType) continue;
+      const current = latestByYear.get(row.academicYear);
+      if (!current || row.capRound > current.capRound) latestByYear.set(row.academicYear, row);
+    }
+
+    return [...latestByYear.values()]
+      .sort((a, b) => a.academicYear.localeCompare(b.academicYear))
+      .map((row) => ({ year: row.academicYear, cutoff: Number(row.closingScore), round: row.capRound }));
+  }, [selectedBranch, selectedSeatType]);
 
   function chooseBranch(branchCode) {
     setSelectedBranchCode(branchCode);
@@ -226,6 +241,54 @@ export function CollegeBranchExplorer({ branches, initialBranchName, initialYear
                   ) : null}
                 </div>
               </section>
+
+              <details className="rounded-lg border border-line bg-white p-4">
+                <summary className="focus-ring cursor-pointer font-semibold text-action">Compare available branches at a glance</summary>
+                <p className="mt-2 text-sm text-slate-600">Latest available intake and cutoff are shown for orientation. Choose a branch above for category-wise records.</p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                  {branches.map((branch) => {
+                    const latestCutoff = branch.cutoffRows[0];
+                    return (
+                      <button
+                        key={branch.branchCode}
+                        className={`focus-ring min-w-0 rounded border p-3 text-left ${selectedBranch.branchCode === branch.branchCode ? "border-action bg-panel" : "border-line"}`}
+                        type="button"
+                        onClick={() => chooseBranch(branch.branchCode)}
+                      >
+                        <span className="block break-words text-sm font-semibold text-ink">{branch.branchName}</span>
+                        <span className="mt-2 block text-xs text-slate-600">
+                          {hasValue(branch.latestIntake) ? `${admissionRoute === "DSE" ? "Lateral seats" : "Intake"}: ${branch.latestIntake}` : "Intake unavailable"}
+                        </span>
+                        <span className="mt-1 block text-xs text-slate-600">
+                          {latestCutoff ? `Latest listed cutoff: ${latestCutoff.closingScore}` : "Cutoff unavailable"}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </details>
+
+              {selectedSeatType !== "ALL" ? (
+                <section className="rounded-lg border border-line bg-white p-4">
+                  <h3 className="font-semibold text-ink">Cutoff trend for {selectedSeatType}</h3>
+                  <p className="mt-1 text-sm text-slate-600">The latest available CAP round from each year is compared.</p>
+                  {trendData.length >= 2 ? (
+                    <div className="mt-4 h-64 w-full" aria-label={`Cutoff trend for ${selectedSeatType}`}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={trendData} margin={{ top: 8, right: 12, bottom: 4, left: 0 }}>
+                          <CartesianGrid stroke="#dce3eb" strokeDasharray="3 3" />
+                          <XAxis dataKey="year" tick={{ fontSize: 12 }} />
+                          <YAxis domain={["dataMin - 2", "dataMax + 2"]} tick={{ fontSize: 12 }} width={42} />
+                          <Tooltip formatter={(value, _name, item) => [`${Number(value).toFixed(2)} (CAP ${item.payload.round})`, "Cutoff"]} />
+                          <Line type="monotone" dataKey="cutoff" stroke="#14748d" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-slate-600">At least two years are needed to draw a reliable trend.</p>
+                  )}
+                </section>
+              ) : null}
 
               <section className="rounded-lg border border-line bg-white p-4">
                 <h3 className="font-semibold text-ink">Seat availability by year</h3>

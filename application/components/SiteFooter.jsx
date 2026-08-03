@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Database, ExternalLink, GraduationCap } from "lucide-react";
+import { AnalyticsSettingsButton } from "./AnalyticsSettingsButton";
 
 export function SiteFooter() {
   return (
@@ -27,6 +28,10 @@ export function SiteFooter() {
           <p className="text-sm font-semibold">Data and trust</p>
           <div className="mt-3 grid gap-2 text-sm text-slate-300">
             <span className="flex items-center gap-2"><Database aria-hidden="true" size={15} /> PostgreSQL records</span>
+            <Link className="hover:text-white" href="/disclaimer">Admission disclaimer</Link>
+            <Link className="hover:text-white" href="/privacy">Privacy policy</Link>
+            <Link className="hover:text-white" href="/terms">Terms of use</Link>
+            <AnalyticsSettingsButton />
             <a className="flex items-center gap-2 hover:text-white" href="https://cetcell.mahacet.org/" target="_blank" rel="noreferrer">
               Maharashtra CET Cell <ExternalLink aria-hidden="true" size={14} />
             </a>

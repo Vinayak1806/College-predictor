@@ -1,5 +1,6 @@
 import {
   cutoffIsEligibleForCollege,
+  dseSeatTypeIsEligible,
   eligibleSeatTypesAcrossUniversities
 } from "./eligibility.js";
 import { analyzeCutoffHistory, zoneOrder } from "./prediction.js";
@@ -64,12 +65,50 @@ export const FE_BACKTEST_PROFILES = [
   ...profile
 }));
 
-export const UNAVAILABLE_BACKTEST_PROFILES = [
+export const DSE_BACKTEST_PROFILES = [
   {
-    label: "DSE OPEN and OBC",
-    reason: "Verified DSE cutoff datasets are not imported yet."
+    id: "dse-open-male",
+    label: "DSE OPEN male",
+    diplomaPercentage: 89.2,
+    category: "OPEN",
+    gender: "MALE"
+  },
+  {
+    id: "dse-obc-male",
+    label: "DSE OBC male",
+    diplomaPercentage: 89.2,
+    category: "OBC",
+    gender: "MALE"
+  },
+  {
+    id: "dse-obc-female",
+    label: "DSE OBC female",
+    diplomaPercentage: 89.2,
+    category: "OBC",
+    gender: "FEMALE"
+  },
+  {
+    id: "dse-sc-male",
+    label: "DSE SC male",
+    diplomaPercentage: 82,
+    category: "SC",
+    gender: "MALE"
+  },
+  {
+    id: "dse-ews",
+    label: "DSE EWS candidate",
+    diplomaPercentage: 90,
+    category: "OPEN",
+    gender: "MALE",
+    ews: true
   }
-];
+].map((profile) => ({
+  tfws: false,
+  pwd: false,
+  defence: false,
+  ews: false,
+  ...profile
+}));
 
 function average(values) {
   if (!values.length) return 0;
@@ -218,7 +257,9 @@ export function summarizeBacktest(profile, evaluations) {
     id: profile.id,
     label: profile.label,
     category: profile.category,
-    percentile: profile.percentile,
+    percentile: profile.percentile ?? null,
+    diplomaPercentage: profile.diplomaPercentage ?? null,
+    score: profile.percentile ?? profile.diplomaPercentage,
     homeUniversity: profile.homeUniversity,
     testedOptions: evaluations.length,
     exactZoneAccuracy: round((exactMatches / Math.max(evaluations.length, 1)) * 100),
@@ -332,6 +373,125 @@ export async function runFePredictionBacktest(prisma, options = {}) {
     profiles: profileReports,
     likelyCauses: causeCounts,
     breakdowns: buildAccuracyBreakdowns(allEvaluations),
-    unavailableProfiles: UNAVAILABLE_BACKTEST_PROFILES
+    unavailableProfiles: []
+  };
+}
+
+export function evaluateDseBacktestGroup(rows, profile, trainingYears, targetYear) {
+  const eligibleRows = rows.filter((row) => dseSeatTypeIsEligible(profile, row.seatType));
+  const trainingRows = eligibleRows.filter((row) => trainingYears.includes(row.dataset.academicYear));
+  const targetRows = eligibleRows.filter((row) => row.dataset.academicYear === targetYear);
+  if (!trainingRows.length || !targetRows.length) return null;
+
+  const score = profile.diplomaPercentage;
+  const prediction = analyzeCutoffHistory(trainingRows.map(toHistoryRecord), score);
+  const actual = analyzeCutoffHistory(targetRows.map(toHistoryRecord), score);
+  if (!prediction || prediction.yearsAnalyzed < trainingYears.length || !actual) return null;
+
+  const predictedZone = prediction.zone;
+  const actualZone = actual.zone;
+  const firstRow = targetRows[0];
+  const evaluation = {
+    profileId: profile.id,
+    category: profile.category,
+    instituteCode: firstRow.collegeBranch.college.instituteCode,
+    college: firstRow.collegeBranch.college.name,
+    branch: firstRow.collegeBranch.branch.displayName,
+    university: "State Level",
+    predictedZone,
+    actualZone,
+    zoneDistance: Math.abs(zoneOrder[predictedZone] - zoneOrder[actualZone]),
+    predictedCutoff: prediction.benchmarkCutoff,
+    actualCutoff: actual.latest.cutoff,
+    cutoffError: round(prediction.benchmarkCutoff - actual.latest.cutoff, 2),
+    absoluteError: round(Math.abs(prediction.benchmarkCutoff - actual.latest.cutoff), 2),
+    trainingVolatility: prediction.volatility,
+    trainingYears: prediction.yearsAnalyzed,
+    targetRound: actual.latest.round,
+    targetSeatType: actual.latest.seatType,
+    eligibilityConflict: false
+  };
+  evaluation.likelyCause = likelyErrorCause(evaluation, prediction, profile);
+  return evaluation;
+}
+
+export async function runDsePredictionBacktest(prisma, options = {}) {
+  const trainingYears = options.trainingYears || ["2024-25"];
+  const targetYear = options.targetYear || "2025-26";
+  const profiles = options.profiles || DSE_BACKTEST_PROFILES;
+
+  const profileWork = await Promise.all(profiles.map(async (profile) => {
+    const score = profile.diplomaPercentage;
+    const rows = await prisma.cutoff.findMany({
+      where: {
+        needsReview: false,
+        closingScore: {
+          not: null,
+          gte: Math.max(0, score - 20),
+          lte: Math.min(100, score + 20)
+        },
+        dataset: {
+          academicYear: { in: [...trainingYears, targetYear] },
+          admissionRoute: "DSE",
+          quota: "MH",
+          status: { in: ["VERIFIED", "PUBLISHED"] }
+        },
+        collegeBranch: {
+          college: { profile: { is: { currentCap2025: "Yes" } } }
+        }
+      },
+      select: {
+        collegeBranchId: true,
+        closingScore: true,
+        section: true,
+        dataset: { select: { academicYear: true, capRound: true } },
+        seatType: {
+          select: { code: true, category: true, gender: true, specialType: true }
+        },
+        collegeBranch: {
+          select: {
+            branch: { select: { displayName: true } },
+            college: { select: { instituteCode: true, name: true } }
+          }
+        }
+      }
+    });
+
+    const evaluations = groupByCollegeBranch(rows)
+      .map((group) => evaluateDseBacktestGroup(group, profile, trainingYears, targetYear))
+      .filter(Boolean);
+    return { report: summarizeBacktest(profile, evaluations), evaluations };
+  }));
+
+  const profileReports = profileWork.map((item) => item.report);
+  const allEvaluations = profileWork.flatMap((item) => item.evaluations);
+  const testedOptions = profileReports.reduce((sum, profile) => sum + profile.testedOptions, 0);
+  const weightedAverage = (field) => testedOptions
+    ? round(profileReports.reduce((sum, profile) => sum + profile[field] * profile.testedOptions, 0) / testedOptions)
+    : 0;
+
+  return {
+    generatedAt: new Date().toISOString(),
+    methodology: {
+      trainingYears,
+      targetYear,
+      description: `${trainingYears.join(" and ")} DSE cutoffs estimate the admission zone, which is checked against ${targetYear}.`
+    },
+    summary: {
+      testedProfiles: profileReports.length,
+      testedOptions,
+      exactZoneAccuracy: weightedAverage("exactZoneAccuracy"),
+      adjacentZoneAccuracy: weightedAverage("adjacentZoneAccuracy"),
+      meanAbsoluteError: round(average(allEvaluations.map((item) => item.absoluteError)), 2),
+      largeErrors: allEvaluations.filter((item) => item.absoluteError >= 4).length,
+      eligibilityConflicts: 0
+    },
+    profiles: profileReports,
+    likelyCauses: allEvaluations.reduce((counts, evaluation) => {
+      counts[evaluation.likelyCause] = (counts[evaluation.likelyCause] || 0) + 1;
+      return counts;
+    }, {}),
+    breakdowns: buildAccuracyBreakdowns(allEvaluations),
+    unavailableProfiles: []
   };
 }
