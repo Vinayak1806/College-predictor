@@ -1,0 +1,11 @@
+{
+  "workbook": "maharashtra_dse_engineering_college_dataset.xlsx",
+  "outputDirectory": "data\\processed\\dse_college_info",
+  "counts": {
+    "profiles": 353,
+    "seat_matrices": 2020,
+    "fees": 295,
+    "websites": 24,
+    "rankings": 12
+  }
+}

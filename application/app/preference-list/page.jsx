@@ -11,15 +11,17 @@ export default function PreferenceListPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-7xl px-4 py-6">
-        <div className="max-w-3xl border-l-4 border-action pl-4">
-          <p className="text-xs font-semibold uppercase text-action">CAP decision workspace</p>
-          <h1 className="mt-1 text-2xl font-semibold text-ink">Preference-List Builder</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            Arrange college-branch choices in the exact order you want Maharashtra CAP to consider them. Your list is saved on this device without login.
+      <main className="mx-auto max-w-7xl px-4 py-4 md:py-5">
+        <div className="grid gap-2 border-l-4 border-action pl-4 md:grid-cols-[340px_minmax(0,1fr)] md:items-end md:gap-8">
+          <div>
+            <p className="text-xs font-semibold uppercase text-action">CAP decision workspace</p>
+            <h1 className="mt-1 text-2xl font-semibold text-ink">Preference-List Builder</h1>
+          </div>
+          <p className="max-w-3xl text-sm leading-6 text-slate-600">
+            Arrange college-branch choices in the exact order you want Maharashtra CAP to consider them. Basic editing works on this device; sign in for order checks, account save and PDF export.
           </p>
         </div>
-        <div className="mt-5">
+        <div className="mt-4">
           <PreferenceListBuilder />
         </div>
       </main>

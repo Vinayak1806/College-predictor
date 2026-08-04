@@ -25,11 +25,23 @@ test("college catalog preserves current codes and canonical links", () => {
       instituteCode: "01002",
       name: "Government College of Engineering, Amravati",
       slug: "01002-government-college-of-engineering-amravati",
+      officialWebsite: "https://gcoea.ac.in/",
       city: { name: "Amravati" },
-      university: { name: "Sant Gadge Baba Amravati University" }
+      university: { name: "Sant Gadge Baba Amravati University" },
+      rankings: [{
+        rankingSystem: "NIRF",
+        rankingYear: 2025,
+        category: "Engineering",
+        rank: null,
+        band: "201-300",
+        sourceUrl: "https://www.nirfindia.org/Rankings/2025/EngineeringRanking300.html"
+      }]
     }]
   });
 
   assert.match(content, /01002 - Government College of Engineering, Amravati/);
   assert.match(content, /https:\/\/example\.com\/colleges\/01002-government-college-of-engineering-amravati/);
+  assert.match(content, /Official website: https:\/\/gcoea\.ac\.in\//);
+  assert.match(content, /NIRF Engineering 2025: Rank band 201-300/);
+  assert.match(content, /Ranking source: https:\/\/www\.nirfindia\.org/);
 });

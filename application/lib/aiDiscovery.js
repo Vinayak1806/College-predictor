@@ -63,8 +63,16 @@ export function buildCollegeCatalog({ siteUrl, colleges }) {
     const name = cleanMarkdownText(college.name);
     const city = cleanMarkdownText(college.city?.name);
     const university = cleanMarkdownText(college.university?.name);
+    const ranking = college.rankings?.[0];
+    const officialRanking = ranking
+      ? `${ranking.rankingSystem} ${ranking.category} ${ranking.rankingYear}: ${ranking.rank ? `Rank ${ranking.rank}` : `Rank band ${ranking.band}`}`
+      : null;
+    const officialWebsite = college.officialWebsite ? `; Official website: ${college.officialWebsite}` : "";
+    const officialRankingText = officialRanking
+      ? `; ${officialRanking}; Ranking source: ${ranking.sourceUrl}`
+      : "";
     const url = siteLink(siteUrl, `/colleges/${college.slug}`);
-    return `- [${code} - ${name}](${url}): City: ${city}; University: ${university}`;
+    return `- [${code} - ${name}](${url}): City: ${city}; University: ${university}${officialWebsite}${officialRankingText}`;
   });
 
   return `# Current Maharashtra Engineering College Catalog

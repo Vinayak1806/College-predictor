@@ -26,6 +26,12 @@ export function predictionZoneToPreferenceZone(zone) {
 
 export function createPreferenceItemFromResult(result) {
   const branchCode = result.branchCode || result.branch;
+  const cutoff = result.latestCutoff ?? result.closingCutoff ?? null;
+  const studentScore = Number(result.studentScore);
+  const numericCutoff = Number(cutoff);
+  const selectedCutoffMargin = Number.isFinite(studentScore) && Number.isFinite(numericCutoff)
+    ? studentScore - numericCutoff
+    : result.margin ?? null;
 
   return {
     id: preferenceItemId(result.instituteCode, branchCode),
@@ -36,8 +42,8 @@ export function createPreferenceItemFromResult(result) {
     branch: result.branch,
     city: result.city || "",
     zone: predictionZoneToPreferenceZone(result.zone),
-    cutoff: result.latestCutoff ?? result.closingCutoff ?? null,
-    margin: result.margin ?? null,
+    cutoff,
+    margin: selectedCutoffMargin,
     seatType: result.seatType || "",
     year: result.year || "",
     round: result.round ?? null,

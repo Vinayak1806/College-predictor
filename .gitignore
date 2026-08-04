@@ -6,6 +6,7 @@ node_modules/
 .next-dev/
 dist/
 coverage/
+tmp/
 *.log
 .env
 .env.*

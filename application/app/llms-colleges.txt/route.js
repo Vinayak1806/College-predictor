@@ -11,8 +11,22 @@ export async function GET() {
       instituteCode: true,
       name: true,
       slug: true,
+      officialWebsite: true,
       city: { select: { name: true } },
-      university: { select: { name: true } }
+      university: { select: { name: true } },
+      rankings: {
+        where: { verified: true },
+        select: {
+          rankingSystem: true,
+          rankingYear: true,
+          category: true,
+          rank: true,
+          band: true,
+          sourceUrl: true
+        },
+        orderBy: [{ rankingYear: "desc" }, { rank: "asc" }],
+        take: 1
+      }
     },
     orderBy: { instituteCode: "asc" }
   });

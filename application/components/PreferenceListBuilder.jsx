@@ -15,6 +15,7 @@ import {
   Trash2
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { authClient } from "../lib/authClient";
 import { saveCapListToAccount } from "../lib/accountStorage";
 import {
   addPreferenceItem,
@@ -40,6 +41,7 @@ function formatNumber(value) {
 }
 
 export function PreferenceListBuilder() {
+  const { data: session, isPending: sessionPending } = authClient.useSession();
   const [items, setItems] = useState([]);
   const [ready, setReady] = useState(false);
   const [selectedCollege, setSelectedCollege] = useState(null);
@@ -172,7 +174,7 @@ export function PreferenceListBuilder() {
 
   function organizeByRisk() {
     setItems((current) => organizePreferenceItems(current));
-    setNotice("Choices grouped as Ambitious, Target, Safe and Backup. Choices inside each group kept their previous order.");
+    setNotice("Choices organized by admission chance. Order inside each group was preserved.");
   }
 
   async function saveToAccount() {
@@ -205,6 +207,10 @@ export function PreferenceListBuilder() {
       });
       if (!response.ok) {
         const data = await response.json();
+        if (response.status === 401) {
+          setNotice("Sign in before downloading your CAP preference-list PDF.");
+          return;
+        }
         throw new Error(data.error || "Could not create the PDF.");
       }
 
@@ -227,14 +233,13 @@ export function PreferenceListBuilder() {
   return (
     <div className="preference-list-page">
       <section className="overflow-visible rounded-lg border border-line bg-white">
-        <div className="border-b border-line px-4 py-4 md:px-5">
-          <p className="text-xs font-semibold uppercase text-action">Add a college-branch choice</p>
-          <p className="mt-1 text-sm text-slate-600">
-            Search by current institute name or code, then choose the exact branch.
-          </p>
-        </div>
-        <div className="preference-builder-controls grid gap-3 p-4 md:grid-cols-[minmax(0,1.5fr)_minmax(180px,1fr)_150px_auto] md:items-end md:p-5">
-          <div className="grid gap-2">
+        <div className="preference-builder-controls grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-[190px_minmax(260px,1.35fr)_minmax(210px,0.9fr)_170px_96px] lg:items-end md:p-5">
+          <div className="sm:col-span-2 lg:col-span-1 lg:self-center">
+            <p className="text-xs font-semibold uppercase text-action">Add a choice</p>
+            <h2 className="mt-1 font-semibold text-ink">College and branch</h2>
+            <p className="mt-1 text-xs leading-5 text-slate-500">Search, select and add.</p>
+          </div>
+          <div className="grid gap-2 sm:col-span-2 lg:col-span-1">
             <label className="text-sm font-medium text-ink">College</label>
             <CollegeAutocomplete
               className="focus-within:ring-2 focus-within:ring-[#7db9ca] rounded border border-line px-3"
@@ -257,7 +262,7 @@ export function PreferenceListBuilder() {
             </select>
           </label>
           <label className="grid gap-2 text-sm font-medium text-ink">
-            Category
+            Admission chance
             <select
               className="focus-ring min-h-11 rounded border border-line bg-white px-3"
               value={selectedZone}
@@ -267,7 +272,7 @@ export function PreferenceListBuilder() {
             </select>
           </label>
           <button
-            className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded bg-action px-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
             type="button"
             disabled={!selectedCollege || !selectedBranchCode || loadingBranches}
             onClick={addManualChoice}
@@ -276,21 +281,24 @@ export function PreferenceListBuilder() {
           </button>
         </div>
         {notice ? (
-          <div className="flex items-start gap-2 border-t border-line bg-panel px-4 py-3 text-sm text-slate-700 md:px-5" role="status">
-            <CheckCircle2 aria-hidden="true" className="mt-0.5 shrink-0 text-action" size={17} />
+          <div className="flex items-start gap-2 border-t border-line bg-panel px-4 py-2 text-xs text-slate-700 md:px-5" role="status">
+            <CheckCircle2 aria-hidden="true" className="shrink-0 text-action" size={16} />
             <p>{notice}</p>
           </div>
         ) : null}
       </section>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
+      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
         <section className="min-w-0 overflow-hidden rounded-lg border border-line bg-white">
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line p-4 md:px-5">
             <div>
-              <p className="text-xs font-semibold uppercase text-action">Your ordered choices</p>
-              <h2 className="mt-1 text-lg font-semibold text-ink">{items.length} preferences</h2>
+              <p className="text-xs font-semibold uppercase text-action">CAP preference order</p>
+              <h2 className="mt-1 text-lg font-semibold text-ink">Your ordered choices</h2>
             </div>
-            <p className="text-xs text-slate-500">Higher position means higher CAP priority.</p>
+            <div className="text-right">
+              <p className="text-lg font-semibold text-ink">{items.length}</p>
+              <p className="text-xs text-slate-500">Total choices</p>
+            </div>
           </div>
 
           {!ready ? <p className="p-6 text-center text-sm text-slate-500">Loading saved choices...</p> : null}
@@ -392,19 +400,20 @@ export function PreferenceListBuilder() {
 
         <aside className="overflow-hidden rounded-lg border border-line bg-white lg:sticky lg:top-20">
           <div className="border-b border-line p-4">
-            <p className="text-xs font-semibold uppercase text-action">List balance</p>
-            <p className="mt-1 text-sm text-slate-600">Categories organize risk; your order controls CAP priority.</p>
+            <p className="text-xs font-semibold uppercase text-action">Plan summary</p>
+            <h2 className="mt-1 font-semibold text-ink">Admission-chance balance</h2>
+            <p className="mt-1 text-xs leading-5 text-slate-500">These labels guide planning; CAP always follows your numbered order.</p>
           </div>
-          <dl className="divide-y divide-line">
+          <dl className="grid grid-cols-2 border-b border-line">
             {preferenceZones.map((zone) => (
-              <div key={zone.value} className="flex items-center justify-between gap-3 px-4 py-3">
+              <div key={zone.value} className="flex items-center justify-between gap-3 border-b border-r border-line px-4 py-3 even:border-r-0 [&:nth-last-child(-n+2)]:border-b-0">
                 <dt className={`rounded border px-2 py-1 text-xs font-semibold ${zoneStyles[zone.value]}`}>{zone.label}</dt>
                 <dd className="font-semibold text-ink">{counts[zone.value] || 0}</dd>
               </div>
             ))}
           </dl>
 
-          {guidance.length ? (
+          {session?.user && guidance.length ? (
             <div className="border-t border-line bg-amber-50 p-4">
               <div className="flex items-center gap-2 text-sm font-semibold text-warning">
                 <AlertCircle aria-hidden="true" size={17} /> Check before finalizing
@@ -415,31 +424,45 @@ export function PreferenceListBuilder() {
             </div>
           ) : null}
 
+          {!sessionPending && !session?.user ? (
+            <div className="border-t border-line bg-panel p-4">
+              <div className="flex items-center gap-2 text-sm font-semibold text-ink">
+                <AlertCircle aria-hidden="true" className="text-action" size={17} /> Account tools
+              </div>
+              <p className="mt-2 text-xs leading-5 text-slate-600">Sign in for ordering warnings, automatic grouping, account save and PDF download.</p>
+              <Link className="focus-ring mt-3 inline-flex min-h-11 items-center rounded bg-action px-4 text-sm font-semibold text-white" href="/login?callbackURL=%2Fpreference-list">Sign in</Link>
+            </div>
+          ) : null}
+
           <div className="preference-builder-controls grid gap-2 border-t border-line p-4">
-            <button
-              className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white disabled:opacity-50"
-              type="button"
-              disabled={!items.length || savingAccount}
-              onClick={saveToAccount}
-            >
-              <CloudUpload aria-hidden="true" size={17} /> {savingAccount ? "Saving..." : "Save to my account"}
-            </button>
-            <button
-              className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded border border-action bg-white px-4 text-sm font-semibold text-action disabled:opacity-50"
-              type="button"
-              disabled={!items.length}
-              onClick={organizeByRisk}
-            >
-              <ListFilter aria-hidden="true" size={17} /> Group by admission chance
-            </button>
-            <button
-              className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded border border-action bg-white px-4 text-sm font-semibold text-action disabled:opacity-50"
-              type="button"
-              disabled={!items.length || downloadingPdf}
-              onClick={downloadPdf}
-            >
-              <FileDown aria-hidden="true" size={17} /> {downloadingPdf ? "Creating PDF..." : "Download PDF"}
-            </button>
+            {session?.user ? (
+              <>
+                <button
+                  className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white disabled:opacity-50"
+                  type="button"
+                  disabled={!items.length || savingAccount}
+                  onClick={saveToAccount}
+                >
+                  <CloudUpload aria-hidden="true" size={17} /> {savingAccount ? "Saving..." : "Save to my account"}
+                </button>
+                <button
+                  className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded border border-action bg-white px-4 text-sm font-semibold text-action disabled:opacity-50"
+                  type="button"
+                  disabled={!items.length}
+                  onClick={organizeByRisk}
+                >
+                  <ListFilter aria-hidden="true" size={17} /> Organize and check order
+                </button>
+                <button
+                  className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded border border-action bg-white px-4 text-sm font-semibold text-action disabled:opacity-50"
+                  type="button"
+                  disabled={!items.length || downloadingPdf}
+                  onClick={downloadPdf}
+                >
+                  <FileDown aria-hidden="true" size={17} /> {downloadingPdf ? "Creating PDF..." : "Download PDF"}
+                </button>
+              </>
+            ) : null}
             <button
               className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded border border-line px-4 text-sm font-semibold text-danger disabled:opacity-50"
               type="button"
@@ -451,6 +474,7 @@ export function PreferenceListBuilder() {
           </div>
         </aside>
       </div>
+
     </div>
   );
 }

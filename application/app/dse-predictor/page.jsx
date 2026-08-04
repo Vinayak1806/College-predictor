@@ -16,6 +16,7 @@ import {
   X
 } from "lucide-react";
 import { ResultCard } from "../../components/ResultCard";
+import { PredictionReportButton } from "../../components/PredictionReportButton";
 import { SiteHeader } from "../../components/SiteHeader";
 import { trackAnalyticsEvent } from "../../lib/analytics";
 import { getPageRange, getPaginationItems } from "../../lib/pagination";
@@ -773,6 +774,10 @@ export default function DsePredictorPage() {
                       <summary className="cursor-pointer font-medium text-action">DSE data note</summary>
                       <p className="mt-2 max-w-xl leading-5 text-slate-600">{analysis?.diplomaBranchNote}</p>
                     </details>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 md:px-5">
+                    <p className="text-xs text-slate-500">Signed-in students can keep a named PDF copy of this prediction page.</p>
+                    <PredictionReportButton route="DSE" form={form} results={results} totalResults={totalResults} />
                   </div>
                 </div>
               </>

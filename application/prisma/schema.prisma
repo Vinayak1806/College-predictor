@@ -42,9 +42,30 @@ model College {
   collegeBranches CollegeBranch[]
   profile         CollegeProfile?
   fees            CollegeFee[]
+  rankings        CollegeRanking[]
 
   @@index([cityId])
   @@map("colleges")
+}
+
+model CollegeRanking {
+  id            BigInt   @id @default(autoincrement())
+  instituteCode String   @map("institute_code")
+  rankingSystem String   @map("ranking_system")
+  rankingYear   Int      @map("ranking_year")
+  category      String
+  rank          Int?
+  band          String?
+  score         Decimal? @db.Decimal(10, 4)
+  matchedName   String?  @map("matched_name")
+  verified      Boolean  @default(false)
+  sourceUrl     String?  @map("source_url")
+  sourceFile    String?  @map("source_file")
+  college       College  @relation(fields: [instituteCode], references: [instituteCode])
+
+  @@unique([instituteCode, rankingSystem, rankingYear, category])
+  @@index([rankingSystem, rankingYear, category, rank])
+  @@map("college_rankings")
 }
 
 model CollegeProfile {

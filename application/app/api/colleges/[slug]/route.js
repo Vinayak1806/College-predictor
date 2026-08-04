@@ -12,6 +12,12 @@ export async function GET(request, { params }) {
     include: {
       city: true,
       university: true,
+      profile: true,
+      fees: { orderBy: { academicYear: "desc" }, take: 5 },
+      rankings: {
+        where: { verified: true },
+        orderBy: [{ rankingYear: "desc" }, { rank: "asc" }]
+      },
       collegeBranches: {
         include: {
           branch: true,

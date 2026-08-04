@@ -29,7 +29,7 @@ const emptyFilters = {
   city: "",
   year: "",
   round: "",
-  route: "",
+  route: "FE",
   category: "",
   seatType: "",
   sort: "NEWEST"
@@ -42,6 +42,16 @@ const sortOptions = [
   ["COLLEGE", "College name"]
 ];
 
+const filterLabels = {
+  q: "College",
+  branch: "Branch",
+  city: "City",
+  year: "Year",
+  round: "Round",
+  category: "Category",
+  seatType: "Seat type"
+};
+
 function buildQuery(filters, page) {
   const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE), sort: filters.sort });
   for (const [key, value] of Object.entries(filters)) {
@@ -52,6 +62,7 @@ function buildQuery(filters, page) {
 
 function collegeLink(cutoff) {
   const params = new URLSearchParams({
+    route: cutoff.dataset.admissionRoute,
     branch: cutoff.collegeBranch.branch.displayName,
     year: cutoff.dataset.academicYear,
     round: String(cutoff.dataset.capRound),
@@ -74,8 +85,23 @@ function rankText(value) {
 }
 
 function FilterFields({ filters, options, onChange, onApply, onClear, idPrefix, resetKey }) {
+  const advancedActive = Boolean(filters.round || filters.category || filters.city || filters.seatType || filters.sort !== "NEWEST");
+  const [advancedOpen, setAdvancedOpen] = useState(advancedActive);
+
+  useEffect(() => {
+    if (advancedActive) setAdvancedOpen(true);
+  }, [advancedActive]);
+
+  useEffect(() => {
+    if (!advancedActive) setAdvancedOpen(false);
+  }, [advancedActive, resetKey]);
+
   return (
     <form className="grid gap-4" onSubmit={onApply}>
+      <div>
+        <p className="text-xs font-semibold uppercase text-action">College and branch</p>
+        <p className="mt-1 text-xs leading-5 text-slate-500">Use either field or combine both.</p>
+      </div>
       <label className="grid gap-1.5 text-sm font-medium text-ink">
         College
         <CollegeAutocomplete
@@ -105,49 +131,50 @@ function FilterFields({ filters, options, onChange, onApply, onClear, idPrefix, 
         </datalist>
       </label>
 
-      <div className="grid grid-cols-2 gap-3">
-        <label className="grid gap-1.5 text-sm font-medium text-ink">
-          Academic year
-          <select className="focus-ring min-h-11 rounded border border-line px-3" value={filters.year} onChange={(event) => onChange("year", event.target.value)}>
-            <option value="">All years</option>
-            {options.years.map((year) => <option key={year} value={year}>{year}</option>)}
-          </select>
-        </label>
-        <label className="grid gap-1.5 text-sm font-medium text-ink">
+      <div className="border-t border-line pt-4">
+        <p className="text-xs font-semibold uppercase text-action">Record period</p>
+      </div>
+      <label className="grid gap-1.5 text-sm font-medium text-ink">
+        Academic year
+        <select className="focus-ring min-h-11 rounded border border-line px-3" value={filters.year} onChange={(event) => onChange("year", event.target.value)}>
+          <option value="">Latest and previous years</option>
+          {options.years.map((year) => <option key={year} value={year}>{year}</option>)}
+        </select>
+      </label>
+
+      <details
+        className="rounded border border-line bg-panel"
+        open={advancedOpen}
+        onToggle={(event) => setAdvancedOpen(event.currentTarget.open)}
+      >
+        <summary className="cursor-pointer px-3 py-3 text-sm font-semibold text-ink">Category, location and seat filters</summary>
+        <div className="grid gap-4 border-t border-line bg-white p-3">
+          <label className="grid gap-1.5 text-sm font-medium text-ink">
           CAP round
           <select className="focus-ring min-h-11 rounded border border-line px-3" value={filters.round} onChange={(event) => onChange("round", event.target.value)}>
             <option value="">All rounds</option>
             {options.rounds.map((round) => <option key={round} value={round}>Round {round}</option>)}
           </select>
-        </label>
-      </div>
+          </label>
 
-      <label className="grid gap-1.5 text-sm font-medium text-ink">
-        Admission route
-        <select className="focus-ring min-h-11 rounded border border-line px-3" value={filters.route} onChange={(event) => onChange("route", event.target.value)}>
-          <option value="">All routes</option>
-          {options.routes.map((route) => <option key={route} value={route}>{route}</option>)}
-        </select>
-      </label>
-
-      <div className="grid grid-cols-2 gap-3">
-        <label className="grid gap-1.5 text-sm font-medium text-ink">
+          <div className="grid grid-cols-2 gap-3">
+            <label className="grid gap-1.5 text-sm font-medium text-ink">
           Category
           <select className="focus-ring min-h-11 rounded border border-line px-3" value={filters.category} onChange={(event) => onChange("category", event.target.value)}>
             <option value="">All categories</option>
             {options.categories.map((category) => <option key={category} value={category}>{category}</option>)}
           </select>
-        </label>
-        <label className="grid gap-1.5 text-sm font-medium text-ink">
+            </label>
+            <label className="grid gap-1.5 text-sm font-medium text-ink">
           City
           <select className="focus-ring min-h-11 rounded border border-line px-3" value={filters.city} onChange={(event) => onChange("city", event.target.value)}>
             <option value="">All cities</option>
             {options.cities.map((city) => <option key={city} value={city}>{city}</option>)}
           </select>
-        </label>
-      </div>
+            </label>
+          </div>
 
-      <label className="grid gap-1.5 text-sm font-medium text-ink">
+          <label className="grid gap-1.5 text-sm font-medium text-ink">
         Exact seat type
         <input
           className="focus-ring min-h-11 rounded border border-line px-3 uppercase"
@@ -159,14 +186,16 @@ function FilterFields({ filters, options, onChange, onApply, onClear, idPrefix, 
         <datalist id={`${idPrefix}-seat-types`}>
           {options.seatTypes.map((seatType) => <option key={seatType} value={seatType} />)}
         </datalist>
-      </label>
+          </label>
 
-      <label className="grid gap-1.5 text-sm font-medium text-ink">
+          <label className="grid gap-1.5 text-sm font-medium text-ink">
         Sort results
         <select className="focus-ring min-h-11 rounded border border-line px-3" value={filters.sort} onChange={(event) => onChange("sort", event.target.value)}>
           {sortOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
-      </label>
+          </label>
+        </div>
+      </details>
 
       <div className="grid grid-cols-[1fr_auto] gap-2">
         <button className="focus-ring min-h-11 rounded bg-action px-4 text-sm font-semibold text-white" type="submit">
@@ -184,13 +213,14 @@ function CutoffCard({ cutoff }) {
   const college = cutoff.collegeBranch.college;
   const branch = cutoff.collegeBranch.branch;
   const seatType = explainSeatType(cutoff.seatType.code);
+  const isDse = cutoff.dataset.admissionRoute === "DSE";
 
   return (
     <article className="overflow-hidden rounded-lg border border-line bg-white shadow-sm">
-      <header className="flex flex-wrap items-start justify-between gap-4 border-b border-line px-4 py-4 md:px-5">
+      <header className="grid gap-4 border-b border-line px-4 py-4 sm:grid-cols-[minmax(0,1fr)_150px] md:px-5">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase text-action">
-            Institute {college.instituteCode} · {cutoff.dataset.admissionRoute}
+            Institute {college.instituteCode} | {cutoff.dataset.admissionRoute}
           </p>
           <h2 className="mt-1 text-base font-semibold leading-6 text-ink">
             <Link className="hover:text-action hover:underline" href={collegeLink(cutoff)}>{college.name}</Link>
@@ -201,34 +231,35 @@ function CutoffCard({ cutoff }) {
             {college.university?.name ? <span className="inline-flex items-center gap-1.5"><University aria-hidden="true" size={14} />{college.university.name}</span> : null}
           </div>
         </div>
-        <span className="rounded border border-action bg-cyan-50 px-2.5 py-1 text-xs font-semibold text-action">
-          {cutoff.dataset.academicYear} · Round {cutoff.dataset.capRound}
-        </span>
+        <div className="border-l-2 border-action pl-3 sm:text-right">
+          <p className="text-xs font-medium uppercase text-slate-500">{isDse ? "Closing diploma %" : "Closing percentile"}</p>
+          <p className="mt-1 text-2xl font-semibold text-action">{scoreText(cutoff.closingScore)}</p>
+        </div>
       </header>
 
-      <dl className="grid grid-cols-2 border-b border-line bg-panel sm:grid-cols-4">
-        <div className="border-b border-r border-line px-4 py-3 sm:border-b-0">
-          <dt className="text-xs uppercase text-slate-500">Closing percentile</dt>
-          <dd className="mt-1 text-xl font-semibold text-ink">{scoreText(cutoff.closingScore)}</dd>
+      <dl className="grid border-b border-line bg-panel sm:grid-cols-[minmax(0,1fr)_180px_170px]">
+        <div className="border-b border-line px-4 py-3 sm:border-b-0 sm:border-r">
+          <dt className="text-xs uppercase text-slate-500">Official seat</dt>
+          <dd className="mt-1 font-semibold text-ink">{seatType.code}</dd>
+          <dd className="mt-1 text-xs leading-5 text-slate-500">{seatType.title}</dd>
         </div>
         <div className="border-b border-line px-4 py-3 sm:border-b-0 sm:border-r">
-          <dt className="text-xs uppercase text-slate-500">Closing rank</dt>
-          <dd className="mt-1 text-xl font-semibold text-ink">{rankText(cutoff.closingRank)}</dd>
-        </div>
-        <div className="border-r border-line px-4 py-3">
-          <dt className="text-xs uppercase text-slate-500">Stage</dt>
-          <dd className="mt-1 font-semibold text-ink">{cutoff.stage || "-"}</dd>
+          <dt className="text-xs uppercase text-slate-500">Cutoff record</dt>
+          <dd className="mt-1 font-semibold text-ink">{cutoff.dataset.academicYear}</dd>
+          <dd className="mt-1 text-xs text-slate-500">CAP Round {cutoff.dataset.capRound}</dd>
         </div>
         <div className="px-4 py-3">
-          <dt className="text-xs uppercase text-slate-500">Section</dt>
-          <dd className="mt-1 font-semibold text-ink">{cutoff.section || "Standard"}</dd>
+          <dt className="text-xs uppercase text-slate-500">{isDse ? "Closing merit no." : "Closing rank"}</dt>
+          <dd className="mt-1 text-xl font-semibold text-ink">{rankText(cutoff.closingRank)}</dd>
         </div>
       </dl>
 
       <div className="grid gap-3 px-4 py-4 md:grid-cols-[1fr_auto] md:items-center md:px-5">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase text-slate-500">Official seat type</p>
-          <p className="mt-1 font-semibold text-ink">{seatType.code} · {seatType.title}</p>
+          <details>
+            <summary className="cursor-pointer text-sm font-semibold text-action">Record details and meaning</summary>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Stage: {cutoff.stage || "Not listed"} | Section: {cutoff.section || "Standard"}. This is a historical closing record, not a guaranteed future cutoff.</p>
+          </details>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link className="focus-ring inline-flex min-h-11 items-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white" href={collegeLink(cutoff)}>
@@ -242,7 +273,7 @@ function CutoffCard({ cutoff }) {
         </div>
       </div>
       <p className="border-t border-line px-4 py-2 text-xs text-slate-500 md:px-5">
-        Source: {cutoff.dataset.sourceFilename} · PDF page {cutoff.sourcePage}
+        Source: {cutoff.dataset.sourceFilename} | PDF page {cutoff.sourcePage}
       </p>
     </article>
   );
@@ -292,28 +323,33 @@ export default function CutoffExplorerPage() {
     }
   }
 
+  async function loadOptions(route, signal) {
+    setOptionsLoading(true);
+    try {
+      const response = await fetch(`/api/cutoffs/options?route=${route}`, { signal });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Filter options could not be loaded.");
+      setOptions(data);
+    } catch (loadError) {
+      if (loadError.name !== "AbortError") setError(loadError.message);
+    } finally {
+      if (!signal?.aborted) setOptionsLoading(false);
+    }
+  }
+
   useEffect(() => {
     const controller = new AbortController();
-    async function initialize() {
-      setOptionsLoading(true);
-      try {
-        const response = await fetch("/api/cutoffs/options", { signal: controller.signal });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Filter options could not be loaded.");
-        setOptions(data);
-      } catch (loadError) {
-        if (loadError.name !== "AbortError") setError(loadError.message);
-      } finally {
-        if (!controller.signal.aborted) setOptionsLoading(false);
-      }
-    }
-    initialize();
-    loadResults(emptyFilters, 1);
+    const requestedRoute = new URLSearchParams(window.location.search).get("route");
+    const route = requestedRoute === "DSE" ? "DSE" : "FE";
+    const initialFilters = { ...emptyFilters, route };
+    setFilters(initialFilters);
+    loadOptions(route, controller.signal);
+    loadResults(initialFilters, 1);
     return () => controller.abort();
   }, []);
 
   const activeFilterCount = useMemo(
-    () => Object.entries(appliedFilters).filter(([key, value]) => key !== "sort" && Boolean(value)).length,
+    () => Object.entries(appliedFilters).filter(([key, value]) => !["sort", "route"].includes(key) && Boolean(value)).length,
     [appliedFilters]
   );
   const pageRange = getPageRange(page, PAGE_SIZE, total);
@@ -330,10 +366,28 @@ export default function CutoffExplorerPage() {
   }
 
   function clearFilters() {
-    setFilters(emptyFilters);
+    const nextFilters = { ...emptyFilters, route: filters.route || "FE" };
+    setFilters(nextFilters);
     setResetKey((current) => current + 1);
     setDrawerOpen(false);
-    loadResults(emptyFilters, 1);
+    loadResults(nextFilters, 1);
+  }
+
+  function removeAppliedFilter(field) {
+    const nextFilters = { ...appliedFilters, [field]: "" };
+    setFilters(nextFilters);
+    if (field === "q") setResetKey((current) => current + 1);
+    loadResults(nextFilters, 1);
+  }
+
+  function selectRoute(route) {
+    if (route === filters.route) return;
+    const nextFilters = { ...emptyFilters, route, sort: filters.sort };
+    setFilters(nextFilters);
+    setResetKey((current) => current + 1);
+    window.history.replaceState(null, "", `/cutoffs?route=${route}`);
+    loadOptions(route);
+    loadResults(nextFilters, 1);
   }
 
   function changePage(nextPage) {
@@ -346,15 +400,40 @@ export default function CutoffExplorerPage() {
     <>
       <SiteHeader />
       <main className="mx-auto max-w-7xl px-4 py-7 md:py-10">
-        <header className="border-l-4 border-action pl-4">
-          <p className="text-xs font-semibold uppercase text-action">Official CAP records</p>
-          <h1 className="mt-1 text-3xl font-bold text-ink">Cutoff Explorer</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-            Find previous closing percentiles and ranks by college, branch, year, round, category and official seat type.
-          </p>
+        <header className="flex flex-col gap-5 border-b border-line pb-5 md:flex-row md:items-end md:justify-between">
+          <div className="border-l-4 border-action pl-4">
+            <p className="text-xs font-semibold uppercase text-action">Official CAP records</p>
+            <h1 className="mt-1 text-3xl font-bold text-ink">Cutoff Explorer</h1>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+              Search exact {appliedFilters.route} closing {appliedFilters.route === "DSE" ? "diploma percentages and merit numbers" : "percentiles and ranks"} with their branch, seat type, year and CAP round.
+            </p>
+          </div>
+          <div className="shrink-0">
+            <p className="mb-2 text-xs font-semibold uppercase text-slate-500">Admission route</p>
+          <div className="inline-grid min-h-11 grid-cols-2 overflow-hidden rounded border border-line" role="group" aria-label="Choose cutoff admission route">
+            {["FE", "DSE"].map((route) => (
+              <button
+                key={route}
+                className={`focus-ring min-h-11 border-r border-line px-5 text-sm font-semibold last:border-r-0 ${
+                  filters.route === route ? "bg-action text-white" : "bg-white text-slate-700 hover:bg-panel"
+                }`}
+                type="button"
+                aria-pressed={filters.route === route}
+                onClick={() => selectRoute(route)}
+              >
+                {route === "FE" ? "FE cutoffs" : "DSE cutoffs"}
+              </button>
+            ))}
+          </div>
+          </div>
         </header>
 
-        <div className="mt-6 flex items-center justify-between gap-3 border-y border-line bg-white px-3 py-3 lg:hidden">
+        <div className="mt-4 flex items-start gap-3 border-l-2 border-action bg-white px-4 py-3 text-sm text-slate-600">
+          <Search aria-hidden="true" className="mt-0.5 shrink-0 text-action" size={17} />
+          <p><span className="font-semibold text-ink">Start with a college or branch.</span> Choose an academic year, then open category and seat filters only when you need an exact official record.</p>
+        </div>
+
+        <div className="mt-4 flex items-center justify-between gap-3 rounded border border-line bg-white px-3 py-3 lg:hidden">
           <div>
             <p className="text-sm font-semibold text-ink">{total.toLocaleString("en-IN")} records found</p>
             <p className="text-xs text-slate-500">{activeFilterCount ? `${activeFilterCount} filters applied` : "All published records"}</p>
@@ -364,7 +443,7 @@ export default function CutoffExplorerPage() {
           </button>
         </div>
 
-        <div className="mt-6 grid items-start gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
+        <div className="mt-4 grid items-start gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
           <aside
             className="sticky top-20 hidden overflow-y-auto rounded-lg border border-line bg-white scrollbar-hidden lg:block"
             style={{ maxHeight: "calc(100vh - 6rem)" }}
@@ -390,16 +469,36 @@ export default function CutoffExplorerPage() {
           </aside>
 
           <section className="min-w-0">
-            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line pb-3">
+            <div className="rounded-lg border border-line bg-white p-4">
+              <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase text-action">Search results</p>
+                <p className="text-xs font-semibold uppercase text-action">{appliedFilters.route} search results</p>
                 <h2 className="mt-1 text-xl font-semibold text-ink">
                   {loading ? "Loading official records..." : `${total.toLocaleString("en-IN")} matching cutoffs`}
                 </h2>
+                <p className="mt-1 text-xs leading-5 text-slate-500">Results are individual college, branch, seat-type, year and round records.</p>
               </div>
-              {!loading && total ? (
-                <p className="text-sm text-slate-500">Showing {pageRange.start}-{pageRange.end}</p>
+              <div className="flex flex-wrap items-center gap-2">
+                {!loading && total ? <p className="text-sm text-slate-500">Showing {pageRange.start}-{pageRange.end}</p> : null}
+                <Link className="focus-ring inline-flex min-h-11 items-center rounded border border-action px-4 text-sm font-semibold text-action" href={appliedFilters.route === "DSE" ? "/dse-predictor" : "/fe-predictor"}>Use {appliedFilters.route} Predictor</Link>
+              </div>
+              </div>
+
+              {activeFilterCount ? (
+                <div className="mt-4 flex flex-wrap gap-2 border-t border-line pt-3" aria-label="Applied filters">
+                  {Object.entries(appliedFilters).filter(([field, value]) => filterLabels[field] && value).map(([field, value]) => (
+                    <button key={field} className="focus-ring inline-flex min-h-9 items-center gap-2 rounded border border-line bg-panel px-3 text-xs font-medium text-slate-700" type="button" onClick={() => removeAppliedFilter(field)}>
+                      {filterLabels[field]}: {field === "round" ? `Round ${value}` : value} <X aria-hidden="true" size={13} />
+                    </button>
+                  ))}
+                  <button className="focus-ring min-h-9 px-2 text-xs font-semibold text-action" type="button" onClick={clearFilters}>Clear all</button>
+                </div>
               ) : null}
+
+              <details className="mt-3 border-t border-line pt-3">
+                <summary className="cursor-pointer text-sm font-semibold text-action">How to read a cutoff record</summary>
+                <p className="mt-2 text-sm leading-6 text-slate-600">Closing score is the last admitted score for that exact branch, seat type, academic year and CAP round. Compare like-for-like records and use the predictor for your personal eligibility.</p>
+              </details>
             </div>
 
             {error ? (
@@ -437,9 +536,9 @@ export default function CutoffExplorerPage() {
             ) : null}
 
             {!loading && totalPages > 1 ? (
-              <nav className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-white px-3 py-3" aria-label="Cutoff result pages">
+              <nav className="mt-5 flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-white px-3 py-3" aria-label="Cutoff result pages">
                 <p className="text-sm text-slate-600">Page {page} of {totalPages}</p>
-                <div className="flex items-center gap-1">
+                <div className="scrollbar-hidden flex max-w-full items-center gap-1 overflow-x-auto">
                   <button
                     className="focus-ring flex h-11 w-11 items-center justify-center rounded border border-line text-slate-700 disabled:opacity-40"
                     type="button"

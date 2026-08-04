@@ -2,12 +2,30 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   addPreferenceItem,
+  createPreferenceItemFromResult,
   movePreferenceItem,
   organizePreferenceItems,
   predictionZoneToPreferenceZone,
   preferenceItemId,
   preferenceListWarnings
 } from "./preferenceList.js";
+
+test("stores a margin that matches the selected official cutoff", () => {
+  const item = createPreferenceItemFromResult({
+    instituteCode: "06179",
+    branchCode: "0617924510",
+    college: "Example College",
+    branch: "Computer Engineering",
+    zone: "TARGET",
+    studentScore: 89.2,
+    latestCutoff: 90.87,
+    closingCutoff: 89.84,
+    margin: -0.64
+  });
+
+  assert.equal(item.cutoff, 90.87);
+  assert.ok(Math.abs(item.margin - (-1.67)) < 1e-10);
+});
 
 test("creates a stable college and branch choice ID", () => {
   assert.equal(preferenceItemId("06155", "Computer Engineering"), "06155:Computer Engineering");

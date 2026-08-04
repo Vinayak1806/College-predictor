@@ -1,20 +1,16 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createPreferenceListPdf } from "../../../../lib/preferencePdf";
-import { limitPublicRequest } from "../../../../lib/rateLimit";
+import { consumeRateLimit } from "../../../../lib/rateLimit";
 import { createRequestId, logServerError, publicServerError } from "../../../../lib/observability";
+import { requireStudent } from "../../../../lib/studentAuth";
 
 const itemSchema = z.object({
   instituteCode: z.string().min(2).max(20),
   college: z.string().min(2).max(250),
-  branchCode: z.string().min(2).max(30),
   branch: z.string().min(2).max(180),
-  city: z.string().max(100).optional().default(""),
-  zone: z.enum(["AMBITIOUS", "TARGET", "SAFE", "BACKUP"]),
   cutoff: z.number().min(0).max(100).nullable().optional(),
-  seatType: z.string().max(30).optional().default(""),
-  year: z.string().max(20).optional().default(""),
-  round: z.number().int().min(1).max(4).nullable().optional()
+  year: z.string().max(20).optional().default("")
 }).strip();
 
 const requestSchema = z.object({
@@ -22,8 +18,21 @@ const requestSchema = z.object({
 }).strict();
 
 export async function POST(request) {
-  const limited = await limitPublicRequest(request, "export");
-  if (limited) return limited;
+  const student = await requireStudent(request);
+  if (!student) {
+    return NextResponse.json({ error: "Sign in to download your CAP preference list." }, { status: 401 });
+  }
+
+  const rateLimit = await consumeRateLimit(`student:preference-pdf:${student.userId}`, {
+    limit: 12,
+    windowMs: 60 * 60 * 1000
+  });
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "PDF download limit reached. Please try again later." },
+      { status: 429, headers: { "retry-after": String(rateLimit.retryAfter) } }
+    );
+  }
 
   try {
     const validation = requestSchema.safeParse(await request.json());
@@ -31,7 +40,7 @@ export async function POST(request) {
       return NextResponse.json({ error: validation.error.issues[0]?.message || "Check the CAP list." }, { status: 400 });
     }
 
-    const pdf = createPreferenceListPdf(validation.data.items);
+    const pdf = await createPreferenceListPdf(validation.data.items);
     return new Response(pdf, {
       headers: {
         "Content-Type": "application/pdf",

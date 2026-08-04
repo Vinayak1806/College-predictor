@@ -23,6 +23,8 @@
     "data:fees:apply": "node scripts/enrich-fra-fees.js --apply",
     "data:cutoff-sources": "node scripts/attach-official-cutoff-sources.js",
     "data:cutoff-sources:apply": "node scripts/attach-official-cutoff-sources.js --apply",
+    "data:dse-workbook": "node scripts/import-dse-college-dataset.js",
+    "data:dse-workbook:apply": "node scripts/import-dse-college-dataset.js --apply",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev"
   },
@@ -32,6 +34,7 @@
     "better-auth": "^1.6.25",
     "lucide-react": "^1.25.0",
     "next": "^15.5.21",
+    "pdf-lib": "^1.17.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.53.0",

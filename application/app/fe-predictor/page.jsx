@@ -15,6 +15,7 @@ import {
   X
 } from "lucide-react";
 import { ResultCard } from "../../components/ResultCard";
+import { PredictionReportButton } from "../../components/PredictionReportButton";
 import { SiteHeader } from "../../components/SiteHeader";
 import { trackAnalyticsEvent } from "../../lib/analytics";
 import { getPageRange, getPaginationItems } from "../../lib/pagination";
@@ -892,6 +893,10 @@ export default function FePredictorPage() {
                         </div>
                       </details>
                     ) : null}
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 md:px-5">
+                    <p className="text-xs text-slate-500">Signed-in students can keep a named PDF copy of this prediction page.</p>
+                    <PredictionReportButton route="FE" form={form} results={results} totalResults={totalResults} />
                   </div>
                 </div>
               </>

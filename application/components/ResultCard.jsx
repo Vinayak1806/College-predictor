@@ -121,8 +121,8 @@ export function ResultCard(props) {
           round: props.round,
           seatType: props.seatType,
           score: props.studentScore,
-          cutoff: props.closingCutoff,
-          margin: props.margin,
+          cutoff: officialCutoff,
+          margin: selectedCutoffDifference,
           zone: props.zone
         }
       }

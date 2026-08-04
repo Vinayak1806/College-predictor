@@ -174,6 +174,13 @@ function numberFromQuery(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function rankingLabel(ranking) {
+  if (!ranking) return null;
+  if (hasValue(ranking.rank)) return `Rank ${ranking.rank}`;
+  if (hasValue(ranking.band)) return `Rank band ${ranking.band}`;
+  return null;
+}
+
 export default async function CollegeDetailsPage({ params, searchParams }) {
   const { slug } = await params;
   const query = await searchParams;
@@ -188,7 +195,7 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
 
   const branchCodes = college.collegeBranches.map((collegeBranch) => collegeBranch.branch.branchCode);
 
-  const [seatMatrices, cutoffs, profile, fees] = await Promise.all([
+  const [seatMatrices, cutoffs, profile, fees, rankings] = await Promise.all([
     prisma.seatMatrix.findMany({
       where: {
         admissionRoute,
@@ -232,6 +239,13 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
         academicYear: "desc"
       },
       take: 5
+    }),
+    prisma.collegeRanking.findMany({
+      where: {
+        instituteCode: college.instituteCode,
+        verified: true
+      },
+      orderBy: [{ rankingYear: "desc" }, { rank: "asc" }]
     })
   ]);
 
@@ -296,6 +310,7 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
   const approvedFee = latestFee?.totalApprovedFee ?? profile?.totalApprovedFee ?? null;
   const approvedFeeYear = latestFee?.academicYear || profile?.feeYear || null;
   const officialWebsite = profile?.officialWebsite || college.officialWebsite;
+  const officialRanking = rankings[0] || null;
   const canonicalUrl = absoluteUrl(`/colleges/${college.slug}`);
   const structuredData = {
     "@context": "https://schema.org",
@@ -434,6 +449,12 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
           <FactGrid>
             {ownership ? <Fact label="Institute ownership" value={ownership} /> : null}
             <Fact label="Academic autonomy" value={isAutonomous ? "Autonomous" : "Non-autonomous"} />
+            {rankingLabel(officialRanking) ? (
+              <Fact
+                label={`${officialRanking.rankingSystem} ${officialRanking.category} ${officialRanking.rankingYear}`}
+                value={rankingLabel(officialRanking)}
+              />
+            ) : null}
             {selectedBranch ? <Fact label="Selected branch" value={selectedBranch.branchName} /> : null}
             {hasValue(selectedSeat?.sanctionedIntake) ? (
               <Fact label="Approved branch intake" value={selectedSeat.sanctionedIntake} />
@@ -529,7 +550,7 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
           ) : null}
         </section>
 
-        {(profile?.sourceUrl || fees[0]?.sourceUrl || missingData.length) ? (
+        {(profile?.sourceUrl || fees[0]?.sourceUrl || officialRanking?.sourceUrl || missingData.length) ? (
           <section className="mt-8 border-t border-line pt-5 text-sm">
             <h2 className="font-semibold text-ink">Sources and data availability</h2>
             {missingData.length ? (
@@ -548,6 +569,11 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
               {fees[0]?.sourceUrl ? (
                 <a className="font-medium text-action underline" href={fees[0].sourceUrl} target="_blank" rel="noreferrer">
                   Official approved fee source
+                </a>
+              ) : null}
+              {officialRanking?.sourceUrl ? (
+                <a className="font-medium text-action underline" href={officialRanking.sourceUrl} target="_blank" rel="noreferrer">
+                  Official {officialRanking.rankingSystem} {officialRanking.rankingYear} source
                 </a>
               ) : null}
             </div>

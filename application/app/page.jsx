@@ -13,6 +13,7 @@ import {
   SlidersHorizontal
 } from "lucide-react";
 import { CollegeAutocomplete } from "../components/CollegeAutocomplete";
+import { HomeEvidenceCharts } from "../components/HomeEvidenceCharts";
 import { SiteHeader } from "../components/SiteHeader";
 import { getPublicStats } from "../lib/publicStats";
 
@@ -48,7 +49,7 @@ export default async function HomePage() {
   const liveStats = await getPublicStats();
   const statistics = [
     [liveStats.currentInstitutes.toLocaleString("en-IN"), "Current CAP institutes"],
-    [liveStats.verifiedCutoffs.toLocaleString("en-IN"), "Verified cutoff records"],
+    [liveStats.verifiedCutoffs.toLocaleString("en-IN"), "Verified FE cutoffs"],
     [liveStats.districtsCovered.toLocaleString("en-IN"), "Districts covered"],
     [liveStats.exactSeatTypes.toLocaleString("en-IN"), "Exact seat types"]
   ];
@@ -128,6 +129,8 @@ export default async function HomePage() {
             ))}
           </div>
         </section>
+
+        <HomeEvidenceCharts coverage={liveStats.cutoffCoverage} />
 
         <section className="border-y border-line bg-white">
           <div className="mx-auto grid max-w-7xl gap-8 px-4 py-14 md:grid-cols-[0.8fr_1.2fr] md:items-start md:py-20">
