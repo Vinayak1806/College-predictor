@@ -1,6 +1,6 @@
 export const metadata = {
-  title: "MHT CET College Predictor 2026",
-  description: "Predict Maharashtra engineering colleges from your MHT-CET percentile, category, home university, preferred branches and cities using official CAP cutoff history.",
+  title: "First-Year B.E./B.Tech College Predictor Maharashtra",
+  description: "Predict First-Year Engineering (FE) B.E./B.Tech college options in Maharashtra from your MHT-CET percentile, category, home university and official CAP cutoff history.",
   alternates: { canonical: "/fe-predictor" }
 };
 

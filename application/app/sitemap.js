@@ -10,7 +10,8 @@ const publicPages = [
   { path: "/dse-predictor", changeFrequency: "monthly", priority: 0.9 },
   { path: "/colleges", changeFrequency: "weekly", priority: 0.9 },
   { path: "/cutoffs", changeFrequency: "weekly", priority: 0.9 },
-  { path: "/college-index", changeFrequency: "monthly", priority: 0.8 }
+  { path: "/college-index", changeFrequency: "monthly", priority: 0.8 },
+  { path: "/college-index?route=DSE", changeFrequency: "monthly", priority: 0.8 }
 ];
 
 export default async function sitemap() {

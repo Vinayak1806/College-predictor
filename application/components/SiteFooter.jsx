@@ -18,10 +18,11 @@ export function SiteFooter() {
         <div>
           <p className="text-sm font-semibold">Student tools</p>
           <div className="mt-3 grid gap-2 text-sm text-slate-300">
-            <Link className="hover:text-white" href="/fe-predictor">FE Predictor</Link>
-            <Link className="hover:text-white" href="/colleges">Explore colleges</Link>
-            <Link className="hover:text-white" href="/college-index">Historical demand index</Link>
-            <Link className="hover:text-white" href="/preference-list">CAP preference list</Link>
+            <Link className="hover:text-white" href="/fe-predictor">First-Year B.E./B.Tech Predictor</Link>
+            <Link className="hover:text-white" href="/dse-predictor">Direct Second-Year (DSE) Predictor</Link>
+            <Link className="hover:text-white" href="/colleges">Explore Engineering Colleges</Link>
+            <Link className="hover:text-white" href="/college-index">Top Maharashtra Engineering Colleges</Link>
+            <Link className="hover:text-white" href="/preference-list">CAP Preference List</Link>
           </div>
         </div>
         <div>

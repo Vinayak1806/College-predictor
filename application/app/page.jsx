@@ -25,7 +25,7 @@ export const metadata = {
 };
 
 const steps = [
-  { icon: GraduationCap, title: "Enter your profile", text: "Add percentile, category, gender and home university." },
+  { icon: GraduationCap, title: "Enter your profile", text: "Add your MHT-CET percentile or diploma percentage with admission details." },
   { icon: SlidersHorizontal, title: "Choose preferences", text: "Select branches, cities, ownership and autonomy." },
   { icon: Database, title: "Analyze CAP history", text: "We compare eligible seats across verified years and rounds." },
   { icon: BarChart3, title: "Review clear results", text: "See admission zone, margin, trend, confidence and source." }
@@ -41,18 +41,50 @@ const features = [
 const questions = [
   ["Does a Safe result guarantee admission?", "No. Safe, Target and Ambitious are historical comparison zones, not guarantees. Actual allotment depends on the current CAP process and available seats."],
   ["Why does the predictor ask for my home university?", "Home and Other Than Home University seat eligibility changes for each college. Selecting the actual university lets the system apply the correct seat codes."],
-  ["Is DSE prediction available?", "Yes. The DSE predictor uses published 2024-25 and 2025-26 Direct Second Year CAP cutoff records. Because fewer historical years are available than FE, DSE results show conservative confidence warnings."],
-  ["Is the College Index an official ranking?", "No. It is a transparent historical-demand research signal. It does not claim to measure teaching quality, placements or campus life."]
+  ["Is Direct Second-Year (DSE) prediction available?", "Yes. The Direct Second-Year predictor uses published DSE CAP cutoff records. Because fewer historical years are available than for First-Year Engineering, these results show conservative confidence warnings."],
+  ["Is the Top Colleges page an official ranking?", "No. It is a transparent historical-demand research signal. It does not claim to measure teaching quality, placements or campus life."]
 ];
 
 export default async function HomePage() {
   const liveStats = await getPublicStats();
-  const verifiedCutoffTotal = liveStats.cutoffCoverage.reduce((sum, row) => sum + row.FE + row.DSE, 0);
+  const verifiedFeCutoffs = liveStats.cutoffCoverage.reduce((sum, row) => sum + row.FE, 0);
+  const verifiedDseCutoffs = liveStats.cutoffCoverage.reduce((sum, row) => sum + row.DSE, 0);
+  const verifiedCutoffTotal = verifiedFeCutoffs + verifiedDseCutoffs;
+  const latestFeYear = liveStats.cutoffCoverage.filter((row) => row.FE > 0).at(-1)?.academicYear || "Not available";
+  const latestDseYear = liveStats.cutoffCoverage.filter((row) => row.DSE > 0).at(-1)?.academicYear || "Not available";
   const statistics = [
     [liveStats.currentInstitutes.toLocaleString("en-IN"), "Current CAP institutes"],
     [verifiedCutoffTotal.toLocaleString("en-IN"), "Verified cutoff records"],
     [liveStats.districtsCovered.toLocaleString("en-IN"), "Districts covered"],
     [liveStats.exactSeatTypes.toLocaleString("en-IN"), "Exact seat types"]
+  ];
+  const admissionRoutes = [
+    {
+      code: "FE",
+      eyebrow: "After Class 12",
+      title: "First-Year B.E./B.Tech Admission",
+      description: "Use your MHT-CET percentile with category, gender, home university and college preferences.",
+      institutes: liveStats.currentFeInstitutes,
+      cutoffs: verifiedFeCutoffs,
+      latestYear: latestFeYear,
+      href: "/fe-predictor",
+      action: "Open First-Year Predictor",
+      accent: "border-action",
+      iconStyle: "bg-cyan-50 text-action"
+    },
+    {
+      code: "DSE",
+      eyebrow: "After Diploma",
+      title: "Direct Second-Year B.E./B.Tech Admission",
+      description: "Use your diploma percentage with category, diploma branch and degree-branch preferences.",
+      institutes: liveStats.currentDseInstitutes,
+      cutoffs: verifiedDseCutoffs,
+      latestYear: latestDseYear,
+      href: "/dse-predictor",
+      action: "Open Direct Second-Year Predictor",
+      accent: "border-success",
+      iconStyle: "bg-emerald-50 text-success"
+    }
   ];
 
   return (
@@ -84,10 +116,10 @@ export default async function HomePage() {
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Link className="focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded bg-action px-5 font-semibold text-white shadow-lg hover:bg-[#0a596d] hover:shadow-raised" href="/fe-predictor">
-                  FE Predictor <ArrowRight aria-hidden="true" size={18} />
+                  First-Year B.E./B.Tech Predictor <ArrowRight aria-hidden="true" size={18} />
                 </Link>
                 <Link className="focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded border border-white/70 bg-white/10 px-5 font-semibold text-white backdrop-blur-sm hover:border-white hover:bg-white/20" href="/dse-predictor">
-                  DSE Predictor <GraduationCap aria-hidden="true" size={18} />
+                  Direct Second-Year (DSE) Predictor <GraduationCap aria-hidden="true" size={18} />
                 </Link>
               </div>
 
@@ -111,7 +143,61 @@ export default async function HomePage() {
           </dl>
         </section>
 
-        <section className="mx-auto max-w-7xl px-4 py-14 md:py-20">
+        <section className="mx-auto max-w-7xl px-4 py-12 md:py-16" aria-labelledby="admission-route-heading">
+          <div className="grid gap-5 md:grid-cols-[0.75fr_1.25fr] md:items-end">
+            <div>
+              <p className="text-xs font-semibold uppercase text-action">Choose your admission route</p>
+              <h2 id="admission-route-heading" className="mt-2 text-3xl font-bold text-ink">Start with the predictor made for you</h2>
+            </div>
+            <p className="max-w-3xl text-sm leading-6 text-slate-600">
+              First-Year and Direct Second-Year admissions use different cutoff records and eligibility rules. Select the route that matches your current qualification.
+            </p>
+          </div>
+
+          <div className="mt-7 grid gap-4 lg:grid-cols-2">
+            {admissionRoutes.map((route) => (
+              <article key={route.code} className={`overflow-hidden rounded-lg border border-line border-t-4 bg-white shadow-sm ${route.accent}`}>
+                <div className="grid gap-5 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start md:p-6">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-3">
+                      <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded ${route.iconStyle}`}>
+                        <GraduationCap aria-hidden="true" size={22} />
+                      </span>
+                      <div>
+                        <p className="text-xs font-semibold uppercase text-slate-500">{route.eyebrow}</p>
+                        <p className="text-xs font-semibold text-action">{route.code} admission</p>
+                      </div>
+                    </div>
+                    <h3 className="mt-4 text-xl font-semibold leading-7 text-ink">{route.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{route.description}</p>
+                  </div>
+                  <span className="rounded border border-line bg-panel px-3 py-2 text-xs font-semibold text-slate-700">Latest: {route.latestYear}</span>
+                </div>
+
+                <dl className="grid grid-cols-2 border-y border-line bg-panel text-center">
+                  <div className="border-r border-line px-3 py-4">
+                    <dt className="text-lg font-bold text-ink">{route.institutes.toLocaleString("en-IN")}</dt>
+                    <dd className="mt-1 text-xs text-slate-500">Current institutes</dd>
+                  </div>
+                  <div className="px-3 py-4">
+                    <dt className="text-lg font-bold text-ink">{route.cutoffs.toLocaleString("en-IN")}</dt>
+                    <dd className="mt-1 text-xs text-slate-500">Verified cutoffs</dd>
+                  </div>
+                </dl>
+
+                <div className="p-4 md:px-6">
+                  <Link className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white hover:bg-[#0a596d]" href={route.href}>
+                    {route.action} <ArrowRight aria-hidden="true" size={17} />
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+          <p className="mt-3 text-xs leading-5 text-slate-500">Counts come from currently published PostgreSQL cutoff datasets and update when an administrator publishes new verified data.</p>
+        </section>
+
+        <section className="border-y border-line bg-white">
+          <div className="mx-auto max-w-7xl px-4 py-14 md:py-20">
           <div className="max-w-2xl">
             <p className="text-xs font-semibold uppercase text-action">How it works</p>
             <h2 className="mt-2 text-3xl font-bold text-ink">From profile to explainable options</h2>
@@ -129,6 +215,7 @@ export default async function HomePage() {
               </article>
             ))}
           </div>
+          </div>
         </section>
 
         <HomeEvidenceCharts coverage={liveStats.cutoffCoverage} />
@@ -139,7 +226,7 @@ export default async function HomePage() {
               <p className="text-xs font-semibold uppercase text-action">Built for decisions</p>
               <h2 className="mt-2 text-3xl font-bold text-ink">Useful evidence, without pretending certainty</h2>
               <p className="mt-4 text-sm leading-7 text-slate-600">Every prediction explains the exact historical record used. Missing college information is hidden or clearly marked instead of being invented.</p>
-              <Link className="mt-6 inline-flex min-h-11 items-center gap-2 font-semibold text-action" href="/college-index">View the historical demand index <ArrowRight aria-hidden="true" size={17} /></Link>
+              <Link className="mt-6 inline-flex min-h-11 items-center gap-2 font-semibold text-action" href="/college-index">Explore top Maharashtra engineering colleges <ArrowRight aria-hidden="true" size={17} /></Link>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               {features.map((feature) => (
@@ -158,7 +245,7 @@ export default async function HomePage() {
             <div>
               <p className="text-xs font-semibold uppercase text-action">Questions students ask</p>
               <h2 className="mt-2 text-3xl font-bold text-ink">Clear answers before CAP</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-600">No login is required to run an FE prediction.</p>
+              <p className="mt-3 text-sm leading-6 text-slate-600">No login is required to use either the First-Year or Direct Second-Year predictor.</p>
             </div>
             <div className="divide-y divide-line border-y border-line">
               {questions.map(([question, answer]) => (
@@ -172,12 +259,16 @@ export default async function HomePage() {
         </section>
 
         <section className="border-y border-line bg-[#eaf5f7]">
-          <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-10 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mx-auto grid max-w-7xl gap-6 px-4 py-10 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
             <div>
               <p className="text-xs font-semibold uppercase text-action">Ready to check your options?</p>
-              <h2 className="mt-2 text-2xl font-bold text-ink">Start with your MHT-CET percentile.</h2>
+              <h2 className="mt-2 text-2xl font-bold text-ink">Choose First-Year or Direct Second-Year admission.</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Both predictors use their own published cutoff records and eligibility logic.</p>
             </div>
-            <Link className="focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded bg-action px-5 font-semibold text-white shadow-sm hover:bg-[#0a596d] hover:shadow-soft" href="/fe-predictor">Open FE Predictor <ArrowRight aria-hidden="true" size={18} /></Link>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Link className="focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded bg-action px-5 text-sm font-semibold text-white shadow-sm hover:bg-[#0a596d] hover:shadow-soft" href="/fe-predictor">First-Year Predictor <ArrowRight aria-hidden="true" size={18} /></Link>
+              <Link className="focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded border border-action bg-white px-5 text-sm font-semibold text-action hover:bg-cyan-50" href="/dse-predictor">Direct Second-Year Predictor <GraduationCap aria-hidden="true" size={18} /></Link>
+            </div>
           </div>
         </section>
       </main>

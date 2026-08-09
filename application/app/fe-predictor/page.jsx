@@ -592,8 +592,8 @@ export default function FePredictorPage() {
       <main className={`mx-auto grid min-w-0 gap-6 px-4 py-6 ${hasPredicted ? "max-w-7xl lg:grid-cols-[340px_minmax(0,1fr)] lg:items-start xl:grid-cols-[360px_minmax(0,1fr)]" : "max-w-6xl"}`}>
         <section className="min-w-0 w-full lg:self-stretch">
           <div className="border-l-4 border-action pl-4">
-            <p className="text-xs font-semibold uppercase text-action">First-year engineering</p>
-            <h1 className="mt-1 text-2xl font-semibold">FE College Predictor</h1>
+            <p className="text-xs font-semibold uppercase text-action">First-Year Engineering Admission (FE)</p>
+            <h1 className="mt-1 text-2xl font-semibold">First-Year B.E./B.Tech College Predictor</h1>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               Find realistic options from verified Maharashtra CAP cutoffs and your official seat eligibility.
             </p>
@@ -799,7 +799,7 @@ export default function FePredictorPage() {
               className={`${mobileStep === 3 ? "flex" : "hidden"} focus-ring min-h-11 items-center justify-center gap-2 rounded bg-action px-5 font-semibold text-white disabled:opacity-60 md:flex ${hasPredicted ? "w-full" : "w-full md:ml-auto md:w-auto md:min-w-64"}`}
               disabled={loading || !canPredict}
             >
-              <BarChart3 aria-hidden="true" size={18} /> {loading ? "Predicting..." : "Predict Colleges"}
+              <BarChart3 aria-hidden="true" size={18} /> {loading ? "Checking First-Year cutoffs..." : "Predict First-Year Colleges"}
             </button>
             {!canPredict ? <p className="text-center text-xs text-slate-500">Complete the required fields to enable prediction.</p> : null}
           </form>

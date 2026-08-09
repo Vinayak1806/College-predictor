@@ -455,17 +455,17 @@ export default function DsePredictorPage() {
       <main className={`mx-auto grid min-w-0 gap-6 px-4 py-6 ${hasPredicted ? "max-w-7xl lg:grid-cols-[340px_minmax(0,1fr)] lg:items-start xl:grid-cols-[360px_minmax(0,1fr)]" : "max-w-6xl"}`}>
         <section className="min-w-0 w-full lg:self-stretch">
           <header className="border-l-4 border-action pl-4">
-            <p className="text-xs font-semibold uppercase text-action">Direct second year engineering</p>
-            <h1 className="mt-1 text-2xl font-semibold text-ink">DSE College Predictor</h1>
+            <p className="text-xs font-semibold uppercase text-action">Direct Second-Year Engineering Admission (DSE)</p>
+            <h1 className="mt-1 text-2xl font-semibold text-ink">Direct Second-Year B.E./B.Tech College Predictor</h1>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Find realistic lateral-entry options using verified Maharashtra DSE CAP cutoffs.
+              Find realistic lateral-entry options using verified Maharashtra Direct Second-Year CAP cutoffs.
             </p>
           </header>
 
           <dl className="mt-4 grid grid-cols-3 rounded border border-line bg-white py-3 text-center shadow-sm">
             <div className="border-r border-line px-2">
               <dt className="text-lg font-semibold text-ink">45k+</dt>
-              <dd className="mt-1 text-xs text-slate-500">DSE cutoffs</dd>
+              <dd className="mt-1 text-xs text-slate-500">Direct Second-Year cutoffs</dd>
             </div>
             <div className="border-r border-line px-2">
               <dt className="text-lg font-semibold text-ink">{options.years.length || 2}</dt>
@@ -519,7 +519,7 @@ export default function DsePredictorPage() {
               </label>
 
               <label className="grid min-w-0 gap-2 text-sm font-medium">
-                <span>DSE merit number <span className="font-normal text-slate-500">(optional)</span></span>
+                <span>Direct Second-Year merit number <span className="font-normal text-slate-500">(optional)</span></span>
                 <input
                   className="focus-ring min-h-11 w-full rounded border border-line px-3"
                   type="number"
@@ -658,7 +658,7 @@ export default function DsePredictorPage() {
               className={`${mobileStep === 3 ? "flex" : "hidden"} focus-ring min-h-11 items-center justify-center gap-2 rounded bg-action px-5 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 md:flex ${hasPredicted ? "w-full" : "w-full md:ml-auto md:w-auto md:min-w-64"}`}
               disabled={!canPredict || loading}
             >
-              <BarChart3 aria-hidden="true" size={18} /> {loading ? "Checking DSE records..." : "Predict DSE Colleges"}
+              <BarChart3 aria-hidden="true" size={18} /> {loading ? "Checking Direct Second-Year cutoffs..." : "Predict Direct Second-Year Colleges"}
             </button>
             {!canPredict ? <p className="text-center text-xs text-slate-500">Complete the required fields to enable prediction.</p> : null}
           </form>
@@ -667,7 +667,7 @@ export default function DsePredictorPage() {
             <aside className="sticky top-20 mt-4 hidden overflow-hidden rounded-lg border border-line bg-white lg:block">
               <div className="flex items-start justify-between gap-3 p-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase text-action">Current DSE profile</p>
+                  <p className="text-xs font-semibold uppercase text-action">Current Direct Second-Year profile</p>
                   <p className="mt-1 text-lg font-semibold text-ink">{form.diplomaPercentage}% diploma</p>
                 </div>
                 <span className="rounded bg-panel px-2 py-1 text-xs font-semibold">{form.category}</span>
@@ -737,7 +737,7 @@ export default function DsePredictorPage() {
                   </dl>
                 ) : (
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                    Add your diploma score and eligibility details to find matches from official DSE CAP records.
+                    Add your diploma score and eligibility details to find matches from official Direct Second-Year CAP records.
                   </p>
                 )}
               </div>
@@ -753,7 +753,7 @@ export default function DsePredictorPage() {
               <>
                 <div className="grid gap-3 border-y border-line bg-panel px-4 py-3 sm:grid-cols-2 md:px-5">
                   <div className="min-w-0">
-                    <p className="text-xs font-medium uppercase text-slate-500">Official DSE seats checked</p>
+                    <p className="text-xs font-medium uppercase text-slate-500">Official Direct Second-Year seats checked</p>
                     <p className="mt-1 break-words text-sm font-semibold">{seatTypes.length ? seatTypes.join(", ") : "No eligible seat codes returned"}</p>
                   </div>
                   <div>
@@ -786,7 +786,7 @@ export default function DsePredictorPage() {
                         : "No options in this admission zone."}
                     </p>
                     <details>
-                      <summary className="cursor-pointer font-medium text-action">DSE data note</summary>
+                      <summary className="cursor-pointer font-medium text-action">Direct Second-Year data note</summary>
                       <p className="mt-2 max-w-xl leading-5 text-slate-600">{analysis?.diplomaBranchNote}</p>
                     </details>
                   </div>

@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "College Comparison",
+  title: "Compare Maharashtra Engineering Colleges",
   robots: { index: false, follow: false }
 };
 

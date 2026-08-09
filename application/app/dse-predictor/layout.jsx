@@ -1,6 +1,6 @@
 export const metadata = {
-  title: "DSE Engineering College Predictor Maharashtra",
-  description: "Predict Direct Second Year engineering college options using diploma percentage, category, branch preferences and verified Maharashtra DSE CAP cutoffs.",
+  title: "Direct Second-Year (DSE) B.E./B.Tech College Predictor",
+  description: "Predict Direct Second-Year (DSE) B.E./B.Tech college options in Maharashtra using diploma percentage, category, preferences and verified CAP cutoffs.",
   alternates: { canonical: "/dse-predictor" }
 };
 

@@ -93,9 +93,10 @@ function Fact({ label, value, note, tone = "normal" }) {
 function ComparisonCard({ item, position }) {
   const prediction = item.prediction;
   const isDse = item.admissionRoute === "DSE";
+  const routeName = isDse ? "Direct Second-Year" : "First-Year";
   const missing = [
     !item.branch ? "Select a branch to compare cutoff and seat information." : null,
-    item.branch && !item.latestOpenCutoff ? `${item.admissionRoute} OPEN general cutoff history is unavailable for this branch.` : null,
+    item.branch && !item.latestOpenCutoff ? `${routeName} OPEN general cutoff history is unavailable for this branch.` : null,
     !item.approvedFee ? "Approved annual fee is not available." : null
   ].filter(Boolean);
   const marginTone = prediction?.margin >= 0 ? "good" : "warning";
@@ -106,7 +107,7 @@ function ComparisonCard({ item, position }) {
     <article className="min-w-0 overflow-hidden rounded-lg border border-line bg-white">
       <div className={`h-1 ${prediction?.zone === "SAFE" ? "bg-success" : prediction?.zone === "TARGET" ? "bg-action" : prediction ? "bg-warning" : "bg-slate-300"}`} />
       <header className="min-h-[178px] p-4 md:p-5">
-        <p className="text-xs font-semibold uppercase text-slate-500">{item.admissionRoute} choice {position} | Institute {item.instituteCode}</p>
+        <p className="text-xs font-semibold uppercase text-slate-500">{routeName} choice {position} | Institute {item.instituteCode}</p>
         <h2 className="mt-2 text-lg font-semibold leading-6 text-ink">{item.name}</h2>
         <p className="mt-2 font-semibold text-action">{item.branch?.name || "College overview"}</p>
         <div className="mt-3 grid gap-1 text-xs text-slate-500">
@@ -238,6 +239,7 @@ function ComparisonCard({ item, position }) {
 export default function ComparePage() {
   const router = useRouter();
   const [admissionRoute, setAdmissionRoute] = useState("FE");
+  const routeName = admissionRoute === "DSE" ? "Direct Second-Year" : "First-Year";
   const [routeReady, setRouteReady] = useState(false);
   const [slots, setSlots] = useState(() => Array.from({ length: MAX_COLLEGES }, emptySlot));
   const [results, setResults] = useState([]);
@@ -466,7 +468,7 @@ export default function ComparePage() {
       <main className="mx-auto max-w-7xl px-4 py-7 md:py-9">
         <header className="border-l-4 border-action pl-4">
           <p className="text-xs font-semibold uppercase text-action">Decision workspace</p>
-          <h1 className="mt-1 text-2xl font-semibold text-ink md:text-3xl">Compare college and branch choices</h1>
+          <h1 className="mt-1 text-2xl font-semibold text-ink md:text-3xl">Compare Engineering Colleges and Branches</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
             Compare up to three options using route-specific cutoff history, approved seats, fees and verified college facts.
           </p>
@@ -479,7 +481,7 @@ export default function ComparePage() {
               <p className="mt-1 text-sm text-slate-600">All colleges, branches, cutoffs and seats below use the selected route.</p>
             </div>
             <div className="grid grid-cols-2 rounded border border-line bg-panel p-1" role="group" aria-label="Choose admission route">
-              {[{ code: "FE", label: "First Year" }, { code: "DSE", label: "Direct Second Year" }].map((route) => (
+              {[{ code: "FE", label: "First-Year" }, { code: "DSE", label: "Direct Second-Year" }].map((route) => (
                 <button
                   key={route.code}
                   className={`focus-ring min-h-11 rounded px-4 text-sm font-semibold ${admissionRoute === route.code ? "bg-action text-white" : "text-slate-700 hover:bg-white"}`}
@@ -497,11 +499,11 @@ export default function ComparePage() {
         <section className="mt-5 overflow-visible rounded-lg border border-line bg-white">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-4 md:px-5">
             <div>
-              <h2 className="font-semibold text-ink">Choose {admissionRoute} colleges</h2>
-              <p className="mt-1 text-sm text-slate-500">A branch is optional, but required for {admissionRoute} cutoff and seat comparison.</p>
+              <h2 className="font-semibold text-ink">Choose {routeName} colleges</h2>
+              <p className="mt-1 text-sm text-slate-500">A branch is optional, but required for {routeName} cutoff and seat comparison.</p>
             </div>
             <button className="focus-ring inline-flex min-h-11 items-center gap-2 rounded border border-line px-3 text-sm font-semibold text-slate-700" type="button" onClick={clearAll}>
-              <Trash2 aria-hidden="true" size={16} /> Clear {admissionRoute} choices
+              <Trash2 aria-hidden="true" size={16} /> Clear {routeName} choices
             </button>
           </div>
 
@@ -542,7 +544,7 @@ export default function ComparePage() {
                     value={slot.branchCode}
                     onChange={(event) => changeBranch(index, event.target.value)}
                   >
-                    <option value="">{slot.loadingBranches ? `Loading ${admissionRoute} branches...` : "College overview"}</option>
+                    <option value="">{slot.loadingBranches ? `Loading ${routeName} branches...` : "College overview"}</option>
                     {slot.branches.map((branch) => (
                       <option key={branch.branchCode} value={branch.branchCode}>{branch.name}</option>
                     ))}
@@ -550,7 +552,7 @@ export default function ComparePage() {
                 </label>
                 {slot.prediction ? (
                   <p className="mt-3 inline-flex rounded border border-line bg-panel px-2.5 py-1 text-xs font-medium text-slate-600">
-                    Saved from your {admissionRoute} prediction
+                    Saved from your {routeName} prediction
                   </p>
                 ) : null}
               </div>
@@ -575,7 +577,7 @@ export default function ComparePage() {
             >
               <CloudUpload aria-hidden="true" size={17} /> {savingAccount ? "Saving..." : "Save to my account"}
             </button>
-            <p className="text-xs text-slate-500">{admissionRoute} historical information supports research; it does not guarantee allotment.</p>
+            <p className="text-xs text-slate-500">{routeName} historical information supports research; it does not guarantee allotment.</p>
           </div>
         </section>
 
@@ -594,7 +596,7 @@ export default function ComparePage() {
                 <h2 className="mt-1 text-xl font-semibold text-ink">{results.length} choices side by side</h2>
               </div>
               <p className="max-w-xl text-xs leading-5 text-slate-500">
-                Historical Demand Index measures previous {admissionRoute} admission demand. It is not an official college ranking.
+                Historical Demand Index measures previous {routeName} admission demand. It is not an official college ranking.
               </p>
             </div>
             <div className={`mt-4 grid items-start gap-4 ${results.length === 2 ? "lg:grid-cols-2" : "lg:grid-cols-3"}`}>
@@ -608,7 +610,7 @@ export default function ComparePage() {
             <BarChart3 aria-hidden="true" className="mx-auto text-action" size={26} />
             <div>
               <h2 className="font-semibold text-ink">Your comparison will appear here</h2>
-              <p className="mt-1 text-sm text-slate-500">Select at least two {admissionRoute} colleges, then compare their strongest available facts.</p>
+              <p className="mt-1 text-sm text-slate-500">Select at least two {routeName} colleges, then compare their strongest available facts.</p>
             </div>
           </section>
         )}

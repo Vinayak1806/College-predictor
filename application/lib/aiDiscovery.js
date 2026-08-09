@@ -16,7 +16,7 @@ function siteLink(siteUrl, path) {
 export function buildLlmsIndex({ siteUrl, stats }) {
   return `# CAP Predictor
 
-> Maharashtra engineering admission research using structured FE and Direct Second Year (DSE) CAP cutoff records.
+> Maharashtra engineering admission research using structured First-Year Engineering (FE) and Direct Second-Year (DSE) CAP cutoff records.
 
 CAP Predictor helps students research current Maharashtra engineering institutes, branches, seat types, fees, seat matrices and historical admission cutoffs. The website is an independent decision-support tool and is not the Maharashtra CET Cell.
 
@@ -26,15 +26,15 @@ CAP Predictor helps students research current Maharashtra engineering institutes
 - Verified FE cutoff records: ${stats.verifiedCutoffs}
 - Exact seat types represented: ${stats.exactSeatTypes}
 - Location groups represented: ${stats.districtsCovered}
-- Admission routes: FE (First-Year Engineering) and DSE (Direct Second Year Engineering)
+- Admission routes: First-Year Engineering (FE) and Direct Second-Year Engineering (DSE)
 - Predictions compare a student score with historical records; they never guarantee admission.
 - Historical Demand Index is a cutoff-demand signal, not an official college ranking or academic-performance rating.
 
 ## Primary resources
 
 - [Home](${siteLink(siteUrl, "/")}): Project scope, methodology and disclaimer.
-- [FE College Predictor](${siteLink(siteUrl, "/fe-predictor")}): MHT-CET prediction using category, gender, home university and preferences.
-- [DSE College Predictor](${siteLink(siteUrl, "/dse-predictor")}): Diploma-percentage prediction using DSE cutoff history.
+- [First-Year B.E./B.Tech College Predictor](${siteLink(siteUrl, "/fe-predictor")}): MHT-CET prediction using category, gender, home university and preferences.
+- [Direct Second-Year (DSE) College Predictor](${siteLink(siteUrl, "/dse-predictor")}): Diploma-percentage prediction using Direct Second-Year cutoff history.
 - [Explore Colleges](${siteLink(siteUrl, "/colleges")}): Search current institutes by name, current code, city or university.
 - [Cutoff Explorer](${siteLink(siteUrl, "/cutoffs")}): Search cutoff records by route, college, branch, year, CAP round, category and seat type.
 - [Historical Demand Index](${siteLink(siteUrl, "/college-index")}): Transparent historical demand comparison; not an official ranking.
@@ -77,7 +77,7 @@ export function buildCollegeCatalog({ siteUrl, colleges }) {
 
   return `# Current Maharashtra Engineering College Catalog
 
-> ${colleges.length} current canonical institutes used by CAP Predictor. Follow each link for branches, FE/DSE cutoffs, seats, available fees and official sources.
+> ${colleges.length} current canonical institutes used by CAP Predictor. Follow each link for branches, First-Year and Direct Second-Year cutoffs, seats, available fees and official sources.
 
 Institute codes are preserved as five-digit text. Historical aliases are not listed as separate current colleges.
 

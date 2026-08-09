@@ -306,9 +306,9 @@ export function PreferenceListBuilder() {
             <div className="px-5 py-12 text-center">
               <ListOrdered aria-hidden="true" className="mx-auto text-slate-400" size={28} />
               <p className="mt-3 font-semibold text-ink">Your CAP list is empty</p>
-              <p className="mt-1 text-sm text-slate-500">Add choices here or from FE prediction results.</p>
+              <p className="mt-1 text-sm text-slate-500">Add choices here or from First-Year prediction results.</p>
               <Link className="focus-ring mt-4 inline-flex min-h-11 items-center rounded bg-action px-4 text-sm font-semibold text-white" href="/fe-predictor">
-                Open FE Predictor
+                Open First-Year Predictor
               </Link>
             </div>
           ) : null}

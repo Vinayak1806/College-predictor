@@ -1,7 +1,7 @@
 export const SITE_NAME = "CAP Predictor";
-export const SITE_TITLE = "MHT CET & DSE College Predictor Maharashtra";
+export const SITE_TITLE = "Maharashtra First-Year and DSE Engineering College Predictor";
 export const SITE_DESCRIPTION =
-  "Predict Maharashtra engineering college options using verified FE and DSE CAP cutoffs, eligible seat types and multi-year admission history.";
+  "Predict First-Year Engineering (FE) and Direct Second-Year (DSE) B.E./B.Tech college options using verified Maharashtra CAP cutoffs and eligible seat types.";
 
 export function normalizeSiteUrl(value) {
   try {

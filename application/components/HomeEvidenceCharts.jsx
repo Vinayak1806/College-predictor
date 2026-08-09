@@ -81,7 +81,7 @@ export function HomeEvidenceCharts({ coverage = [] }) {
                 <p className="text-xs font-semibold uppercase text-slate-500">Data coverage</p>
                 <h3 className="mt-1 text-lg font-semibold text-ink">Official cutoffs by year</h3>
               </div>
-              <p className="text-xs text-slate-500">FE and DSE</p>
+              <p className="text-xs text-slate-500">First-Year and Direct Second-Year</p>
             </div>
             <div className="grid items-center gap-3 sm:grid-cols-[220px_minmax(0,1fr)] lg:grid-cols-1 xl:grid-cols-[220px_minmax(0,1fr)]">
               <div className="relative mx-auto h-52 w-full max-w-[220px]" role="img" aria-label="Donut chart showing verified cutoff records by academic year">

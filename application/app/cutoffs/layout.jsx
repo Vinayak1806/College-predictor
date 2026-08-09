@@ -1,6 +1,6 @@
 export const metadata = {
-  title: "MHT CET and DSE Cutoff Explorer",
-  description: "Search verified Maharashtra engineering CAP cutoffs by college, branch, year, round, admission route, category, seat type and city.",
+  title: "Maharashtra Engineering CAP Cutoff Explorer",
+  description: "Search verified First-Year Engineering and Direct Second-Year (DSE) Maharashtra CAP cutoffs by college, branch, year, round, category and seat type.",
   alternates: { canonical: "/cutoffs" }
 };
 

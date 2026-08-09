@@ -8,11 +8,11 @@ import { authClient } from "../lib/authClient";
 
 const links = [
   ["Home", "/"],
-  ["FE Predictor", "/fe-predictor"],
-  ["DSE Predictor", "/dse-predictor"],
-  ["Explore Colleges", "/colleges"],
+  ["First Year", "/fe-predictor"],
+  ["Direct Second Year", "/dse-predictor"],
+  ["Colleges", "/colleges"],
   ["Cutoffs", "/cutoffs"],
-  ["College Index", "/college-index"],
+  ["Top Colleges", "/college-index"],
   ["Compare", "/compare"],
   ["CAP List", "/preference-list"]
 ];

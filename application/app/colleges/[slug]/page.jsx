@@ -51,7 +51,7 @@ export async function generateMetadata({ params }) {
 
   const location = college.city?.name ? ` in ${college.city.name}` : " in Maharashtra";
   const title = `${college.name} Cutoffs, Fees & Branches`;
-  const description = `Explore FE and DSE CAP cutoffs, available engineering branches, intake, fees and university details for ${college.name}${location}. Institute code ${college.instituteCode}.`;
+  const description = `Explore First-Year Engineering (FE) and Direct Second-Year (DSE) CAP cutoffs, branches, intake, fees and university details for ${college.name}${location}. Institute code ${college.instituteCode}.`;
   const canonical = absoluteUrl(`/colleges/${college.slug}`);
 
   return {
@@ -426,7 +426,7 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
         <header className="mt-4 border-y border-line bg-white px-4 py-5 sm:px-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm font-medium text-slate-500">Institute code: {college.instituteCode}</p>
-            <span className="rounded bg-cyan-50 px-3 py-1 text-xs font-semibold text-action">{admissionRoute} admission data</span>
+            <span className="rounded bg-cyan-50 px-3 py-1 text-xs font-semibold text-action">{admissionRoute === "DSE" ? "Direct Second-Year" : "First-Year"} admission data</span>
           </div>
           <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
@@ -438,7 +438,7 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
             <div className="flex flex-wrap gap-2">
               <SharePageButton title={`${college.name} cutoffs and branches`} />
               <Link className="focus-ring inline-flex min-h-11 items-center rounded border border-action px-4 text-sm font-semibold text-action" href={predictorHref}>
-                Open {admissionRoute} predictor
+                Open {admissionRoute === "DSE" ? "Direct Second-Year" : "First-Year"} Predictor
               </Link>
               {officialWebsite ? (
                 <a

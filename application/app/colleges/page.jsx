@@ -173,16 +173,17 @@ export default async function CollegesPage({ searchParams }) {
     matrixRows.map((row) => row.branchName.trim().toLowerCase()).filter(Boolean)
   ).size;
   const routeDescription = admissionRoute === "DSE"
-    ? "Direct second-year degree options based on official diploma-percentage cutoffs and lateral-entry seats."
-    : "First-year degree options based on official FE CAP cutoffs, branches and approved admission seats.";
+    ? "Direct Second-Year (DSE) B.E./B.Tech options based on official diploma-percentage cutoffs and lateral-entry seats."
+    : "First-Year Engineering (FE) B.E./B.Tech options based on official CAP cutoffs, branches and approved admission seats.";
+  const routeName = admissionRoute === "DSE" ? "Direct Second-Year" : "First-Year";
 
   return (
     <>
       <SiteHeader />
       <main className="mx-auto max-w-7xl px-4 py-8 md:py-12">
         <header className="max-w-3xl border-l-4 border-action pl-4">
-          <p className="text-xs font-semibold uppercase text-action">{admissionRoute} college research</p>
-          <h1 className="mt-2 text-3xl font-bold text-ink md:text-4xl">Explore Maharashtra engineering colleges</h1>
+          <p className="text-xs font-semibold uppercase text-action">{routeName} College Research</p>
+          <h1 className="mt-2 text-3xl font-bold text-ink md:text-4xl">Explore Maharashtra Engineering Colleges</h1>
           <p className="mt-3 text-sm leading-6 text-slate-600">{routeDescription}</p>
         </header>
 
@@ -198,7 +199,7 @@ export default async function CollegesPage({ searchParams }) {
                 href={routeHref(route, search)}
               >
                 <GraduationCap aria-hidden="true" size={17} />
-                {route === "FE" ? "FE Degree" : "DSE Degree"}
+                {route === "FE" ? "First Year (FE)" : "Direct Second Year (DSE)"}
               </Link>
             ))}
           </nav>
@@ -237,10 +238,10 @@ export default async function CollegesPage({ searchParams }) {
           <div>
             <h2 className="font-semibold text-ink">{search ? `Results for "${search}"` : "Browse colleges"}</h2>
             <p className="mt-1 text-xs text-slate-500">
-              Showing {colleges.length} of {totalMatchingColleges} institutes with official {admissionRoute} records.
+              Showing {colleges.length} of {totalMatchingColleges} institutes with official {routeName} records.
             </p>
           </div>
-          <span className="rounded bg-panel px-3 py-2 text-sm font-semibold text-slate-700">{admissionRoute} data</span>
+          <span className="rounded bg-panel px-3 py-2 text-sm font-semibold text-slate-700">{routeName} data</span>
         </div>
 
         {colleges.length ? (
@@ -272,7 +273,7 @@ export default async function CollegesPage({ searchParams }) {
                   <div className="mt-4 flex flex-wrap gap-2 text-xs">
                     {ownership ? <span className="rounded bg-panel px-2 py-1 font-medium text-slate-700">{ownership}</span> : null}
                     {autonomous ? <span className="rounded bg-emerald-50 px-2 py-1 font-medium text-success">Autonomous</span> : null}
-                    <span className="rounded bg-panel px-2 py-1 font-medium text-slate-700">{routeBranches.length} {admissionRoute} branches</span>
+                    <span className="rounded bg-panel px-2 py-1 font-medium text-slate-700">{routeBranches.length} {routeName} branches</span>
                   </div>
                   {branchNames.length ? (
                     <p className="mt-4 text-xs leading-5 text-slate-600">
@@ -288,7 +289,7 @@ export default async function CollegesPage({ searchParams }) {
                         : ""}
                     </p>
                   ) : null}
-                  <Link className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-action" href={collegeHref}>View {admissionRoute} details <ArrowRight aria-hidden="true" size={16} /></Link>
+                  <Link className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-action" href={collegeHref}>View {routeName} details <ArrowRight aria-hidden="true" size={16} /></Link>
                 </article>
               );
             })}

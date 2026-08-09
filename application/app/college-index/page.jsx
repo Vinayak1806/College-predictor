@@ -3,6 +3,7 @@ import { SiteHeader } from "../../components/SiteHeader";
 import { calculateStrengthIndex } from "../../lib/prediction";
 import { prisma } from "../../lib/prisma";
 import { activeCollegeWhere, latestPublishedDataset } from "../../lib/publishedData";
+import { absoluteUrl } from "../../lib/site";
 
 function hasValue(value) {
   return value !== null && value !== undefined && value !== "";
@@ -20,11 +21,25 @@ function normalizeOwnership(value) {
   return text;
 }
 
-export const metadata = {
-  title: "Maharashtra FE and DSE Historical Demand Index",
-  description: "Compare historical FE or DSE admission demand across current Maharashtra engineering colleges using verified CAP cutoff records.",
-  alternates: { canonical: "/college-index" }
-};
+export async function generateMetadata({ searchParams }) {
+  const query = await searchParams;
+  const admissionRoute = query?.route === "DSE" ? "DSE" : "FE";
+  const dse = admissionRoute === "DSE";
+  const title = dse
+    ? "Top Direct Second-Year (DSE) Engineering Colleges in Maharashtra"
+    : "Top Engineering Colleges in Maharashtra by CAP Cutoff Demand";
+  const description = dse
+    ? "Explore top Direct Second-Year (DSE) engineering colleges in Maharashtra ordered by historical CAP cutoff demand, with seats, location and college details."
+    : "Explore top engineering colleges in Maharashtra ordered by historical First-Year Engineering CAP cutoff demand, with intake, autonomy, location and detailed cutoff records.";
+  const canonical = dse ? "/college-index?route=DSE" : "/college-index";
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: { title, description, url: canonical }
+  };
+}
 
 function profileIsAutonomous(value) {
   const text = String(value || "").toLowerCase();
@@ -178,16 +193,44 @@ export default async function CollegeIndexPage({ searchParams }) {
   const currentPage = Math.min(requestedPage, totalPages);
   const firstPosition = (currentPage - 1) * pageSize;
   const colleges = rankedColleges.slice(firstPosition, firstPosition + pageSize);
+  const pageTitle = admissionRoute === "DSE"
+    ? "Top Direct Second-Year (DSE) Engineering Colleges in Maharashtra"
+    : "Top Engineering Colleges in Maharashtra";
+  const routeName = admissionRoute === "DSE" ? "Direct Second-Year (DSE)" : "First-Year Engineering (FE)";
+  const canonicalUrl = absoluteUrl(admissionRoute === "DSE" ? "/college-index?route=DSE" : "/college-index");
+  const itemListJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: `${pageTitle} by historical CAP cutoff demand`,
+    description: `A research list of Maharashtra ${routeName} colleges ordered by historical CAP cutoff demand. This is not an official government ranking.`,
+    url: canonicalUrl,
+    numberOfItems: rankedColleges.length,
+    itemListOrder: "https://schema.org/ItemListOrderDescending",
+    itemListElement: colleges.map((college, index) => ({
+      "@type": "ListItem",
+      position: firstPosition + index + 1,
+      item: {
+        "@type": "CollegeOrUniversity",
+        name: college.name,
+        url: absoluteUrl(`/colleges/${college.slug}?route=${admissionRoute}`),
+        address: college.city ? { "@type": "PostalAddress", addressLocality: college.city, addressRegion: "Maharashtra", addressCountry: "IN" } : undefined
+      }
+    }))
+  };
 
   return (
     <>
       <SiteHeader />
       <main className="mx-auto max-w-7xl px-4 py-8">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, "\\u003c") }}
+        />
         <header className="max-w-4xl border-l-4 border-action pl-4">
-          <p className="text-xs font-semibold uppercase text-action">Research tool</p>
-          <h1 className="mt-1 text-2xl font-semibold text-ink md:text-3xl">Maharashtra {admissionRoute} Historical Demand Index</h1>
+          <p className="text-xs font-semibold uppercase text-action">Historical CAP demand index</p>
+          <h1 className="mt-1 text-2xl font-semibold text-ink md:text-3xl">{pageTitle}</h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-            This derived list highlights colleges that have shown stronger student demand in previous {admissionRoute} cutoffs. FE and DSE are calculated separately. It is not an official government ranking and does not measure placements, teaching quality or campus life.
+            Compare Maharashtra colleges that have shown stronger student demand in previous {routeName} CAP cutoffs. First-Year and Direct Second-Year records are calculated separately. This is a historical cutoff research index, not an official government ranking, and it does not measure placements, teaching quality or campus life.
           </p>
         </header>
 
@@ -201,7 +244,7 @@ export default async function CollegeIndexPage({ searchParams }) {
               }`}
               href={`/college-index?route=${route}`}
             >
-              {route === "FE" ? "FE colleges" : "DSE colleges"}
+              {route === "FE" ? "First-Year Colleges" : "Direct Second-Year Colleges"}
             </Link>
           ))}
         </nav>
@@ -216,10 +259,10 @@ export default async function CollegeIndexPage({ searchParams }) {
         <section className="mt-8">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold text-ink">Top historical-demand colleges</h2>
+              <h2 className="text-lg font-semibold text-ink">Maharashtra colleges with the highest historical cutoff demand</h2>
               <p className="mt-1 text-sm text-slate-600">Open a college to inspect its branches, seats and exact cutoff history.</p>
             </div>
-            <Link className="font-medium text-action underline" href={predictorHref}>Check your {admissionRoute} admission fit</Link>
+            <Link className="font-medium text-action underline" href={predictorHref}>Check your {routeName} admission fit</Link>
           </div>
 
           <div className="mt-4 hidden overflow-hidden rounded border border-line bg-white md:block">
@@ -230,7 +273,7 @@ export default async function CollegeIndexPage({ searchParams }) {
                   <th className="px-4 py-3">College</th>
                   <th className="px-4 py-3">Demand index</th>
                   <th className="px-4 py-3">Profile</th>
-                  <th className="px-4 py-3">{admissionRoute === "DSE" ? "DSE seats" : "FE intake"}</th>
+                  <th className="px-4 py-3">{admissionRoute === "DSE" ? "Direct Second-Year seats" : "First-Year intake"}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">

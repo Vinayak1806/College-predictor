@@ -405,7 +405,7 @@ export default function CutoffExplorerPage() {
             <p className="text-xs font-semibold uppercase text-action">Official CAP records</p>
             <h1 className="mt-1 text-3xl font-bold text-ink">Cutoff Explorer</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-              Search exact {appliedFilters.route} closing {appliedFilters.route === "DSE" ? "diploma percentages and merit numbers" : "percentiles and ranks"} with their branch, seat type, year and CAP round.
+              Search exact {appliedFilters.route === "DSE" ? "Direct Second-Year (DSE)" : "First-Year Engineering (FE)"} closing {appliedFilters.route === "DSE" ? "diploma percentages and merit numbers" : "percentiles and ranks"} with their branch, seat type, year and CAP round.
             </p>
           </div>
           <div className="shrink-0">
@@ -421,7 +421,7 @@ export default function CutoffExplorerPage() {
                 aria-pressed={filters.route === route}
                 onClick={() => selectRoute(route)}
               >
-                {route === "FE" ? "FE cutoffs" : "DSE cutoffs"}
+                {route === "FE" ? "First-Year cutoffs" : "Direct Second-Year cutoffs"}
               </button>
             ))}
           </div>
@@ -472,7 +472,7 @@ export default function CutoffExplorerPage() {
             <div className="rounded-lg border border-line bg-white p-4">
               <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase text-action">{appliedFilters.route} search results</p>
+                <p className="text-xs font-semibold uppercase text-action">{appliedFilters.route === "DSE" ? "Direct Second-Year" : "First-Year"} search results</p>
                 <h2 className="mt-1 text-xl font-semibold text-ink">
                   {loading ? "Loading official records..." : `${total.toLocaleString("en-IN")} matching cutoffs`}
                 </h2>
@@ -480,7 +480,7 @@ export default function CutoffExplorerPage() {
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {!loading && total ? <p className="text-sm text-slate-500">Showing {pageRange.start}-{pageRange.end}</p> : null}
-                <Link className="focus-ring inline-flex min-h-11 items-center rounded border border-action px-4 text-sm font-semibold text-action" href={appliedFilters.route === "DSE" ? "/dse-predictor" : "/fe-predictor"}>Use {appliedFilters.route} Predictor</Link>
+                <Link className="focus-ring inline-flex min-h-11 items-center rounded border border-action px-4 text-sm font-semibold text-action" href={appliedFilters.route === "DSE" ? "/dse-predictor" : "/fe-predictor"}>Use {appliedFilters.route === "DSE" ? "DSE" : "First-Year"} Predictor</Link>
               </div>
               </div>
 
