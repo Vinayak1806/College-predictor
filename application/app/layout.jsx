@@ -43,9 +43,19 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: SITE_NAME,
+    alternateName: "Maharashtra Engineering College Predictor",
+    url: siteUrl,
+    description: SITE_DESCRIPTION
+  };
+
   return (
     <html lang="en">
       <body className="flex min-h-screen flex-col">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd).replace(/</g, "\\u003c") }} />
         <div className="flex-1">{children}</div>
         <SiteFooter />
         <GoogleAnalytics measurementId={process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID} />

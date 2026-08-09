@@ -82,6 +82,7 @@ export const dsePredictSchema = z.object({
   gender: z.enum(["MALE", "FEMALE"]),
   preferredBranches: z.array(z.string()).default([]),
   preferredCities: z.array(z.string()).default([]),
+  preferredUniversities: z.array(z.string()).default([]),
   collegeTypes: z.array(z.enum(["GOVERNMENT", "AIDED", "PRIVATE"])).default([]),
   autonomousOnly: z.boolean().default(false),
   resultMode: z.enum([

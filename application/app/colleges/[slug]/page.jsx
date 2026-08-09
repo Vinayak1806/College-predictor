@@ -369,7 +369,9 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
   const marginTone = margin !== null && margin >= 0 ? "good" : margin !== null && margin >= -4 ? "warning" : "danger";
   const missingData = [];
 
-  if (!approvedFee) missingData.push("Approved fee information is not available for this institute.");
+  if (!approvedFee) {
+    missingData.push("A verified current fee is not available in our records. Confirm the latest fee on the college's official website or the Maharashtra Fee Regulating Authority website before applying.");
+  }
 
   const similarCurrentFilter = await currentCollegeWhere(prisma, admissionRoute);
   const similarCandidates = await prisma.college.findMany({

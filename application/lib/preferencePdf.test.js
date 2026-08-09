@@ -16,8 +16,8 @@ test("creates a branded multi-page CAP preference-list PDF", async () => {
   assert.equal(buffer.subarray(0, 8).toString("ascii"), "%PDF-1.7");
 
   const pdf = await PDFDocument.load(buffer);
-  assert.equal(pdf.getTitle(), "CAP Predictor College Preference List");
-  assert.equal(pdf.getAuthor(), "CAP Predictor");
+  assert.equal(pdf.getTitle(), "Admission Compass College Preference List");
+  assert.equal(pdf.getAuthor(), "Admission Compass");
   assert.ok(pdf.getPageCount() > 1);
   for (const page of pdf.getPages()) {
     assert.ok(page.getWidth() > page.getHeight());

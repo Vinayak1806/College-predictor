@@ -19,6 +19,24 @@ const feForm = {
   ews: false
 };
 
+const dseForm = {
+  diplomaPercentage: "89.20",
+  meritNumber: "",
+  diplomaBranch: "Computer Engineering",
+  academicYear: "",
+  capRound: "",
+  category: "OBC",
+  gender: "MALE",
+  branches: ["Computer Engineering"],
+  cities: ["Pune"],
+  universities: ["Savitribai Phule Pune University"],
+  collegeTypes: [],
+  autonomousOnly: false,
+  ews: false,
+  pwd: false,
+  defence: false
+};
+
 test("accepts a bounded FE student profile", () => {
   assert.equal(studentProfileSchema.safeParse({
     name: "Computer in Pune",
@@ -41,5 +59,14 @@ test("accepts compact successful prediction history", () => {
     formData: feForm,
     resultCount: 25,
     zoneCounts: { TARGET: 10, SAFE: 5 }
+  }).success, true);
+});
+
+test("accepts a DSE profile with preferred universities", () => {
+  assert.equal(predictionHistorySchema.safeParse({
+    admissionRoute: "DSE",
+    formData: dseForm,
+    resultCount: 12,
+    zoneCounts: { TARGET: 6 }
   }).success, true);
 });

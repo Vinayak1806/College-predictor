@@ -29,7 +29,7 @@ function codeFromFraId(value) {
 
 async function fetchJson(url) {
   const response = await fetch(url, {
-    headers: { "user-agent": "CAP Predictor data updater" }
+    headers: { "user-agent": "Admission Compass data updater" }
   });
 
   if (!response.ok) {

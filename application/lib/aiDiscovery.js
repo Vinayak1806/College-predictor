@@ -14,11 +14,11 @@ function siteLink(siteUrl, path) {
 }
 
 export function buildLlmsIndex({ siteUrl, stats }) {
-  return `# CAP Predictor
+  return `# Admission Compass
 
 > Maharashtra engineering admission research using structured First-Year Engineering (FE) and Direct Second-Year (DSE) CAP cutoff records.
 
-CAP Predictor helps students research current Maharashtra engineering institutes, branches, seat types, fees, seat matrices and historical admission cutoffs. The website is an independent decision-support tool and is not the Maharashtra CET Cell.
+Admission Compass helps students research current Maharashtra engineering institutes, branches, seat types, fees, seat matrices and historical admission cutoffs. The website is an independent decision-support tool and is not the Maharashtra CET Cell.
 
 ## Data coverage
 
@@ -77,7 +77,7 @@ export function buildCollegeCatalog({ siteUrl, colleges }) {
 
   return `# Current Maharashtra Engineering College Catalog
 
-> ${colleges.length} current canonical institutes used by CAP Predictor. Follow each link for branches, First-Year and Direct Second-Year cutoffs, seats, available fees and official sources.
+> ${colleges.length} current canonical institutes used by Admission Compass. Follow each link for branches, First-Year and Direct Second-Year cutoffs, seats, available fees and official sources.
 
 Institute codes are preserved as five-digit text. Historical aliases are not listed as separate current colleges.
 

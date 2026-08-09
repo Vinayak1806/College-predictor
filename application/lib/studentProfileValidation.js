@@ -31,6 +31,7 @@ export const dseProfileFormSchema = z.object({
   gender: z.enum(["MALE", "FEMALE"]),
   branches: selectedValues,
   cities: selectedValues,
+  universities: selectedValues.default([]),
   collegeTypes,
   autonomousOnly: z.boolean(),
   ews: z.boolean(),

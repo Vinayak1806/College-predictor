@@ -1,7 +1,7 @@
-export const SITE_NAME = "CAP Predictor";
-export const SITE_TITLE = "Maharashtra First-Year and DSE Engineering College Predictor";
+export const SITE_NAME = "Admission Compass";
+export const SITE_TITLE = "Maharashtra Engineering College Predictor | Admission Compass";
 export const SITE_DESCRIPTION =
-  "Predict First-Year Engineering (FE) and Direct Second-Year (DSE) B.E./B.Tech college options using verified Maharashtra CAP cutoffs and eligible seat types.";
+  "Use Admission Compass to predict First-Year and Direct Second-Year B.E./B.Tech college options from verified Maharashtra CAP cutoffs and eligible seat types.";
 
 export function normalizeSiteUrl(value) {
   try {

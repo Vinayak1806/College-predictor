@@ -65,7 +65,7 @@ export default async function LoginPage({ searchParams }) {
             <span className="flex h-11 w-11 items-center justify-center rounded bg-action text-white">
               <ShieldCheck aria-hidden="true" size={22} />
             </span>
-            <h2 className="mt-5 text-2xl font-semibold text-ink">Sign in to CAP Predictor</h2>
+            <h2 className="mt-5 text-2xl font-semibold text-ink">Sign in to Admission Compass</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               Use your Google account for a quick and secure student login.
             </p>

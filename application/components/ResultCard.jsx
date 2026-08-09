@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, BookmarkCheck, Scale } from "lucide-react";
+import { ArrowUpRight, BookmarkCheck, Info, Scale } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { saveCapListToAccount, saveComparisonToAccount } from "../lib/accountStorage";
@@ -154,6 +154,15 @@ export function ResultCard(props) {
         comparisonText={comparisonText}
       />
       <ResultCardDetails result={props} detailFacts={detailFacts} otherSeatTypes={otherSeatTypes} />
+
+      {!hasResultValue(props.latestFee) ? (
+        <div className="flex items-start gap-2 border-t border-line bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900 md:px-5">
+          <Info aria-hidden="true" className="mt-0.5 shrink-0" size={16} />
+          <p>
+            A verified current fee is not available in our records. Use <strong>View college</strong> below and confirm the latest fee on the college&apos;s official website or the Maharashtra Fee Regulating Authority website.
+          </p>
+        </div>
+      ) : null}
 
       <footer className="flex flex-wrap gap-2 border-t border-line px-4 py-4 md:px-5">
         {collegeHref ? (

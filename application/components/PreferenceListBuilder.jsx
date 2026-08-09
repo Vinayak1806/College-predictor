@@ -11,6 +11,7 @@ import {
   GripVertical,
   ListFilter,
   ListOrdered,
+  LockKeyhole,
   Plus,
   Trash2
 } from "lucide-react";
@@ -53,6 +54,7 @@ export function PreferenceListBuilder() {
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [savingAccount, setSavingAccount] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [signInPrompt, setSignInPrompt] = useState("");
 
   useEffect(() => {
     setItems(readPreferenceList());
@@ -175,6 +177,15 @@ export function PreferenceListBuilder() {
   function organizeByRisk() {
     setItems((current) => organizePreferenceItems(current));
     setNotice("Choices organized by admission chance. Order inside each group was preserved.");
+  }
+
+  function useAccountTool(description, action) {
+    if (sessionPending) return;
+    if (!session?.user) {
+      setSignInPrompt(description);
+      return;
+    }
+    action();
   }
 
   async function saveToAccount() {
@@ -427,42 +438,43 @@ export function PreferenceListBuilder() {
           {!sessionPending && !session?.user ? (
             <div className="border-t border-line bg-panel p-4">
               <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-                <AlertCircle aria-hidden="true" className="text-action" size={17} /> Account tools
+                <LockKeyhole aria-hidden="true" className="text-action" size={17} /> Sign in to use account tools
               </div>
-              <p className="mt-2 text-xs leading-5 text-slate-600">Sign in for ordering warnings, automatic grouping, account save and PDF download.</p>
-              <Link className="focus-ring mt-3 inline-flex min-h-11 items-center rounded bg-action px-4 text-sm font-semibold text-white" href="/login?callbackURL=%2Fpreference-list">Sign in</Link>
+              <p className="mt-2 text-xs leading-5 text-slate-600">Choose a tool below. Your current list stays on this device while you sign in.</p>
             </div>
           ) : null}
 
           <div className="preference-builder-controls grid gap-2 border-t border-line p-4">
-            {session?.user ? (
-              <>
-                <button
-                  className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white disabled:opacity-50"
-                  type="button"
-                  disabled={!items.length || savingAccount}
-                  onClick={saveToAccount}
-                >
-                  <CloudUpload aria-hidden="true" size={17} /> {savingAccount ? "Saving..." : "Save to my account"}
-                </button>
-                <button
-                  className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded border border-action bg-white px-4 text-sm font-semibold text-action disabled:opacity-50"
-                  type="button"
-                  disabled={!items.length}
-                  onClick={organizeByRisk}
-                >
-                  <ListFilter aria-hidden="true" size={17} /> Organize and check order
-                </button>
-                <button
-                  className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded border border-action bg-white px-4 text-sm font-semibold text-action disabled:opacity-50"
-                  type="button"
-                  disabled={!items.length || downloadingPdf}
-                  onClick={downloadPdf}
-                >
-                  <FileDown aria-hidden="true" size={17} /> {downloadingPdf ? "Creating PDF..." : "Download PDF"}
-                </button>
-              </>
-            ) : null}
+            <button
+              className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white disabled:opacity-50"
+              type="button"
+              aria-haspopup={!session?.user ? "dialog" : undefined}
+              disabled={sessionPending || (Boolean(session?.user) && (!items.length || savingAccount))}
+              onClick={() => useAccountTool("save this CAP list to your account", saveToAccount)}
+            >
+              {session?.user ? <CloudUpload aria-hidden="true" size={17} /> : <LockKeyhole aria-hidden="true" size={17} />}
+              {savingAccount ? "Saving..." : "Save to my account"}
+            </button>
+            <button
+              className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded border border-action bg-white px-4 text-sm font-semibold text-action disabled:opacity-50"
+              type="button"
+              aria-haspopup={!session?.user ? "dialog" : undefined}
+              disabled={sessionPending || (Boolean(session?.user) && !items.length)}
+              onClick={() => useAccountTool("organize and check your preference order", organizeByRisk)}
+            >
+              {session?.user ? <ListFilter aria-hidden="true" size={17} /> : <LockKeyhole aria-hidden="true" size={17} />}
+              Organize and check order
+            </button>
+            <button
+              className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded border border-action bg-white px-4 text-sm font-semibold text-action disabled:opacity-50"
+              type="button"
+              aria-haspopup={!session?.user ? "dialog" : undefined}
+              disabled={sessionPending || (Boolean(session?.user) && (!items.length || downloadingPdf))}
+              onClick={() => useAccountTool("download your CAP preference list as a PDF", downloadPdf)}
+            >
+              {session?.user ? <FileDown aria-hidden="true" size={17} /> : <LockKeyhole aria-hidden="true" size={17} />}
+              {downloadingPdf ? "Creating PDF..." : "Download list PDF"}
+            </button>
             <button
               className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded border border-line px-4 text-sm font-semibold text-danger disabled:opacity-50"
               type="button"
@@ -474,6 +486,46 @@ export function PreferenceListBuilder() {
           </div>
         </aside>
       </div>
+
+      {signInPrompt ? (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/55 p-4"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSignInPrompt("");
+          }}
+        >
+          <section
+            aria-labelledby="account-tool-sign-in-title"
+            aria-modal="true"
+            className="w-full max-w-md rounded-lg border border-line bg-white p-5 shadow-xl"
+            role="dialog"
+          >
+            <div className="flex h-11 w-11 items-center justify-center rounded bg-cyan-50 text-action">
+              <LockKeyhole aria-hidden="true" size={21} />
+            </div>
+            <h2 id="account-tool-sign-in-title" className="mt-4 text-lg font-semibold text-ink">Sign in to continue</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Sign in to {signInPrompt}. Your current CAP choices will remain saved on this device.
+            </p>
+            <div className="mt-5 grid gap-2 sm:grid-cols-2">
+              <button
+                className="focus-ring min-h-11 rounded border border-line px-4 text-sm font-semibold text-slate-700"
+                type="button"
+                onClick={() => setSignInPrompt("")}
+              >
+                Not now
+              </button>
+              <Link
+                className="focus-ring flex min-h-11 items-center justify-center rounded bg-action px-4 text-sm font-semibold text-white"
+                href="/login?callbackURL=%2Fpreference-list"
+              >
+                Sign in
+              </Link>
+            </div>
+          </section>
+        </div>
+      ) : null}
 
     </div>
   );

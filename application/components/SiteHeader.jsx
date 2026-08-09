@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BarChart3, CircleUserRound, GraduationCap, LogOut, Menu, Search, UserRound, X } from "lucide-react";
+import { BarChart3, CircleUserRound, LogOut, Menu, Search, UserRound, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { authClient } from "../lib/authClient";
+import { BrandMark } from "./BrandMark";
 
 const links = [
   ["Home", "/"],
@@ -68,12 +69,10 @@ export function SiteHeader({ showStudentAccount = true }) {
     <header className="sticky top-0 z-50 border-b border-line bg-white/95 shadow-[0_4px_18px_rgba(18,52,69,0.06)] backdrop-blur">
       <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4">
         <Link href="/" className="focus-ring group flex min-w-0 items-center gap-3 rounded" onClick={() => setMenuOpen(false)}>
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-action text-white shadow-sm transition-colors group-hover:bg-[#0a596d]">
-            <GraduationCap aria-hidden="true" size={22} strokeWidth={2.2} />
-          </span>
+          <BrandMark className="h-10 w-10 transition-transform duration-200 group-hover:scale-[1.04]" />
           <span className="min-w-0">
-            <span className="block truncate text-base font-bold leading-5 text-ink">CAP Predictor</span>
-            <span className="hidden text-xs text-slate-500 sm:block">Maharashtra engineering admissions</span>
+            <span className="block truncate text-base font-bold leading-5 text-ink">Admission Compass</span>
+            <span className="hidden text-xs text-slate-500 sm:block">Maharashtra engineering college predictor</span>
           </span>
         </Link>
 

@@ -45,7 +45,7 @@ function drawWatermark(page, font) {
 }
 
 function drawHeader(page, regular, bold, report) {
-  page.drawText("CAP Predictor", { x: MARGIN, y: HEIGHT - 40, size: 19, font: bold, color: rgb(0.04, 0.16, 0.24) });
+  page.drawText("Admission Compass", { x: MARGIN, y: HEIGHT - 40, size: 19, font: bold, color: rgb(0.04, 0.16, 0.24) });
   page.drawText(`${report.route} Personalized Prediction Report`, { x: MARGIN, y: HEIGHT - 58, size: 10, font: regular, color: rgb(0.32, 0.4, 0.48) });
   const owner = clean(report.studentName || report.studentEmail || "Signed-in student");
   page.drawText(shorten(owner, regular, 8, 230), { x: WIDTH - MARGIN - 230, y: HEIGHT - 50, size: 8, font: regular, color: rgb(0.35, 0.43, 0.5) });
@@ -136,6 +136,6 @@ export async function createPredictionReportPdf(report, generatedAt = new Date()
   }
 
   pdf.setTitle(`${report.route} Personalized Prediction Report`);
-  pdf.setAuthor("CAP Predictor");
+  pdf.setAuthor("Admission Compass");
   return Buffer.from(await pdf.save());
 }

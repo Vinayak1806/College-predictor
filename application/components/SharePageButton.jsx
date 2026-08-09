@@ -4,7 +4,7 @@ import { Check, Share2 } from "lucide-react";
 import { useState } from "react";
 import { trackAnalyticsEvent } from "../lib/analytics";
 
-export function SharePageButton({ title = "CAP Predictor college", label = "Share college" }) {
+export function SharePageButton({ title = "Admission Compass college", label = "Share college" }) {
   const [copied, setCopied] = useState(false);
 
   async function sharePage() {

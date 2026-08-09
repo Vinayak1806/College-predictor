@@ -91,18 +91,18 @@ export default async function HomePage() {
     <>
       <SiteHeader />
       <main>
-        <section className="relative min-h-[calc(100svh-104px)] bg-[#102a43] text-white">
+        <section className="relative w-full min-w-0 overflow-hidden bg-[#102a43] text-white">
           <Image
             src="/images/engineering-students-campus.png"
             alt="Engineering students walking through a modern college campus"
             fill
             priority
             sizes="100vw"
-            className="object-cover object-[62%_center]"
+            className="h-full w-full max-w-none object-cover object-[62%_center]"
           />
           <div className="absolute inset-0 bg-[#071923]/65" />
-          <div className="relative mx-auto flex min-h-[calc(100svh-104px)] max-w-7xl items-center px-4 py-12">
-            <div className="enter-up max-w-3xl">
+          <div className="relative mx-auto flex min-h-[calc(100svh-88px)] w-full min-w-0 max-w-7xl items-center px-4 py-12">
+            <div className="enter-up min-w-0 max-w-3xl">
               <div className="inline-flex items-center gap-2 border-l-2 border-amber-400 pl-3 text-sm font-semibold text-white">
                 <CheckCircle2 aria-hidden="true" size={17} />
                 Structured Maharashtra CAP data
@@ -114,16 +114,16 @@ export default async function HomePage() {
                 Compare MHT-CET percentile or diploma percentage with eligible seat types, verified CAP cutoffs and current college data.
               </p>
 
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <Link className="focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded bg-action px-5 font-semibold text-white shadow-lg hover:bg-[#0a596d] hover:shadow-raised" href="/fe-predictor">
+              <div className="mt-7 flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <Link className="focus-ring inline-flex min-h-12 min-w-0 items-center justify-center gap-2 rounded bg-action px-5 text-center font-semibold leading-5 text-white shadow-lg hover:bg-[#0a596d] hover:shadow-raised sm:flex-1" href="/fe-predictor">
                   First-Year B.E./B.Tech Predictor <ArrowRight aria-hidden="true" size={18} />
                 </Link>
-                <Link className="focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded border border-white/70 bg-white/10 px-5 font-semibold text-white backdrop-blur-sm hover:border-white hover:bg-white/20" href="/dse-predictor">
+                <Link className="focus-ring inline-flex min-h-12 min-w-0 items-center justify-center gap-2 rounded border border-white/70 bg-white/10 px-5 text-center font-semibold leading-5 text-white backdrop-blur-sm hover:border-white hover:bg-white/20 sm:flex-1" href="/dse-predictor">
                   Direct Second-Year (DSE) Predictor <GraduationCap aria-hidden="true" size={18} />
                 </Link>
               </div>
 
-              <form action="/colleges" className="relative z-20 mt-8 flex max-w-2xl rounded bg-white shadow-xl">
+              <form action="/colleges" className="relative z-20 mt-8 flex min-w-0 max-w-2xl rounded bg-white shadow-xl">
                 <label className="sr-only" htmlFor="home-college-search">Search college name, code or city</label>
                 <CollegeAutocomplete id="home-college-search" name="q" className="flex min-h-12 flex-1 items-center px-4" placeholder="Search college name or institute code" />
                 <button className="focus-ring min-h-12 rounded-r bg-[#d97706] px-5 text-sm font-semibold text-white hover:bg-[#b85f05]" type="submit">Search</button>
@@ -132,29 +132,40 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="border-b border-line bg-white" aria-label="Verified data coverage">
-          <dl className="mx-auto grid max-w-7xl grid-cols-2 px-4 md:grid-cols-4">
-            {statistics.map(([value, label]) => (
-              <div key={label} className="border-b border-line px-3 py-5 text-center even:border-l md:border-b-0 md:border-l md:first:border-l-0">
-                <dt className="text-2xl font-bold text-ink">{value}</dt>
-                <dd className="mt-1 text-xs text-slate-500">{label}</dd>
+        <section className="border-y border-line bg-white" aria-label="Verified data coverage">
+          <div className="mx-auto grid max-w-7xl gap-3 px-4 py-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-center">
+            <div className="flex items-center gap-3 border-b border-line pb-3 lg:border-b-0 lg:pb-0">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-cyan-50 text-action">
+                <Database aria-hidden="true" size={20} />
+              </span>
+              <div>
+                <p className="text-xs font-semibold uppercase text-action">Live database</p>
+                <p className="mt-0.5 text-xs text-slate-500">Published CAP records</p>
               </div>
-            ))}
-          </dl>
+            </div>
+            <dl className="grid grid-cols-2 gap-y-3 sm:grid-cols-4 sm:gap-y-0">
+              {statistics.map(([value, label], index) => (
+                <div key={label} className={`min-w-0 px-3 py-1 sm:border-l sm:border-line ${index % 2 ? "border-l border-line" : ""}`}>
+                  <dt className="text-lg font-bold text-ink">{value}</dt>
+                  <dd className="mt-0.5 text-xs leading-5 text-slate-500">{label}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-4 py-12 md:py-16" aria-labelledby="admission-route-heading">
-          <div className="grid gap-5 md:grid-cols-[0.75fr_1.25fr] md:items-end">
+        <section className="mx-auto max-w-7xl px-4 py-8 md:py-10" aria-labelledby="admission-route-heading">
+          <div className="grid gap-3 md:grid-cols-[0.8fr_1.2fr] md:items-center md:gap-8">
             <div>
               <p className="text-xs font-semibold uppercase text-action">Choose your admission route</p>
-              <h2 id="admission-route-heading" className="mt-2 text-3xl font-bold text-ink">Start with the predictor made for you</h2>
+              <h2 id="admission-route-heading" className="mt-2 text-2xl font-bold text-ink md:text-3xl">Choose your college predictor</h2>
             </div>
             <p className="max-w-3xl text-sm leading-6 text-slate-600">
               First-Year and Direct Second-Year admissions use different cutoff records and eligibility rules. Select the route that matches your current qualification.
             </p>
           </div>
 
-          <div className="mt-7 grid gap-4 lg:grid-cols-2">
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
             {admissionRoutes.map((route) => (
               <article key={route.code} className={`overflow-hidden rounded-lg border border-line border-t-4 bg-white shadow-sm ${route.accent}`}>
                 <div className="grid gap-5 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start md:p-6">

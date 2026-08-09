@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Database, ExternalLink, GraduationCap } from "lucide-react";
+import { Database, ExternalLink } from "lucide-react";
 import { AnalyticsSettingsButton } from "./AnalyticsSettingsButton";
+import { BrandMark } from "./BrandMark";
 
 export function SiteFooter() {
   return (
@@ -8,8 +9,11 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 md:grid-cols-[1.3fr_0.7fr_0.7fr]">
         <div className="max-w-md">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded bg-white/10 text-cyan-100"><GraduationCap aria-hidden="true" size={22} /></span>
-            <p className="font-semibold">CAP Predictor</p>
+            <BrandMark />
+            <div>
+              <p className="font-semibold">Admission Compass</p>
+              <p className="mt-0.5 text-xs text-slate-400">Maharashtra engineering college predictor</p>
+            </div>
           </div>
           <p className="mt-4 text-sm leading-6 text-slate-300">
             A student decision tool built from structured Maharashtra CAP cutoff records. Historical matches support research but do not guarantee admission.

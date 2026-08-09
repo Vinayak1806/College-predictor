@@ -79,7 +79,7 @@ function drawWatermark(page, boldFont) {
 }
 
 function drawPageHeading(page, regularFont, boldFont, generatedLabel) {
-  page.drawText("CAP Predictor", {
+  page.drawText("Admission Compass", {
     x: MARGIN,
     y: PAGE_HEIGHT - 43,
     size: 20,
@@ -142,7 +142,7 @@ function drawFooter(page, regularFont, pageNumber, totalPages) {
     thickness: 0.6,
     color: rgb(0.78, 0.82, 0.86)
   });
-  page.drawText("CAP Predictor - Maharashtra Engineering Admissions", {
+  page.drawText("Admission Compass - Maharashtra Engineering Admissions", {
     x: MARGIN,
     y: 20,
     size: 7.5,
@@ -224,10 +224,10 @@ export async function createPreferenceListPdf(items, generatedAt = new Date()) {
   const boldFont = await pdf.embedFont(StandardFonts.HelveticaBold);
   const generatedLabel = `Generated ${generatedAt.toLocaleDateString("en-IN")}`;
 
-  pdf.setTitle("CAP Predictor College Preference List");
-  pdf.setAuthor("CAP Predictor");
-  pdf.setCreator("CAP Predictor");
-  pdf.setProducer("CAP Predictor");
+  pdf.setTitle("Admission Compass College Preference List");
+  pdf.setAuthor("Admission Compass");
+  pdf.setCreator("Admission Compass");
+  pdf.setProducer("Admission Compass");
 
   const rows = items.map((item) => prepareRow(item, regularFont));
   let page = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);

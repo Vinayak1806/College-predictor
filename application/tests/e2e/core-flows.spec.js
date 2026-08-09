@@ -5,11 +5,11 @@ test("public navigation, student login and protected account routes work", async
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
   await page.goto("/preference-list");
-  await expect(page.getByRole("heading", { name: "Preference-List Builder" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "CAP Preference List Builder" })).toBeVisible();
   await expect(page.getByText("Account tools")).toBeVisible();
   await page.getByRole("link", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/login\?callbackURL=/);
-  await expect(page.getByRole("heading", { name: "Sign in to CAP Predictor" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sign in to Admission Compass" })).toBeVisible();
 
   await page.goto("/account");
   await expect(page).toHaveURL(/\/login/);
@@ -19,6 +19,10 @@ test("admin routes reject guests and invalid credentials", async ({ page, reques
   expect((await request.get("/api/admin/imports")).status()).toBe(401);
   expect((await request.post("/api/admin/imports/0/publish")).status()).toBe(401);
 
+  // Keep repeated local/CI runs from sharing the admin login rate-limit bucket.
+  await page.setExtraHTTPHeaders({
+    "x-forwarded-for": `playwright-${Date.now()}-${Math.random()}`
+  });
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/admin\/login/);
   await page.getByLabel("Admin token", { exact: true }).fill("incorrect-token-that-is-long-enough-for-validation");
@@ -37,7 +41,7 @@ test("FE prediction returns official college options", async ({ page }) => {
   await citySearch.fill("sola");
   await expect(page.getByRole("button", { name: "Solapur", exact: true })).toBeVisible();
   await university.selectOption({ index: 1 });
-  await page.getByRole("button", { name: "Predict Colleges" }).click();
+  await page.getByRole("button", { name: "Predict First-Year Colleges" }).click();
   await expect(page.getByRole("heading", { name: "Your college-branch options" })).toBeVisible({ timeout: 30_000 });
   await expect(page.locator("article").first()).toContainText(/Selected official cutoff/i);
 });
@@ -49,9 +53,14 @@ test("DSE prediction returns route-specific options", async ({ page }) => {
   const diplomaBranch = page.getByLabel(/Diploma branch/);
   await expect.poll(async () => diplomaBranch.locator("option").count(), { timeout: 30_000 }).toBeGreaterThan(1);
   await diplomaBranch.selectOption({ index: 1 });
-  await page.getByRole("button", { name: "Predict DSE Colleges" }).click();
+  const preferredUniversity = page.getByRole("combobox", { name: /Preferred universities/ });
+  await expect(preferredUniversity).toBeEnabled({ timeout: 30_000 });
+  await preferredUniversity.fill("Savitribai");
+  await page.getByRole("button", { name: "Savitribai Phule Pune University", exact: true }).click();
+  await page.getByRole("button", { name: "Predict Direct Second-Year Colleges" }).click();
   await expect(page.getByRole("heading", { name: "Your college-branch options" })).toBeVisible({ timeout: 30_000 });
-  await expect(page.locator("article").first()).toContainText(/DSE|diploma/i);
+  await expect(page.locator("article.result-card").first()).toContainText("Savitribai Phule Pune University");
+  await expect(page.locator("article.result-card").first()).toContainText(/DSE|diploma/i);
 });
 
 test("mobile predictor keeps the step controls usable", async ({ page }) => {

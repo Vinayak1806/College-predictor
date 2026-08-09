@@ -11,7 +11,7 @@ export async function GET(request) {
       predictionEnabled: true,
       admissionRoute: ["FE", "DSE"].includes(route) ? route : undefined
     };
-    const [datasets, seatTypes, branches, cities] = await Promise.all([
+    const [datasets, seatTypes, branches, cities, universities] = await Promise.all([
       prisma.cutoffDataset.findMany({
         where: publishedDataset,
         distinct: ["academicYear", "admissionRoute", "capRound"],
@@ -48,6 +48,20 @@ export async function GET(request) {
         distinct: ["name"],
         select: { name: true },
         orderBy: { name: "asc" }
+      }),
+      prisma.university.findMany({
+        where: {
+          colleges: {
+            some: {
+              collegeBranches: {
+                some: { cutoffs: { some: { needsReview: false, dataset: publishedDataset } } }
+              }
+            }
+          }
+        },
+        distinct: ["name"],
+        select: { name: true },
+        orderBy: { name: "asc" }
       })
     ]);
 
@@ -58,7 +72,8 @@ export async function GET(request) {
       categories: [...new Set(seatTypes.map((seatType) => seatType.category))].sort(),
       seatTypes: seatTypes.map((seatType) => seatType.code),
       branches: branches.map((branch) => branch.displayName),
-      cities: cities.map((city) => city.name)
+      cities: cities.map((city) => city.name),
+      universities: universities.map((university) => university.name)
     });
   } catch (error) {
     console.error("Cutoff options failed", error);

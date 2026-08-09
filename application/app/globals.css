@@ -21,11 +21,17 @@
 
 html {
   scroll-behavior: smooth;
+  max-width: 100%;
+  overflow-x: clip;
+  scrollbar-color: #78909c #e8eef1;
+  scrollbar-width: thin;
 }
 
 body {
   margin: 0;
-  min-width: 320px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: clip;
   background: var(--page);
   color: var(--ink);
@@ -33,6 +39,24 @@ body {
   line-height: 1.5;
   text-rendering: optimizeLegibility;
   font-variant-numeric: tabular-nums;
+}
+
+html::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+html::-webkit-scrollbar-track {
+  background: #e8eef1;
+}
+
+html::-webkit-scrollbar-thumb {
+  border: 2px solid #e8eef1;
+  background: #78909c;
+}
+
+html::-webkit-scrollbar-button {
+  display: none;
 }
 
 h1,

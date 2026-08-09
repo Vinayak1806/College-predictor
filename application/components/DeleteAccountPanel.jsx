@@ -13,7 +13,7 @@ export function DeleteAccountPanel() {
 
   async function deleteAccount() {
     if (confirmation !== "DELETE") return;
-    if (!window.confirm("Permanently delete this account and all saved CAP Predictor data?")) return;
+    if (!window.confirm("Permanently delete this account and all saved Admission Compass data?")) return;
 
     setDeleting(true);
     setError("");

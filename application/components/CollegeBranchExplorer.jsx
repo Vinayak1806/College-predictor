@@ -135,14 +135,17 @@ export function CollegeBranchExplorer({ branches, initialBranchName, initialYear
         </div>
       </div>
 
-      <div className="mt-3 grid gap-4 lg:grid-cols-[320px_1fr]">
-        <aside className="rounded-lg border border-line bg-white p-3">
-          <p className="text-sm font-semibold text-ink">Branches ({branches.length})</p>
-          <div className="mt-3 grid max-h-[520px] gap-2 overflow-auto pr-1">
+      <div className="mt-3 grid gap-4">
+        <aside className="rounded-lg border border-line bg-white p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-semibold text-ink">Available branches ({branches.length})</p>
+            <p className="text-xs text-slate-500">Choose one to update the information below</p>
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {branches.map((branch) => (
               <button
                 key={branch.branchCode}
-                className={`focus-ring rounded border p-3 text-left text-sm ${
+                className={`focus-ring min-w-0 rounded border p-3 text-left text-sm transition-colors ${
                   selectedBranch?.branchCode === branch.branchCode
                     ? "border-action bg-panel"
                     : "border-line bg-white hover:bg-panel"
@@ -161,7 +164,7 @@ export function CollegeBranchExplorer({ branches, initialBranchName, initialYear
           </div>
         </aside>
 
-        <div className="grid gap-4">
+        <div className="grid min-w-0 gap-4">
           {!selectedBranch ? (
             <div className="rounded-lg border border-warning bg-white p-4 text-sm text-warning">
               No branch data found for this college.
@@ -222,7 +225,7 @@ export function CollegeBranchExplorer({ branches, initialBranchName, initialYear
 
                 <div className="mt-4 border-t border-line pt-4">
                   <p className="text-sm font-semibold text-ink">Choose exact seat type</p>
-                  <div className="mt-2 flex max-h-44 flex-wrap gap-2 overflow-auto pr-1">
+                  <div className="mt-2 flex flex-wrap gap-2">
                     <FilterButton active={selectedSeatType === "ALL"} onClick={() => setSelectedSeatType("ALL")}>
                       All seats
                     </FilterButton>

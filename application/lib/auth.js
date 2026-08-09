@@ -17,7 +17,7 @@ export const studentAuthConfigured = Boolean(
 const authSecret = configuredSecret || "local-setup-only-secret-change-before-production";
 
 export const auth = betterAuth({
-  appName: "CAP Predictor",
+  appName: "Admission Compass",
   baseURL: publicAppUrl,
   secret: authSecret,
   trustedOrigins: [publicAppUrl],

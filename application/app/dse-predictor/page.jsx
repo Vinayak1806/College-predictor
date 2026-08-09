@@ -57,6 +57,7 @@ const initialForm = {
   gender: "MALE",
   branches: [],
   cities: [],
+  universities: [],
   collegeTypes: [],
   autonomousOnly: false,
   ews: false,
@@ -304,7 +305,7 @@ export default function DsePredictorPage() {
   const predictorFormRef = useRef(null);
   const resultsTopRef = useRef(null);
   const [form, setForm] = useState(initialForm);
-  const [options, setOptions] = useState({ years: [], rounds: [], branches: [], cities: [] });
+  const [options, setOptions] = useState({ years: [], rounds: [], branches: [], cities: [], universities: [] });
   const [optionsLoading, setOptionsLoading] = useState(true);
   const [instituteCount, setInstituteCount] = useState(null);
   const [zone, setZone] = useState("ALL");
@@ -324,6 +325,7 @@ export default function DsePredictorPage() {
   const canPredict = percentageValid && Boolean(form.diplomaBranch && form.category && form.gender);
   const branchOptions = options.branches.map((branch) => ({ label: branch, value: branch }));
   const cityOptions = options.cities.map((city) => ({ label: city, value: city }));
+  const universityOptions = options.universities.map((university) => ({ label: university, value: university }));
   const totalResults = pagination?.totalResults || 0;
   const currentPage = pagination?.page || 1;
   const totalPages = pagination?.totalPages || 0;
@@ -345,7 +347,8 @@ export default function DsePredictorPage() {
           years: data.years || [],
           rounds: data.rounds || [],
           branches: data.branches || [],
-          cities: data.cities || []
+          cities: data.cities || [],
+          universities: data.universities || []
         });
         setOptionsLoading(false);
       })
@@ -404,6 +407,7 @@ export default function DsePredictorPage() {
           gender: form.gender,
           preferredBranches: form.branches,
           preferredCities: form.cities,
+          preferredUniversities: form.universities,
           collegeTypes: form.collegeTypes,
           autonomousOnly: form.autonomousOnly,
           resultMode: RESULT_MODE,
@@ -432,6 +436,7 @@ export default function DsePredictorPage() {
           result_count: data.pagination?.totalResults || 0,
           branch_filter_count: form.branches.length,
           city_filter_count: form.cities.length,
+          university_filter_count: form.universities.length,
           ownership_filter_count: form.collegeTypes.length,
           autonomous_only: form.autonomousOnly
         });
@@ -624,6 +629,17 @@ export default function DsePredictorPage() {
                 noOptionsText="No matching district or city found."
               />
               <CompactMultiSelect
+                label={`Preferred universities${optionsLoading ? "" : ` (${options.universities.length})`}`}
+                options={universityOptions}
+                selectedValues={form.universities}
+                emptyText="All universities"
+                onToggle={(value) => toggleListValue("universities", value)}
+                onClear={() => update("universities", [])}
+                loading={optionsLoading}
+                searchPlaceholder="Type university name"
+                noOptionsText="No matching university found."
+              />
+              <CompactMultiSelect
                 label="Institute ownership"
                 options={collegeTypeOptions}
                 selectedValues={form.collegeTypes}
@@ -689,6 +705,10 @@ export default function DsePredictorPage() {
                   <dt className="text-xs text-slate-500">CAP round</dt>
                   <dd className="mt-1 text-sm font-semibold">{form.capRound ? `Round ${form.capRound}` : "Latest comparable"}</dd>
                 </div>
+                <div className="col-span-2 min-w-0 border-t border-line px-4 py-3">
+                  <dt className="text-xs text-slate-500">University preference</dt>
+                  <dd className="mt-1 break-words text-sm font-semibold">{selectedSummary(form.universities, universityOptions, "All universities")}</dd>
+                </div>
               </dl>
               <div className="p-4">
                 <div className="flex items-end justify-between gap-3">
@@ -717,7 +737,7 @@ export default function DsePredictorPage() {
                 <p className="text-xs font-semibold uppercase text-action">Prediction workspace</p>
                 <h2 className="mt-1 text-xl font-semibold">{hasPredicted ? "Your college-branch options" : "Ready for your profile"}</h2>
                 {hasPredicted ? (
-                  <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2 xl:grid-cols-4">
+                  <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2 xl:grid-cols-5">
                     <div>
                       <dt className="text-xs text-slate-500">Diploma percentage</dt>
                       <dd className="mt-0.5 font-semibold">{form.diplomaPercentage}%</dd>
@@ -733,6 +753,10 @@ export default function DsePredictorPage() {
                     <div className="min-w-0">
                       <dt className="text-xs text-slate-500">Location</dt>
                       <dd className="mt-0.5 break-words font-semibold">{form.cities.length ? form.cities.join(", ") : "All Maharashtra"}</dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-xs text-slate-500">University</dt>
+                      <dd className="mt-0.5 break-words font-semibold">{selectedSummary(form.universities, universityOptions, "All universities")}</dd>
                     </div>
                   </dl>
                 ) : (

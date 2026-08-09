@@ -108,7 +108,10 @@ async function createPrediction(request) {
         branch: branchFilters.length ? { OR: branchFilters } : undefined,
         college: {
           routeArchives: { none: { admissionRoute: "DSE" } },
-          OR: cityFilters.length ? cityFilters : undefined
+          OR: cityFilters.length ? cityFilters : undefined,
+          university: input.preferredUniversities.length
+            ? { name: { in: input.preferredUniversities } }
+            : undefined
         }
       }
     },
