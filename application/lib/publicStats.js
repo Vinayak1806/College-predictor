@@ -1,15 +1,29 @@
 import { prisma } from "./prisma";
+import { activeCollegeWhere, latestPublishedDataset } from "./publishedData";
 
 export async function getPublicStats() {
-  const currentFilter = { profile: { is: { currentCap2025: "Yes" } } };
-  const [currentInstitutes, verifiedCutoffs, exactSeatTypes, cityRows, coverageDatasets] = await Promise.all([
+  const [latestFeDataset, latestDseDataset] = await Promise.all([
+    latestPublishedDataset(prisma, "FE"),
+    latestPublishedDataset(prisma, "DSE")
+  ]);
+  const currentFeFilter = latestFeDataset
+    ? activeCollegeWhere("FE", latestFeDataset.academicYear)
+    : activeCollegeWhere("FE");
+  const currentDseFilter = latestDseDataset
+    ? activeCollegeWhere("DSE", latestDseDataset.academicYear)
+    : activeCollegeWhere("DSE");
+  const currentFilter = { OR: [currentFeFilter, currentDseFilter] };
+  const [currentInstitutes, currentFeInstitutes, currentDseInstitutes, verifiedCutoffs, exactSeatTypes, cityRows, coverageDatasets] = await Promise.all([
     prisma.college.count({ where: currentFilter }),
+    prisma.college.count({ where: currentFeFilter }),
+    prisma.college.count({ where: currentDseFilter }),
     prisma.cutoff.count({
       where: {
         needsReview: false,
         dataset: {
           admissionRoute: "FE",
-          status: { in: ["VERIFIED", "PUBLISHED"] }
+          status: { in: ["VERIFIED", "PUBLISHED"] },
+          predictionEnabled: true
         }
       }
     }),
@@ -18,7 +32,10 @@ export async function getPublicStats() {
         cutoffs: {
           some: {
             needsReview: false,
-            dataset: { status: { in: ["VERIFIED", "PUBLISHED"] } }
+            dataset: {
+              status: { in: ["VERIFIED", "PUBLISHED"] },
+              predictionEnabled: true
+            }
           }
         }
       }
@@ -34,7 +51,8 @@ export async function getPublicStats() {
     prisma.cutoffDataset.findMany({
       where: {
         admissionRoute: { in: ["FE", "DSE"] },
-        status: { in: ["VERIFIED", "PUBLISHED"] }
+        status: { in: ["VERIFIED", "PUBLISHED"] },
+        predictionEnabled: true
       },
       select: {
         academicYear: true,
@@ -61,6 +79,8 @@ export async function getPublicStats() {
 
   return {
     currentInstitutes,
+    currentFeInstitutes,
+    currentDseInstitutes,
     verifiedCutoffs,
     districtsCovered: cityRows.length,
     exactSeatTypes,

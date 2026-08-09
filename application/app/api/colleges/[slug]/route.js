@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { json } from "../../../../lib/http";
 import { prisma } from "../../../../lib/prisma";
+import { currentCollegeWhere } from "../../../../lib/publishedData";
 
 export async function GET(request, { params }) {
   const { slug } = await params;
+  const currentFilter = await currentCollegeWhere(prisma);
   const college = await prisma.college.findFirst({
     where: {
       slug,
-      profile: { is: { currentCap2025: "Yes" } }
+      ...currentFilter
     },
     include: {
       city: true,

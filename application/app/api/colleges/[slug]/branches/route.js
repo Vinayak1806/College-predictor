@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { json } from "../../../../../lib/http";
 import { prisma } from "../../../../../lib/prisma";
+import { currentCollegeWhere } from "../../../../../lib/publishedData";
 
 export async function GET(request, { params }) {
   const { slug } = await params;
@@ -8,11 +9,12 @@ export async function GET(request, { params }) {
   if (!["FE", "DSE"].includes(routeValue)) {
     return NextResponse.json({ error: "Admission route must be FE or DSE." }, { status: 400 });
   }
+  const currentFilter = await currentCollegeWhere(prisma, routeValue);
 
   const college = await prisma.college.findFirst({
     where: {
       slug,
-      profile: { is: { currentCap2025: "Yes" } }
+      ...currentFilter
     },
     select: {
       instituteCode: true,
@@ -24,7 +26,8 @@ export async function GET(request, { params }) {
               needsReview: false,
               dataset: {
                 admissionRoute: routeValue,
-                status: { in: ["VERIFIED", "PUBLISHED"] }
+                status: { in: ["VERIFIED", "PUBLISHED"] },
+                predictionEnabled: true
               }
             },
             select: { id: true },

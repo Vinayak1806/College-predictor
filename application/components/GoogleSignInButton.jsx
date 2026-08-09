@@ -29,12 +29,12 @@ export function GoogleSignInButton({ configured, callbackURL = "/account" }) {
         type="button"
         disabled={!configured || loading}
         onClick={signIn}
-        className="focus-ring flex min-h-12 w-full items-center justify-center gap-3 rounded bg-action px-4 text-sm font-semibold text-white hover:bg-[#11566d] disabled:cursor-not-allowed disabled:bg-slate-300"
+        className="focus-ring flex min-h-14 w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-action hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
       >
         {loading ? (
           <LoaderCircle aria-hidden="true" className="animate-spin" size={18} />
         ) : (
-          <span aria-hidden="true" className="flex h-6 w-6 items-center justify-center rounded-sm bg-white text-sm font-bold text-[#4285f4]">G</span>
+          <span aria-hidden="true" className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-[#4285f4]">G</span>
         )}
         {loading ? "Opening Google..." : "Continue with Google"}
       </button>

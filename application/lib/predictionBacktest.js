@@ -4,6 +4,7 @@ import {
   eligibleSeatTypesAcrossUniversities
 } from "./eligibility.js";
 import { analyzeCutoffHistory, zoneOrder } from "./prediction.js";
+import { groupCutoffRowsByCollegeBranch } from "./cutoffGroups.js";
 
 export const FE_BACKTEST_PROFILES = [
   {
@@ -118,22 +119,6 @@ function average(values) {
 function round(value, digits = 1) {
   const factor = 10 ** digits;
   return Math.round(value * factor) / factor;
-}
-
-function groupByCollegeBranch(rows) {
-  const groups = new Map();
-
-  for (const row of rows) {
-    const college = row.collegeBranch.college;
-    const branch = row.collegeBranch.branch;
-    const instituteCode = String(college.instituteCode || "").replace(/^0+/, "") || college.instituteCode;
-    const key = `${instituteCode}:${branch.displayName.trim().toLowerCase()}`;
-    const group = groups.get(key) || [];
-    group.push(row);
-    groups.set(key, group);
-  }
-
-  return [...groups.values()];
 }
 
 function toHistoryRecord(row) {
@@ -291,7 +276,8 @@ export async function runFePredictionBacktest(prisma, options = {}) {
           academicYear: { in: [...trainingYears, targetYear] },
           admissionRoute: "FE",
           quota: "MH",
-          status: { in: ["VERIFIED", "PUBLISHED"] }
+          status: { in: ["VERIFIED", "PUBLISHED"] },
+          historyEnabled: true
         },
         collegeBranch: {
           college: { profile: { is: { currentCap2025: "Yes" } } }
@@ -325,7 +311,7 @@ export async function runFePredictionBacktest(prisma, options = {}) {
       }
     });
 
-    const evaluations = groupByCollegeBranch(rows)
+    const evaluations = groupCutoffRowsByCollegeBranch(rows)
       .map((group) => evaluateBacktestGroup(group, profile, trainingYears, targetYear))
       .filter(Boolean);
 
@@ -434,7 +420,8 @@ export async function runDsePredictionBacktest(prisma, options = {}) {
           academicYear: { in: [...trainingYears, targetYear] },
           admissionRoute: "DSE",
           quota: "MH",
-          status: { in: ["VERIFIED", "PUBLISHED"] }
+          status: { in: ["VERIFIED", "PUBLISHED"] },
+          historyEnabled: true
         },
         collegeBranch: {
           college: { profile: { is: { currentCap2025: "Yes" } } }
@@ -457,7 +444,7 @@ export async function runDsePredictionBacktest(prisma, options = {}) {
       }
     });
 
-    const evaluations = groupByCollegeBranch(rows)
+    const evaluations = groupCutoffRowsByCollegeBranch(rows)
       .map((group) => evaluateDseBacktestGroup(group, profile, trainingYears, targetYear))
       .filter(Boolean);
     return { report: summarizeBacktest(profile, evaluations), evaluations };

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SiteHeader } from "../../components/SiteHeader";
 import { calculateStrengthIndex } from "../../lib/prediction";
 import { prisma } from "../../lib/prisma";
+import { activeCollegeWhere, latestPublishedDataset } from "../../lib/publishedData";
 
 function hasValue(value) {
   return value !== null && value !== undefined && value !== "";
@@ -33,13 +34,19 @@ function profileIsAutonomous(value) {
 export default async function CollegeIndexPage({ searchParams }) {
   const query = await searchParams;
   const admissionRoute = query?.route === "DSE" ? "DSE" : "FE";
+  const requestedPage = Math.max(1, Number.parseInt(query?.page || "1", 10) || 1);
+  const pageSize = 50;
   const preferenceField = admissionRoute === "DSE" ? "dsePreferenceProxy" : "fePreferenceProxy";
   const predictorHref = admissionRoute === "DSE" ? "/dse-predictor" : "/fe-predictor";
-  const [profiles, dseSeatTotals] = await Promise.all([
+  const latestDataset = await latestPublishedDataset(prisma, admissionRoute);
+  const [profiles, dseSeatTotals, latestOpenCutoffs] = await Promise.all([
     prisma.collegeProfile.findMany({
       where: {
         currentCap2025: "Yes",
-        [preferenceField]: { not: null }
+        [preferenceField]: { not: null },
+        college: {
+          is: activeCollegeWhere(admissionRoute, latestDataset?.academicYear)
+        }
       },
       include: {
         college: {
@@ -47,15 +54,49 @@ export default async function CollegeIndexPage({ searchParams }) {
         }
       }
     }),
-    admissionRoute === "DSE"
+    admissionRoute === "DSE" && latestDataset
       ? prisma.seatMatrix.groupBy({
           by: ["instituteCode"],
           where: {
-            academicYear: "2025-26",
+            academicYear: latestDataset.academicYear,
             admissionRoute: "DSE",
             needsReview: false
           },
           _sum: { lateralEntrySeats: true }
+        })
+      : Promise.resolve([]),
+    latestDataset
+      ? prisma.cutoff.findMany({
+          where: {
+            datasetId: latestDataset.id,
+            needsReview: false,
+            closingScore: { not: null },
+            seatType: {
+              OR: [
+                { code: { startsWith: "GOPEN" } },
+                { code: { startsWith: "LOPEN" } }
+              ]
+            }
+          },
+          select: {
+            closingScore: true,
+            collegeBranch: {
+              select: {
+                branchId: true,
+                college: {
+                  select: {
+                    instituteCode: true,
+                    name: true,
+                    slug: true,
+                    collegeType: true,
+                    autonomous: true,
+                    city: { select: { name: true } },
+                    university: { select: { name: true } }
+                  }
+                }
+              }
+            }
+          }
         })
       : Promise.resolve([])
   ]);
@@ -63,7 +104,7 @@ export default async function CollegeIndexPage({ searchParams }) {
     dseSeatTotals.map((row) => [row.instituteCode, row._sum.lateralEntrySeats])
   );
 
-  const colleges = profiles
+  const profiledColleges = profiles
     .map((profile) => {
       const autonomous = profileIsAutonomous(profile.autonomyStatus) || profile.college.autonomous;
       const historicalDemandScore = Number(profile[preferenceField]);
@@ -90,9 +131,53 @@ export default async function CollegeIndexPage({ searchParams }) {
         historicalDemandScore,
         demandIndex
       };
-    })
-    .sort((a, b) => b.demandIndex - a.demandIndex || b.historicalDemandScore - a.historicalDemandScore)
-    .slice(0, 50);
+    });
+  const profiledCodes = new Set(profiledColleges.map((college) => college.instituteCode));
+  const fallbackByCollege = new Map();
+  for (const cutoff of latestOpenCutoffs) {
+    const college = cutoff.collegeBranch.college;
+    if (profiledCodes.has(college.instituteCode)) continue;
+    const current = fallbackByCollege.get(college.instituteCode) || {
+      college,
+      branchScores: new Map()
+    };
+    const score = Number(cutoff.closingScore);
+    const previous = current.branchScores.get(cutoff.collegeBranch.branchId) ?? -1;
+    if (score > previous) current.branchScores.set(cutoff.collegeBranch.branchId, score);
+    fallbackByCollege.set(college.instituteCode, current);
+  }
+  const fallbackColleges = [...fallbackByCollege.values()].map(({ college, branchScores }) => {
+    const strongestBranches = [...branchScores.values()].sort((a, b) => b - a).slice(0, 3);
+    const historicalDemandScore = strongestBranches.reduce((sum, score) => sum + score, 0) / strongestBranches.length;
+    const routeCapacity = admissionRoute === "DSE"
+      ? dseSeatsByCollege.get(college.instituteCode) ?? null
+      : null;
+    return {
+      slug: college.slug,
+      instituteCode: college.instituteCode,
+      name: college.name,
+      city: college.city?.name || null,
+      university: college.university?.name || null,
+      ownership: normalizeOwnership(college.collegeType),
+      autonomous: college.autonomous,
+      routeCapacity,
+      demandBand: "Latest published year",
+      historicalDemandScore,
+      demandIndex: calculateStrengthIndex({
+        historicalDemandScore,
+        autonomous: college.autonomous,
+        sanctionedIntake: routeCapacity,
+        dataConfidence: "LIMITED"
+      })
+    };
+  });
+
+  const rankedColleges = [...profiledColleges, ...fallbackColleges]
+    .sort((a, b) => b.demandIndex - a.demandIndex || b.historicalDemandScore - a.historicalDemandScore);
+  const totalPages = Math.max(1, Math.ceil(rankedColleges.length / pageSize));
+  const currentPage = Math.min(requestedPage, totalPages);
+  const firstPosition = (currentPage - 1) * pageSize;
+  const colleges = rankedColleges.slice(firstPosition, firstPosition + pageSize);
 
   return (
     <>
@@ -122,7 +207,7 @@ export default async function CollegeIndexPage({ searchParams }) {
         </nav>
 
         <section className="mt-6 grid gap-px overflow-hidden rounded border border-line bg-line sm:grid-cols-4">
-          <div className="bg-white p-4"><p className="text-xs uppercase text-slate-500">Colleges shown</p><p className="mt-1 text-xl font-semibold">{colleges.length}</p></div>
+          <div className="bg-white p-4"><p className="text-xs uppercase text-slate-500">Colleges ranked</p><p className="mt-1 text-xl font-semibold">{rankedColleges.length}</p></div>
           <div className="bg-white p-4"><p className="text-xs uppercase text-slate-500">Cutoff contribution</p><p className="mt-1 text-xl font-semibold">90%</p></div>
           <div className="bg-white p-4"><p className="text-xs uppercase text-slate-500">Other signals</p><p className="mt-1 text-sm font-semibold">Autonomy, {admissionRoute === "DSE" ? "DSE seats" : "intake"}, coverage</p></div>
           <div className="bg-white p-4"><p className="text-xs uppercase text-slate-500">Data type</p><p className="mt-1 text-sm font-semibold">Calculated, not official</p></div>
@@ -151,7 +236,7 @@ export default async function CollegeIndexPage({ searchParams }) {
               <tbody className="divide-y divide-line">
                 {colleges.map((college, index) => (
                   <tr key={college.instituteCode}>
-                    <td className="px-4 py-4 text-lg font-semibold text-action">#{index + 1}</td>
+                    <td className="px-4 py-4 text-lg font-semibold text-action">#{firstPosition + index + 1}</td>
                     <td className="px-4 py-4">
                       <Link className="font-semibold text-ink hover:text-action hover:underline" href={`/colleges/${college.slug}?route=${admissionRoute}`}>{college.name}</Link>
                       <p className="mt-1 text-xs text-slate-500">{[college.city, college.university].filter(Boolean).join(" | ")}</p>
@@ -169,7 +254,7 @@ export default async function CollegeIndexPage({ searchParams }) {
             {colleges.map((college, index) => (
               <article key={college.instituteCode} className="rounded border border-line bg-white p-4 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
-                  <span className="text-lg font-semibold text-action">#{index + 1}</span>
+                  <span className="text-lg font-semibold text-action">#{firstPosition + index + 1}</span>
                   <span className="rounded bg-panel px-3 py-1 text-sm font-semibold">{college.demandIndex} / 100</span>
                 </div>
                 <Link className="mt-3 block font-semibold leading-6 text-ink hover:text-action hover:underline" href={`/colleges/${college.slug}?route=${admissionRoute}`}>{college.name}</Link>
@@ -178,6 +263,18 @@ export default async function CollegeIndexPage({ searchParams }) {
               </article>
             ))}
           </div>
+
+          {totalPages > 1 ? (
+            <nav className="mt-5 flex items-center justify-between gap-3 rounded border border-line bg-white p-3" aria-label="College index pages">
+              {currentPage > 1 ? (
+                <Link className="focus-ring flex min-h-11 items-center rounded border border-line px-4 text-sm font-semibold text-action" href={`/college-index?route=${admissionRoute}&page=${currentPage - 1}`}>Previous</Link>
+              ) : <span className="min-h-11 px-4" />}
+              <p className="text-sm text-slate-600">Page <strong className="text-ink">{currentPage}</strong> of {totalPages}</p>
+              {currentPage < totalPages ? (
+                <Link className="focus-ring flex min-h-11 items-center rounded border border-line px-4 text-sm font-semibold text-action" href={`/college-index?route=${admissionRoute}&page=${currentPage + 1}`}>Next</Link>
+              ) : <span className="min-h-11 px-4" />}
+            </nav>
+          ) : null}
         </section>
 
         <section className="mt-8 border-t border-line pt-5 text-sm leading-6 text-slate-600">

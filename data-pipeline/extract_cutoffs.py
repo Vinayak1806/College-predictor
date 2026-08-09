@@ -5,7 +5,7 @@ import csv
 import json
 import re
 from collections import Counter
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 
 import pdfplumber
@@ -48,7 +48,7 @@ FIELDNAMES = [
 ]
 
 COLLEGE_RE = re.compile(r"^(?P<code>\d{4,5})\s*-\s*(?P<name>.+)$")
-BRANCH_RE = re.compile(r"^(?P<code>\d{9,10})\s*-\s*(?P<name>.+)$")
+BRANCH_RE = re.compile(r"^(?P<code>\d{9,10}[A-Z]{0,3})\s*-\s*(?P<name>.+)$")
 DSE_COLLEGE_RE = re.compile(
     r"^(?P<code>\d{4,5})\s+(?P<name>.+?)(?:\s+\((?P<status>[^()]*)\))?$"
 )
@@ -281,6 +281,97 @@ def parse_page(text: str, page_number: int, args: argparse.Namespace) -> list[di
     return records
 
 
+def fe_positioned_lines(page) -> list[tuple[float, str]]:
+    lines: list[tuple[float, str]] = []
+    for line in group_words_into_lines(page.extract_words() or []):
+        text = " ".join(str(word["text"]) for word in line).strip()
+        lines.append((float(line[0]["top"]), text))
+    return lines
+
+
+def fe_context_before_table(lines: list[tuple[float, str]], table_top: float) -> Context:
+    ctx = Context()
+    for line_top, line in lines:
+        if line_top >= table_top:
+            break
+
+        college_match = COLLEGE_RE.match(line)
+        if college_match:
+            ctx.institute_code = normalize_institute_code(college_match.group("code"))
+            ctx.college_name = college_match.group("name").strip()
+            ctx.branch_code = ""
+            ctx.branch_name = ""
+            ctx.section = ""
+            continue
+
+        branch_match = BRANCH_RE.match(line)
+        if branch_match:
+            ctx.branch_code = normalize_branch_code(branch_match.group("code"))
+            ctx.branch_name = branch_match.group("name").strip()
+            ctx.section = ""
+            continue
+
+        if line.startswith("Status:"):
+            ctx.college_status, ctx.university = split_status(line)
+            continue
+
+        if line in SECTION_TYPES:
+            ctx.section = SECTION_TYPES[line]
+
+    if not ctx.section:
+        ctx.section = "STATE"
+    return ctx
+
+
+def parse_fe_table_page(page, page_number: int, args: argparse.Namespace) -> list[dict[str, str]]:
+    positioned_lines = fe_positioned_lines(page)
+    records: list[dict[str, str]] = []
+
+    for table in page.find_tables():
+        rows = table.extract() or []
+        if len(rows) < 2 or len(rows[0]) < 2:
+            continue
+
+        seat_types = [normalize_seat_type(value or "") for value in rows[0][1:]]
+        if not any(seat_types):
+            continue
+
+        table_context = fe_context_before_table(positioned_lines, float(table.bbox[1]))
+
+        for row in rows[1:]:
+            stage = str(row[0] or "").strip()
+            if not re.fullmatch(r"[IVX]+(?:-Non)?", stage, re.IGNORECASE):
+                continue
+
+            for position, cell in enumerate(row[1:]):
+                value = str(cell or "").strip()
+                if not value:
+                    continue
+
+                rank_match = RANK_RE.search(value)
+                score_match = SCORE_RE.search(value)
+                reasons: list[str] = []
+                if not rank_match or not score_match:
+                    reasons.append("RANK_SCORE_COUNT_MISMATCH")
+
+                seat_type = seat_types[position] if position < len(seat_types) else ""
+                record = make_record(
+                    ctx=table_context,
+                    seat_type=seat_type,
+                    stage=stage,
+                    rank=rank_match.group(0) if rank_match else "",
+                    score=score_match.group(1) if score_match else "",
+                    args=args,
+                    page_number=page_number,
+                    needs_review=bool(reasons),
+                    reasons=reasons,
+                )
+                record["extraction_method"] = "pdfplumber_table"
+                records.append(record)
+
+    return records
+
+
 def group_words_into_lines(words: list[dict]) -> list[list[dict]]:
     lines: list[list[dict]] = []
     for word in sorted(words, key=lambda item: (round(float(item["top"]), 1), float(item["x0"]))):
@@ -507,7 +598,8 @@ def main() -> None:
             if args.route == "DSE":
                 rows.extend(parse_dse_page(page.extract_words() or [], page_number, args))
             else:
-                rows.extend(parse_page(text, page_number, args))
+                table_rows = parse_fe_table_page(page, page_number, args)
+                rows.extend(table_rows or parse_page(text, page_number, args))
 
     counts = validate_records(rows)
     write_csv(rows, Path(args.output))

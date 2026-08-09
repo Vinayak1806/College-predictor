@@ -271,9 +271,13 @@ export function AdminImportCentre() {
   const [imports, setImports] = useState([]);
   const [selected, setSelected] = useState(null);
   const [recordFilter, setRecordFilter] = useState("ALL");
+  const [issueFilter, setIssueFilter] = useState("");
+  const [instituteFilter, setInstituteFilter] = useState("");
+  const [recordPage, setRecordPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState("");
   const [error, setError] = useState("");
+  const [actionNotice, setActionNotice] = useState("");
   const [editingRecordId, setEditingRecordId] = useState("");
   const fileInputRef = useRef(null);
 
@@ -301,12 +305,26 @@ export function AdminImportCentre() {
     }
   }
 
-  async function loadImport(id, filter = recordFilter) {
+  async function loadImport(
+    id,
+    filter = recordFilter,
+    issue = issueFilter,
+    institute = instituteFilter,
+    page = recordPage
+  ) {
     setWorking(`preview-${id}`);
     setError("");
+    setActionNotice("");
     try {
-      const response = await api(`/api/admin/imports/${id}?records=${filter}`);
+      const query = new URLSearchParams({ records: filter, page: String(page), pageSize: "25" });
+      if (issue) query.set("issue", issue);
+      if (institute) query.set("institute", institute);
+      const response = await api(`/api/admin/imports/${id}?${query}`);
       setSelected(response.data);
+      setRecordFilter(filter);
+      setIssueFilter(issue);
+      setInstituteFilter(institute);
+      setRecordPage(page);
       setEditingRecordId("");
     } catch (loadError) {
       setError(loadError.message);
@@ -360,7 +378,9 @@ export function AdminImportCentre() {
     if (!selected) return;
     const confirmation = action === "publish"
       ? `Publish ${selected.summary?.publishableRecords || 0} validated records to the live database?`
-      : "Roll back the records published by this import?";
+      : action === "reprocess"
+        ? "Re-extract the saved PDF with the latest parser? Existing staged corrections for this import will be replaced. Nothing will be published."
+        : "Roll back the records published by this import?";
     if (!window.confirm(confirmation)) return;
 
     setWorking(action);
@@ -368,7 +388,11 @@ export function AdminImportCentre() {
     try {
       const response = await api(`/api/admin/imports/${selected.id}/${action}`, { method: "POST" });
       setSelected((current) => ({ ...current, ...response.data }));
-      await loadImports();
+      if (action === "reprocess") {
+        await Promise.all([loadImport(selected.id, "REVIEW", "", "", 1), loadImports()]);
+      } else {
+        await loadImports();
+      }
     } catch (actionError) {
       setError(actionError.message);
     } finally {
@@ -377,8 +401,51 @@ export function AdminImportCentre() {
   }
 
   async function changeRecordFilter(filter) {
-    setRecordFilter(filter);
-    if (selected) await loadImport(selected.id, filter);
+    if (selected) await loadImport(selected.id, filter, "", "", 1);
+  }
+
+  async function changeIssueFilter(issue) {
+    if (selected) await loadImport(selected.id, "REVIEW", issue, "", 1);
+  }
+
+  async function changeInstituteFilter(institute) {
+    if (selected) await loadImport(selected.id, "REVIEW", "", institute, 1);
+  }
+
+  async function changeRecordPage(page) {
+    if (selected) await loadImport(selected.id, recordFilter, issueFilter, instituteFilter, page);
+  }
+
+  async function runBulkReview(action) {
+    if (!selected) return;
+    const reviewRows = selected.summary?.recordsNeedingReview || 0;
+    const instituteGroups = selected.reviewGroups?.length || 0;
+    const confirmation = action === "APPROVE_INSTITUTES"
+      ? `Add ${instituteGroups} institutes to the master college table and approve all ${reviewRows} review rows? Cutoffs will remain staged until you press Publish.`
+      : `Exclude all ${reviewRows} review rows from this import? They will not be published.`;
+    if (!window.confirm(confirmation)) return;
+
+    setWorking(`bulk-${action}`);
+    setError("");
+    setActionNotice("");
+    try {
+      const response = await api(`/api/admin/imports/${selected.id}/bulk-review`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action })
+      });
+      const nextFilter = response.data.status === "VERIFIED" ? "ALL" : "REVIEW";
+      await Promise.all([loadImport(selected.id, nextFilter, "", "", 1), loadImports()]);
+      setActionNotice(
+        action === "APPROVE_INSTITUTES"
+          ? `${response.action.affectedInstitutes} official institutes were added and ${response.action.affectedRecords} rows are now ready. Review the totals, then publish separately.`
+          : `${response.action.affectedRecords} review rows were excluded from publication.`
+      );
+    } catch (bulkError) {
+      setError(bulkError.message);
+    } finally {
+      setWorking("");
+    }
   }
 
   async function correctRecord(record, data) {
@@ -391,7 +458,7 @@ export function AdminImportCentre() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ data })
       });
-      await Promise.all([loadImport(selected.id, recordFilter), loadImports()]);
+      await Promise.all([loadImport(selected.id, recordFilter, issueFilter, instituteFilter, recordPage), loadImports()]);
     } catch (correctionError) {
       setError(correctionError.message);
     } finally {
@@ -409,7 +476,7 @@ export function AdminImportCentre() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ exclude: true })
       });
-      await Promise.all([loadImport(selected.id, recordFilter), loadImports()]);
+      await Promise.all([loadImport(selected.id, recordFilter, issueFilter, instituteFilter, recordPage), loadImports()]);
     } catch (excludeError) {
       setError(excludeError.message);
     } finally {
@@ -552,7 +619,7 @@ export function AdminImportCentre() {
                 key={item.id}
                 className={`focus-ring block w-full px-3 py-3 text-left ${selected?.id === item.id ? "bg-cyan-50" : "hover:bg-panel"}`}
                 type="button"
-                onClick={() => loadImport(item.id)}
+                onClick={() => loadImport(item.id, "ALL", "", "", 1)}
               >
                 <div className="flex items-start justify-between gap-2">
                   <p className="min-w-0 break-words text-sm font-semibold text-ink">{item.originalFilename}</p>
@@ -577,6 +644,13 @@ export function AdminImportCentre() {
         </div>
       ) : null}
 
+      {actionNotice ? (
+        <div className="flex items-start gap-3 border-b border-success bg-emerald-50 px-4 py-3 text-sm text-success" role="status">
+          <CheckCircle2 aria-hidden="true" className="mt-0.5 shrink-0" size={18} />
+          <p>{actionNotice}</p>
+        </div>
+      ) : null}
+
       {selected ? (
         <div>
           <div className="flex flex-wrap items-start justify-between gap-4 border-b border-line px-4 py-4 md:px-5">
@@ -592,6 +666,17 @@ export function AdminImportCentre() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
+              {["NEEDS_REVIEW", "REJECTED"].includes(selected.status) ? (
+                <button
+                  className="focus-ring inline-flex min-h-11 items-center gap-2 rounded border border-action bg-white px-4 text-sm font-semibold text-action disabled:opacity-50"
+                  type="button"
+                  disabled={Boolean(working)}
+                  onClick={() => runAction("reprocess")}
+                >
+                  <RefreshCw aria-hidden="true" className={working === "reprocess" ? "animate-spin" : ""} size={17} />
+                  {working === "reprocess" ? "Reprocessing PDF..." : "Reprocess with latest extractor"}
+                </button>
+              ) : null}
               {selected.status === "VERIFIED" && selected.summary?.publishableRecords > 0 ? (
                 <button
                   className="focus-ring inline-flex min-h-11 items-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white disabled:opacity-50"
@@ -620,7 +705,10 @@ export function AdminImportCentre() {
           {selected.status === "NEEDS_REVIEW" ? (
             <div className="flex items-start gap-3 border-b border-warning bg-amber-50 px-4 py-3 text-sm text-warning md:px-5">
               <AlertCircle aria-hidden="true" className="mt-0.5 shrink-0" size={17} />
-              <p>Publication is locked until every review row is corrected or explicitly excluded.</p>
+              <p>
+                Reprocess first when the extractor has been improved. Then review the remaining issues by institute group;
+                publication stays locked until unresolved rows are corrected or explicitly excluded.
+              </p>
             </div>
           ) : null}
 
@@ -639,9 +727,49 @@ export function AdminImportCentre() {
                   <p className="text-xs font-semibold uppercase text-slate-500">Validation issues</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {Object.entries(selected.summary.issueCounts).map(([issue, count]) => (
-                      <span key={issue} className="rounded border border-warning bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-warning">
+                      <button
+                        key={issue}
+                        className={`focus-ring rounded border px-2.5 py-1.5 text-xs font-medium ${
+                          issueFilter === issue
+                            ? "border-warning bg-warning text-white"
+                            : "border-warning bg-amber-50 text-warning"
+                        }`}
+                        type="button"
+                        onClick={() => changeIssueFilter(issue)}
+                      >
                         {issue.replaceAll("_", " ").toLowerCase()} | {count}
-                      </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {selected.summary.automaticRepairs?.length ? (
+                <div className="border-b border-success bg-emerald-50 px-4 py-4 md:px-5">
+                  <div className="flex items-start gap-3">
+                    <Database aria-hidden="true" className="mt-0.5 shrink-0 text-success" size={18} />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-success">
+                        Database comparison repaired {selected.summary.automaticRepairs.length} page-boundary row{selected.summary.automaticRepairs.length === 1 ? "" : "s"}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-slate-600">
+                        The branch choice-code prefix matched an existing institute. College identity, ownership and autonomy were corrected; extracted seat counts were kept unchanged.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid gap-2 lg:grid-cols-2">
+                    {selected.summary.automaticRepairs.map((repair) => (
+                      <div key={`${repair.rowNumber}-${repair.branchCode}`} className="rounded border border-emerald-200 bg-white p-3 text-xs">
+                        <p className="font-mono font-semibold text-action">
+                          Row {repair.rowNumber} | PDF page {repair.sourcePage || "-"} | {repair.branchCode}
+                        </p>
+                        <p className="mt-1 text-slate-500 line-through">
+                          {repair.fromInstituteCode} | {repair.fromCollegeName}
+                        </p>
+                        <p className="mt-1 font-semibold text-ink">
+                          {repair.toInstituteCode} | {repair.toCollegeName}
+                        </p>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -649,12 +777,89 @@ export function AdminImportCentre() {
             </>
           ) : null}
 
+          {selected.status === "NEEDS_REVIEW" && selected.reviewGroups?.length ? (
+            <div className="border-b border-line px-4 py-4 md:px-5">
+              <div className="flex flex-wrap items-end justify-between gap-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase text-action">Review by institute</p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {selected.reviewGroups.length} institute group{selected.reviewGroups.length === 1 ? "" : "s"} contain all review rows.
+                    Check one group instead of opening every repeated cutoff row.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {Object.keys(selected.summary?.issueCounts || {}).every((issue) => issue === "UNKNOWN_INSTITUTE_CODE") ? (
+                    <button
+                      className="focus-ring inline-flex min-h-10 items-center gap-2 rounded bg-action px-3 text-xs font-semibold text-white disabled:opacity-50"
+                      type="button"
+                      disabled={Boolean(working)}
+                      onClick={() => runBulkReview("APPROVE_INSTITUTES")}
+                    >
+                      {working === "bulk-APPROVE_INSTITUTES" ? <RefreshCw aria-hidden="true" className="animate-spin" size={15} /> : <Database aria-hidden="true" size={15} />}
+                      Add {selected.reviewGroups.length} institutes + approve all rows
+                    </button>
+                  ) : null}
+                  <button
+                    className="focus-ring inline-flex min-h-10 items-center gap-2 rounded border border-danger bg-white px-3 text-xs font-semibold text-danger disabled:opacity-50"
+                    type="button"
+                    disabled={Boolean(working)}
+                    onClick={() => runBulkReview("EXCLUDE_ROWS")}
+                  >
+                    <Ban aria-hidden="true" size={15} /> Exclude all review rows
+                  </button>
+                  {(issueFilter || instituteFilter) ? (
+                    <button
+                      className="focus-ring min-h-10 rounded border border-line bg-white px-3 text-xs font-semibold text-slate-700"
+                      type="button"
+                      onClick={() => loadImport(selected.id, "REVIEW", "", "", 1)}
+                    >
+                      Clear filter
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                {selected.reviewGroups.map((group) => (
+                  <button
+                    key={group.instituteCode}
+                    className={`focus-ring min-w-0 rounded border p-3 text-left ${
+                      instituteFilter === group.instituteCode ? "border-action bg-cyan-50" : "border-line bg-white hover:bg-panel"
+                    }`}
+                    type="button"
+                    onClick={() => changeInstituteFilter(group.instituteCode)}
+                  >
+                    <span className="flex items-center justify-between gap-2">
+                      <span className="font-mono text-xs font-semibold text-action">{group.instituteCode}</span>
+                      <span className="text-xs font-semibold text-warning">{group.recordCount} rows</span>
+                    </span>
+                    <span className="mt-1 block truncate text-sm font-semibold text-ink" title={group.collegeName}>{group.collegeName}</span>
+                    <span className="mt-1 block text-xs text-slate-500">
+                      {group.branchCount} branches | first PDF page {group.firstPage || "-"}
+                    </span>
+                    <span className="mt-2 block truncate text-[11px] text-warning">
+                      {group.issues.map((issue) => issue.replaceAll("_", " ").toLowerCase()).join(", ")}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           {selected.records ? (
             <div>
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3 md:px-5">
                 <div>
                   <p className="text-xs font-semibold uppercase text-action">Record preview</p>
-                  <p className="mt-1 text-xs text-slate-500">Showing up to 100 records.</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {selected.recordPagination?.matchedRecords
+                      ? `Rows ${(selected.recordPagination.page - 1) * selected.recordPagination.pageSize + 1}-${Math.min(
+                          selected.recordPagination.page * selected.recordPagination.pageSize,
+                          selected.recordPagination.matchedRecords
+                        )} of ${selected.recordPagination.matchedRecords}`
+                      : "No matching records"}
+                    {issueFilter ? ` | ${issueFilter.replaceAll("_", " ").toLowerCase()}` : ""}
+                    {instituteFilter ? ` | institute ${instituteFilter}` : ""}
+                  </p>
                 </div>
                 <div className="flex gap-1" aria-label="Preview record filter">
                   {[
@@ -694,6 +899,31 @@ export function AdminImportCentre() {
                   <div className="px-4 py-10 text-center text-sm text-slate-500">No records match this preview filter.</div>
                 ) : null}
               </div>
+              {selected.recordPagination?.totalPages > 1 ? (
+                <div className="flex items-center justify-between gap-3 border-t border-line bg-panel px-4 py-3 md:px-5">
+                  <p className="text-xs text-slate-500">
+                    Page {selected.recordPagination.page} of {selected.recordPagination.totalPages}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      className="focus-ring min-h-10 rounded border border-line bg-white px-3 text-xs font-semibold text-slate-700 disabled:opacity-40"
+                      type="button"
+                      disabled={selected.recordPagination.page <= 1 || Boolean(working)}
+                      onClick={() => changeRecordPage(selected.recordPagination.page - 1)}
+                    >
+                      Previous
+                    </button>
+                    <button
+                      className="focus-ring min-h-10 rounded border border-line bg-white px-3 text-xs font-semibold text-slate-700 disabled:opacity-40"
+                      type="button"
+                      disabled={selected.recordPagination.page >= selected.recordPagination.totalPages || Boolean(working)}
+                      onClick={() => changeRecordPage(selected.recordPagination.page + 1)}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : (
             <button

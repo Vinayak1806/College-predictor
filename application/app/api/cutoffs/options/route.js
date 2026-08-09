@@ -8,9 +8,9 @@ export async function GET(request) {
     const route = new URL(request.url).searchParams.get("route");
     const publishedDataset = {
       status: { in: ["VERIFIED", "PUBLISHED"] },
+      predictionEnabled: true,
       admissionRoute: ["FE", "DSE"].includes(route) ? route : undefined
     };
-    const currentCollege = { profile: { is: { currentCap2025: "Yes" } } };
     const [datasets, seatTypes, branches, cities] = await Promise.all([
       prisma.cutoffDataset.findMany({
         where: publishedDataset,
@@ -27,7 +27,6 @@ export async function GET(request) {
         where: {
           collegeBranches: {
             some: {
-              college: currentCollege,
               cutoffs: { some: { needsReview: false, dataset: publishedDataset } }
             }
           }
@@ -40,7 +39,6 @@ export async function GET(request) {
         where: {
           colleges: {
             some: {
-              ...currentCollege,
               collegeBranches: {
                 some: { cutoffs: { some: { needsReview: false, dataset: publishedDataset } } }
               }

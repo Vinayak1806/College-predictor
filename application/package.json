@@ -9,7 +9,14 @@
     "start": "next start",
     "test": "node --test lib/*.test.js",
     "test:smoke": "node scripts/smoke-test.js",
+    "test:routes": "node --env-file=.env scripts/route-audit.js",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
     "test:load": "node scripts/load-test.js",
+    "backup:db": "powershell -ExecutionPolicy Bypass -File scripts/backup-database.ps1",
+    "restore:test": "powershell -ExecutionPolicy Bypass -File scripts/test-database-restore.ps1",
+    "check:deploy": "node scripts/predeploy-check.js && pnpm test && pnpm build",
+    "monitor:production": "node scripts/monitor-production.js",
     "check:launch": "pnpm test && pnpm build",
     "test:backtest": "node scripts/run-prediction-backtests.js",
     "lint": "next lint",
@@ -25,6 +32,7 @@
     "data:cutoff-sources:apply": "node scripts/attach-official-cutoff-sources.js --apply",
     "data:dse-workbook": "node scripts/import-dse-college-dataset.js",
     "data:dse-workbook:apply": "node scripts/import-dse-college-dataset.js --apply",
+    "admin:reprocess": "node --env-file=.env scripts/reprocess-admin-import.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev"
   },
@@ -43,6 +51,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.5.18",
     "prisma": "^6.0.0",

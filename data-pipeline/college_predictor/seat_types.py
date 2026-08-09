@@ -28,6 +28,8 @@ SPECIAL_TYPES = {
     "EWS": ("EWS", "SPECIAL", "STATE"),
     "ORPHAN": ("ORPHAN", "SPECIAL", "STATE"),
     "ORP": ("ORPHAN", "SPECIAL", "STATE"),
+    "ORPHANN": ("ORPHAN", "SPECIAL", "STATE"),
+    "ORPHANI": ("ORPHAN", "SPECIAL", "STATE"),
 }
 
 MINORITY_TYPES = {

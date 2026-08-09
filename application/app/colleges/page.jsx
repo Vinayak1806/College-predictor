@@ -4,6 +4,7 @@ import { CollegeAutocomplete } from "../../components/CollegeAutocomplete";
 import { SiteHeader } from "../../components/SiteHeader";
 import { currentInstituteCodeSearch } from "../../lib/instituteCodes";
 import { prisma } from "../../lib/prisma";
+import { latestPublishedDataset } from "../../lib/publishedData";
 
 export const dynamic = "force-dynamic";
 
@@ -77,12 +78,15 @@ export default async function CollegesPage({ searchParams }) {
   const query = await searchParams;
   const search = typeof query?.q === "string" ? query.q.trim() : "";
   const admissionRoute = query?.route === "DSE" ? "DSE" : "FE";
+  const latestDataset = await latestPublishedDataset(prisma, admissionRoute);
   const currentCodeQuery = currentInstituteCodeSearch(search);
   const routeCutoffFilter = {
     needsReview: false,
     dataset: {
       admissionRoute,
-      status: { in: ["VERIFIED", "PUBLISHED"] }
+      academicYear: latestDataset?.academicYear,
+      status: { in: ["VERIFIED", "PUBLISHED"] },
+      predictionEnabled: true
     }
   };
   const routeCollegeFilter = {
@@ -106,7 +110,6 @@ export default async function CollegesPage({ searchParams }) {
   const [collegeRecords, totalMatchingColleges, matrixRows] = await Promise.all([
     prisma.college.findMany({
       where: {
-        profile: { is: { currentCap2025: "Yes" } },
         ...routeCollegeFilter,
         ...searchFilter
       },
@@ -133,7 +136,6 @@ export default async function CollegesPage({ searchParams }) {
     }),
     prisma.college.count({
       where: {
-        profile: { is: { currentCap2025: "Yes" } },
         ...routeCollegeFilter,
         ...searchFilter
       }

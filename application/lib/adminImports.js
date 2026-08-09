@@ -1,33 +1,19 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
 import { currentInstituteCode } from "./instituteCodes.js";
 import { prisma } from "./prisma.js";
+import { clearResponseCache } from "./responseCache.js";
 import {
-  canonicalBranchCode,
   recordIssues,
+  repairSeatMatrixInstituteMismatches,
   sanitizeRecordCorrection,
   validateStagedRecords
 } from "./adminImportValidation.js";
+import { publishCutoffs, publishSeatMatrices } from "./adminImportPublishing.js";
+import { adminImportsRoot, runAdminImportProcessor } from "./adminImportRuntime.js";
 
-const execFileAsync = promisify(execFile);
-const projectRoot = path.resolve(process.cwd(), "..");
-const importsRoot = path.join(projectRoot, "data", "admin-imports");
-const processorPath = path.join(projectRoot, "data-pipeline", "process_admin_upload.py");
 const MAX_FILE_SIZE = 30 * 1024 * 1024;
-
-function numberOrNull(value) {
-  if (value === null || value === undefined || value === "") return null;
-  const number = Number(value);
-  return Number.isFinite(number) ? number : null;
-}
-
-function booleanValue(value) {
-  return String(value).toLowerCase() === "true";
-}
 
 function chunk(items, size = 500) {
   const chunks = [];
@@ -41,6 +27,33 @@ function publicSummary(summary) {
   if (!summary || typeof summary !== "object" || Array.isArray(summary)) return summary;
   const { rollback, ...visible } = summary;
   return visible;
+}
+
+function slugify(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || "unknown";
+}
+
+const VERIFIED_FE_2026_LOCATIONS = new Map([
+  ["02805", { district: "Chhatrapati Sambhajinagar", region: "Aurangabad" }],
+  ["04026", { district: "Gadchiroli", region: "Nagpur" }],
+  ["04762", { district: "Chandrapur", region: "Nagpur" }],
+  ["05413", { district: "Dhule", region: "Nashik" }],
+  ["05682", { district: "Ahilyanagar", region: "Nashik" }],
+  ["05683", { district: "Nashik", region: "Nashik" }],
+  ["05686", { district: "Nashik", region: "Nashik" }],
+  ["06041", { district: "Solapur", region: "Pune" }],
+  ["06725", { district: "Solapur", region: "Pune" }],
+  ["06814", { district: "Kolhapur", region: "Pune" }],
+  ["16371", { district: "Pune", region: "Pune" }],
+  ["16372", { district: "Satara", region: "Pune" }]
+]);
+
+function verifiedImportLocation(adminImport, instituteCode) {
+  if (adminImport.admissionRoute !== "FE" || adminImport.academicYear !== "2026-27") return null;
+  return VERIFIED_FE_2026_LOCATIONS.get(instituteCode) || null;
 }
 
 export function serializeAdminImport(adminImport, includeRecords = false) {
@@ -92,46 +105,105 @@ export function validatePdfUpload(file) {
   }
 }
 
-async function runPython(args) {
-  const configured = process.env.PYTHON_EXECUTABLE;
-  const bundledPython = path.join(
-    os.homedir(),
-    ".cache",
-    "codex-runtimes",
-    "codex-primary-runtime",
-    "dependencies",
-    "python",
-    "python.exe"
-  );
-  const candidates = configured
-    ? [{ command: configured, prefix: [] }]
-    : process.platform === "win32"
-      ? [
-          { command: "python", prefix: [] },
-          { command: "py", prefix: ["-3"] },
-          { command: bundledPython, prefix: [] }
-        ]
-      : [{ command: "python3", prefix: [] }, { command: "python", prefix: [] }];
+async function processAdminImport(adminImport) {
+  const importDir = path.dirname(adminImport.storedPath);
+  try {
+    await prisma.adminImport.update({
+      where: { id: adminImport.id },
+      data: { status: "PROCESSING", errorMessage: null }
+    });
 
-  let unavailableRuntimeError;
-  for (const candidate of candidates) {
-    try {
-      return await execFileAsync(candidate.command, [...candidate.prefix, processorPath, ...args], {
-        cwd: projectRoot,
-        timeout: 30 * 60 * 1000,
-        maxBuffer: 10 * 1024 * 1024,
-        windowsHide: true
-      });
-    } catch (error) {
-      const missingDependency =
-        /ModuleNotFoundError|No module named ['"](?:pdfplumber|pandas|pypdf)['"]/i.test(String(error.stderr || ""));
-      if (error.code !== "ENOENT" && !missingDependency) throw error;
-      unavailableRuntimeError = error;
+    const args = [
+      "--document-type", adminImport.documentType,
+      "--input", adminImport.storedPath,
+      "--output-dir", importDir,
+      "--original-filename", adminImport.originalFilename,
+      "--route", adminImport.admissionRoute,
+      "--academic-year", adminImport.academicYear,
+      "--quota", adminImport.quota
+    ];
+    if (adminImport.capRound) args.push("--cap-round", String(adminImport.capRound));
+    await runAdminImportProcessor(args);
+
+    const [rawRecords, report, colleges] = await Promise.all([
+      fs.readFile(path.join(importDir, "records.json"), "utf8").then(JSON.parse),
+      fs.readFile(path.join(importDir, "report.json"), "utf8").then(JSON.parse),
+      prisma.college.findMany({
+        select: { instituteCode: true, name: true, collegeType: true, autonomous: true }
+      })
+    ]);
+    if (!rawRecords.length) {
+      throw new Error("The extractor found no usable records. Nothing was staged or published.");
     }
+    if (
+      adminImport.documentType === "SEAT_MATRIX_PDF"
+      && adminImport.admissionRoute === "DSE"
+      && Number(report.unparsed_choice_codes) > 0
+    ) {
+      throw new Error(
+        `Extraction stopped safely: ${report.unparsed_choice_codes} choice code(s) were detected in the PDF but not converted into rows. The import was not staged or published.`
+      );
+    }
+    const knownInstituteCodes = new Set(colleges.map((college) => college.instituteCode));
+    const issueCounts = {};
+    const databaseComparison = repairSeatMatrixInstituteMismatches(rawRecords, colleges);
+    const checkedRecords = validateStagedRecords(databaseComparison.records, knownInstituteCodes);
+
+    const stagedRecords = checkedRecords.map((record, index) => {
+      const issues = record.issues;
+      for (const issue of issues) issueCounts[issue] = (issueCounts[issue] || 0) + 1;
+
+      return {
+        importId: adminImport.id,
+        rowNumber: index + 1,
+        recordType: record.recordType,
+        data: record.data,
+        valid: issues.length === 0,
+        needsReview: issues.length > 0,
+        issues
+      };
+    });
+
+    const publishableRecords = stagedRecords.filter((record) => record.valid && !record.needsReview).length;
+    const recordsNeedingReview = stagedRecords.length - publishableRecords;
+    const summary = {
+      ...report,
+      totalRecords: stagedRecords.length,
+      publishableRecords,
+      recordsNeedingReview,
+      excludedRecords: 0,
+      automaticRepairs: databaseComparison.repairs,
+      issueCounts
+    };
+    const status = recordsNeedingReview ? "NEEDS_REVIEW" : "VERIFIED";
+
+    return await prisma.$transaction(async (transaction) => {
+      await transaction.adminImportRecord.deleteMany({ where: { importId: adminImport.id } });
+      for (const records of chunk(stagedRecords)) {
+        await transaction.adminImportRecord.createMany({ data: records });
+      }
+
+      return transaction.adminImport.update({
+        where: { id: adminImport.id },
+        data: {
+          status,
+          summary,
+          processedAt: new Date()
+        },
+        include: { _count: { select: { records: true } } }
+      });
+    }, { maxWait: 10000, timeout: 120000 });
+  } catch (error) {
+    await prisma.adminImport.update({
+      where: { id: adminImport.id },
+      data: {
+        status: "REJECTED",
+        errorMessage: String(error.stderr || error.message || error).slice(0, 4000),
+        processedAt: new Date()
+      }
+    });
+    throw error;
   }
-  throw new Error(
-    `A Python runtime with the data-pipeline requirements could not be started. Configure PYTHON_EXECUTABLE. ${unavailableRuntimeError?.message || ""}`.trim()
-  );
 }
 
 export async function createAndProcessImport({ file, metadata }) {
@@ -151,7 +223,7 @@ export async function createAndProcessImport({ file, metadata }) {
   }
 
   const uploadKey = crypto.randomUUID();
-  const importDir = path.join(importsRoot, uploadKey);
+  const importDir = path.join(adminImportsRoot, uploadKey);
   const storedPath = path.join(importDir, "source.pdf");
   await fs.mkdir(importDir, { recursive: true });
   await fs.writeFile(storedPath, bytes);
@@ -173,85 +245,21 @@ export async function createAndProcessImport({ file, metadata }) {
     }
   });
 
-  try {
-    await prisma.adminImport.update({
-      where: { id: adminImport.id },
-      data: { status: "PROCESSING", errorMessage: null }
-    });
+  return processAdminImport(adminImport);
+}
 
-    const args = [
-      "--document-type", metadata.documentType,
-      "--input", storedPath,
-      "--output-dir", importDir,
-      "--original-filename", file.name,
-      "--route", metadata.admissionRoute,
-      "--academic-year", metadata.academicYear,
-      "--quota", metadata.quota
-    ];
-    if (metadata.capRound) args.push("--cap-round", String(metadata.capRound));
-    await runPython(args);
-
-    const [rawRecords, report, colleges] = await Promise.all([
-      fs.readFile(path.join(importDir, "records.json"), "utf8").then(JSON.parse),
-      fs.readFile(path.join(importDir, "report.json"), "utf8").then(JSON.parse),
-      prisma.college.findMany({ select: { instituteCode: true } })
-    ]);
-    const knownInstituteCodes = new Set(colleges.map((college) => college.instituteCode));
-    const issueCounts = {};
-    const checkedRecords = validateStagedRecords(rawRecords, knownInstituteCodes);
-
-    const stagedRecords = checkedRecords.map((record, index) => {
-      const issues = record.issues;
-      for (const issue of issues) issueCounts[issue] = (issueCounts[issue] || 0) + 1;
-
-      return {
-        importId: adminImport.id,
-        rowNumber: index + 1,
-        recordType: record.recordType,
-        data: record.data,
-        valid: issues.length === 0,
-        needsReview: issues.length > 0,
-        issues
-      };
-    });
-
-    await prisma.adminImportRecord.deleteMany({ where: { importId: adminImport.id } });
-    for (const records of chunk(stagedRecords)) {
-      await prisma.adminImportRecord.createMany({ data: records });
-    }
-
-    const publishableRecords = stagedRecords.filter((record) => record.valid && !record.needsReview).length;
-    const recordsNeedingReview = stagedRecords.length - publishableRecords;
-    const summary = {
-      ...report,
-      totalRecords: stagedRecords.length,
-      publishableRecords,
-      recordsNeedingReview,
-      excludedRecords: 0,
-      issueCounts
-    };
-    const status = recordsNeedingReview ? "NEEDS_REVIEW" : "VERIFIED";
-
-    return await prisma.adminImport.update({
-      where: { id: adminImport.id },
-      data: {
-        status,
-        summary,
-        processedAt: new Date()
-      },
-      include: { _count: { select: { records: true } } }
-    });
-  } catch (error) {
-    await prisma.adminImport.update({
-      where: { id: adminImport.id },
-      data: {
-        status: "REJECTED",
-        errorMessage: String(error.stderr || error.message || error).slice(0, 4000),
-        processedAt: new Date()
-      }
-    });
-    throw error;
+export async function reprocessAdminImport(id) {
+  const adminImport = await prisma.adminImport.findUnique({ where: { id: BigInt(id) } });
+  if (!adminImport) throw Object.assign(new Error("Import not found."), { status: 404 });
+  if (["PROCESSING", "PUBLISHED", "ROLLED_BACK"].includes(adminImport.status)) {
+    throw Object.assign(
+      new Error("Only an unpublished import that is not already processing can be reprocessed."),
+      { status: 409 }
+    );
   }
+
+  await fs.access(adminImport.storedPath);
+  return processAdminImport(adminImport);
 }
 
 async function refreshImportReviewState(transaction, adminImport) {
@@ -398,199 +406,129 @@ export async function updateAdminImportRecord(importId, recordId, correction) {
   }, { maxWait: 10000, timeout: 120000 });
 }
 
-async function publishCutoffs(adminImport, records) {
-  const rows = records.map((record) => record.data);
-  const branchRows = [...new Map(rows.map((row) => [
-    canonicalBranchCode(row.branch_code),
-    {
-      branchCode: canonicalBranchCode(row.branch_code),
-      officialName: row.branch_name,
-      displayName: row.branch_name
-    }
-  ])).values()];
-  const seatRows = [...new Map(rows.map((row) => [
-    row.seat_type,
-    {
-      code: row.seat_type,
-      category: row.category,
-      gender: row.gender,
-      universityType: row.university_type,
-      specialType: row.seat_type.startsWith("PWD")
-        ? "PWD"
-        : row.seat_type.startsWith("DEF")
-          ? "DEFENCE"
-          : ["ORP", "ORPHAN"].includes(row.seat_type)
-            ? "ORPHAN"
-            : ["TFWS", "EWS"].includes(row.seat_type)
-              ? row.seat_type
-              : row.seat_type === "MI"
-                ? "MINORITY"
-                : null
-    }
-  ])).values()];
-  const instituteCodes = [...new Set(rows.map((row) => currentInstituteCode(row.institute_code)))];
-
+export async function bulkResolveAdminImportReview(importId, { action, instituteCode }) {
   return prisma.$transaction(async (transaction) => {
-    await transaction.branch.createMany({ data: branchRows, skipDuplicates: true });
-    await transaction.seatType.createMany({ data: seatRows, skipDuplicates: true });
-
-    const [colleges, branches, seatTypes] = await Promise.all([
-      transaction.college.findMany({ where: { instituteCode: { in: instituteCodes } }, select: { id: true, instituteCode: true } }),
-      transaction.branch.findMany({ where: { branchCode: { in: branchRows.map((row) => row.branchCode) } }, select: { id: true, branchCode: true } }),
-      transaction.seatType.findMany({ where: { code: { in: seatRows.map((row) => row.code) } }, select: { id: true, code: true } })
-    ]);
-    const collegeByCode = new Map(colleges.map((college) => [college.instituteCode, college.id]));
-    const branchByCode = new Map(branches.map((branch) => [branch.branchCode, branch.id]));
-    const seatByCode = new Map(seatTypes.map((seatType) => [seatType.code, seatType.id]));
-
-    const collegeBranchRows = [...new Map(rows.map((row) => {
-      const collegeId = collegeByCode.get(currentInstituteCode(row.institute_code));
-      const branchId = branchByCode.get(canonicalBranchCode(row.branch_code));
-      const key = `${collegeId}|${branchId}|${row.academic_year}`;
-      return [key, { collegeId, branchId, academicYear: row.academic_year }];
-    })).values()];
-    await transaction.collegeBranch.createMany({ data: collegeBranchRows, skipDuplicates: true });
-    const collegeBranches = await transaction.collegeBranch.findMany({
-      where: {
-        collegeId: { in: [...new Set(collegeBranchRows.map((row) => row.collegeId))] },
-        branchId: { in: [...new Set(collegeBranchRows.map((row) => row.branchId))] },
-        academicYear: adminImport.academicYear
-      },
-      select: { id: true, collegeId: true, branchId: true, academicYear: true }
+    const adminImport = await transaction.adminImport.findUnique({
+      where: { id: BigInt(importId) }
     });
-    const collegeBranchByKey = new Map(
-      collegeBranches.map((row) => [`${row.collegeId}|${row.branchId}|${row.academicYear}`, row.id])
-    );
+    if (!adminImport) throw Object.assign(new Error("Import not found."), { status: 404 });
+    if (!["VERIFIED", "NEEDS_REVIEW"].includes(adminImport.status)) {
+      throw Object.assign(new Error("Only an unpublished processed import can be reviewed."), { status: 409 });
+    }
 
-    const dataset = await transaction.cutoffDataset.create({
-      data: {
-        academicYear: adminImport.academicYear,
-        admissionRoute: adminImport.admissionRoute,
-        capRound: adminImport.capRound,
-        quota: adminImport.quota,
-        sourceFilename: adminImport.originalFilename,
-        sourceUrl: adminImport.sourceUrl,
-        fileHash: adminImport.fileHash,
-        status: "PUBLISHED",
-        verifiedAt: new Date()
+    const reviewRecords = await transaction.adminImportRecord.findMany({
+      where: { importId: adminImport.id, needsReview: true },
+      orderBy: { rowNumber: "asc" }
+    });
+    const selectedRecords = instituteCode
+      ? reviewRecords.filter((record) => currentInstituteCode(record.data?.institute_code) === instituteCode)
+      : reviewRecords;
+    if (!selectedRecords.length) {
+      throw Object.assign(new Error("No review rows match this action."), { status: 409 });
+    }
+
+    const selectedIds = selectedRecords.map((record) => record.id);
+    const instituteCodes = [...new Set(selectedRecords.map((record) =>
+      currentInstituteCode(record.data?.institute_code)
+    ).filter(Boolean))];
+
+    if (action === "EXCLUDE_ROWS") {
+      await transaction.adminImportRecord.updateMany({
+        where: { id: { in: selectedIds }, importId: adminImport.id },
+        data: { valid: false, needsReview: false, issues: ["EXCLUDED_BY_ADMIN"] }
+      });
+    } else {
+      const unsafeRecord = selectedRecords.find((record) => {
+        const issues = Array.isArray(record.issues) ? record.issues : [];
+        return issues.length !== 1 || issues[0] !== "UNKNOWN_INSTITUTE_CODE";
+      });
+      if (unsafeRecord) {
+        throw Object.assign(
+          new Error("Bulk approval is allowed only when unknown institute code is the row's only issue."),
+          { status: 409 }
+        );
       }
-    });
 
-    const cutoffRows = rows.map((row) => {
-      const collegeId = collegeByCode.get(currentInstituteCode(row.institute_code));
-      const branchId = branchByCode.get(canonicalBranchCode(row.branch_code));
-      return {
-        datasetId: dataset.id,
-        collegeBranchId: collegeBranchByKey.get(`${collegeId}|${branchId}|${row.academic_year}`),
-        seatTypeId: seatByCode.get(row.seat_type),
-        stage: row.stage || null,
-        section: row.section || "STANDARD",
-        openingRank: numberOrNull(row.opening_rank),
-        closingRank: numberOrNull(row.closing_rank),
-        openingScore: numberOrNull(row.opening_score),
-        closingScore: numberOrNull(row.closing_score),
-        sourcePage: Number(row.source_page),
-        verified: true,
-        needsReview: false,
-        reviewReason: null
-      };
-    });
-    for (const batch of chunk(cutoffRows)) {
-      await transaction.cutoff.createMany({ data: batch, skipDuplicates: true });
-    }
+      const existingUniversities = await transaction.university.findMany({
+        select: { id: true, name: true }
+      });
+      const universityByName = new Map(existingUniversities.map((university) => [university.name, university.id]));
+      const existingCities = await transaction.city.findMany({ select: { id: true, name: true } });
+      const cityByName = new Map(existingCities.map((city) => [city.name, city.id]));
 
-    return {
-      publishedRecords: cutoffRows.length,
-      rollback: { datasetId: dataset.id.toString() }
-    };
-  }, { maxWait: 10000, timeout: 120000 });
-}
+      for (const code of instituteCodes) {
+        const instituteRows = selectedRecords.filter((record) =>
+          currentInstituteCode(record.data?.institute_code) === code
+        );
+        const names = [...new Set(instituteRows.map((record) => String(record.data?.college_name || "").trim()).filter(Boolean))];
+        const universities = [...new Set(instituteRows.map((record) => String(record.data?.university || "").trim()).filter(Boolean))];
+        if (names.length !== 1 || universities.length !== 1) {
+          throw Object.assign(
+            new Error(`Institute ${code} has inconsistent names or university data and must be reviewed separately.`),
+            { status: 409 }
+          );
+        }
 
-function seatMatrixData(row) {
-  let categorySeats = null;
-  try {
-    categorySeats = row.category_seats
-      ? (typeof row.category_seats === "string" ? JSON.parse(row.category_seats) : row.category_seats)
-      : null;
-  } catch {
-    categorySeats = null;
-  }
+        const universityId = universityByName.get(universities[0]);
+        if (!universityId) {
+          throw Object.assign(
+            new Error(`University '${universities[0]}' is not available in the master university table.`),
+            { status: 409 }
+          );
+        }
 
-  return {
-    academicYear: row.academic_year,
-    admissionRoute: row.admission_route,
-    instituteCode: currentInstituteCode(row.institute_code),
-    collegeName: row.college_name,
-    collegeStatus: row.college_status || null,
-    collegeType: row.college_type || null,
-    autonomous: booleanValue(row.autonomous),
-    capSeats: numberOrNull(row.cap_seats),
-    branchCode: canonicalBranchCode(row.branch_code),
-    branchName: row.branch_name,
-    sanctionedIntake: numberOrNull(row.sanctioned_intake),
-    maharashtraSeats: numberOrNull(row.maharashtra_seats),
-    minoritySeats: numberOrNull(row.minority_seats),
-    allIndiaSeats: numberOrNull(row.all_india_seats),
-    instituteSeats: numberOrNull(row.institute_seats),
-    orphanSeats: numberOrNull(row.orphan_seats),
-    ewsSeats: numberOrNull(row.ews_seats),
-    tfwsChoiceCode: row.tfws_choice_code ? canonicalBranchCode(row.tfws_choice_code) : null,
-    tfwsSeats: numberOrNull(row.tfws_seats),
-    vacantSeats: numberOrNull(row.vacant_seats),
-    lateralEntrySeats: numberOrNull(row.lateral_entry_seats),
-    pwdSeats: numberOrNull(row.pwd_seats),
-    defenceSeats: numberOrNull(row.defence_seats),
-    categorySeats,
-    sourceFile: row.source_file,
-    sourcePage: Number(row.source_page),
-    verified: true,
-    needsReview: false,
-    reviewReason: null
-  };
-}
-
-async function publishSeatMatrices(adminImport, records) {
-  const rows = records.map((record) => seatMatrixData(record.data));
-  const branchCodes = rows.map((row) => row.branchCode);
-  const previousRows = await prisma.seatMatrix.findMany({
-    where: {
-      academicYear: adminImport.academicYear,
-      admissionRoute: adminImport.admissionRoute,
-      branchCode: { in: branchCodes }
-    }
-  });
-  const previousKeys = new Set(previousRows.map((row) => `${row.academicYear}|${row.admissionRoute}|${row.branchCode}`));
-  const insertedKeys = rows
-    .filter((row) => !previousKeys.has(`${row.academicYear}|${row.admissionRoute}|${row.branchCode}`))
-    .map((row) => ({
-      academicYear: row.academicYear,
-      admissionRoute: row.admissionRoute,
-      branchCode: row.branchCode
-    }));
-
-  await prisma.$transaction(async (transaction) => {
-    for (const row of rows) {
-      await transaction.seatMatrix.upsert({
-        where: {
-          academicYear_admissionRoute_branchCode: {
-            academicYear: row.academicYear,
-            admissionRoute: row.admissionRoute,
-            branchCode: row.branchCode
+        const statusText = String(instituteRows[0].data?.college_status || "").trim();
+        const location = verifiedImportLocation(adminImport, code);
+        let cityId = location ? cityByName.get(location.district) : null;
+        if (location && !cityId) {
+          const city = await transaction.city.create({
+            data: {
+              name: location.district,
+              district: location.district,
+              region: location.region
+            }
+          });
+          cityId = city.id;
+          cityByName.set(location.district, city.id);
+        }
+        await transaction.college.upsert({
+          where: { instituteCode: code },
+          create: {
+            instituteCode: code,
+            name: names[0],
+            slug: slugify(`${code}-${names[0]}`),
+            cityId: cityId || null,
+            universityId,
+            collegeType: statusText || null,
+            autonomous: /autonomous/i.test(statusText) && !/non-autonomous/i.test(statusText)
+          },
+          update: {
+            name: names[0],
+            cityId: cityId || null,
+            universityId,
+            collegeType: statusText || null,
+            autonomous: /autonomous/i.test(statusText) && !/non-autonomous/i.test(statusText)
           }
-        },
-        create: row,
-        update: row
+        });
+      }
+
+      await transaction.adminImportRecord.updateMany({
+        where: { id: { in: selectedIds }, importId: adminImport.id },
+        data: { valid: true, needsReview: false, issues: [] }
       });
     }
-  }, { maxWait: 10000, timeout: 120000 });
 
-  return {
-    publishedRecords: rows.length,
-    rollback: {
-      previousRows: previousRows.map(({ id, ...row }) => row),
-      insertedKeys
-    }
-  };
+    const updatedImport = await refreshImportReviewState(transaction, adminImport);
+    const result = await transaction.adminImport.findUnique({
+      where: { id: updatedImport.id },
+      include: { _count: { select: { records: true } } }
+    });
+    return {
+      adminImport: result,
+      affectedRecords: selectedRecords.length,
+      affectedInstitutes: instituteCodes.length
+    };
+  }, { maxWait: 10000, timeout: 120000 });
 }
 
 export async function publishAdminImport(id) {
@@ -620,7 +558,7 @@ export async function publishAdminImport(id) {
     rollback: published.rollback
   };
 
-  return prisma.adminImport.update({
+  const result = await prisma.adminImport.update({
     where: { id: adminImport.id },
     data: {
       status: "PUBLISHED",
@@ -630,6 +568,8 @@ export async function publishAdminImport(id) {
     },
     include: { _count: { select: { records: true } } }
   });
+  clearResponseCache();
+  return result;
 }
 
 export async function rollbackAdminImport(id) {
@@ -668,7 +608,7 @@ export async function rollbackAdminImport(id) {
     }, { maxWait: 10000, timeout: 120000 });
   }
 
-  return prisma.adminImport.update({
+  const result = await prisma.adminImport.update({
     where: { id: adminImport.id },
     data: {
       status: "ROLLED_BACK",
@@ -676,4 +616,6 @@ export async function rollbackAdminImport(id) {
     },
     include: { _count: { select: { records: true } } }
   });
+  clearResponseCache();
+  return result;
 }

@@ -9,7 +9,7 @@ Open `/admin` and use **Upload official admission data**.
 Currently supported:
 
 - `CAP cutoff PDF`: FE or DSE route, academic year and CAP round.
-- `FE seat-matrix PDF`: academic year, branch intake and CAP seat information.
+- `FE or DSE seat-matrix PDF`: academic year, branch intake and CAP seat information.
 
 The server stores original files under `data/admin-imports/`, calculates a SHA-256
 hash to reject duplicate uploads, runs `data-pipeline/process_admin_upload.py`,
@@ -48,6 +48,11 @@ Publishing behavior:
 
 Unknown file layouts must get a dedicated extractor before they appear as an
 upload option. Renaming an unrelated PDF does not make it compatible.
+
+For DSE seat matrices, extraction also counts every choice code in the PDF. If
+the generated row count is lower, the upload stops without staging or publishing
+partial data. Institute prefixes, wrapped course names, status lines, and
+category-seat columns are validated before publication.
 
 Required lifecycle:
 

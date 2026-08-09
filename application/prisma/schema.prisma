@@ -27,22 +27,23 @@ model City {
 }
 
 model College {
-  id              BigInt          @id @default(autoincrement())
-  instituteCode   String          @unique @map("institute_code")
+  id              BigInt                @id @default(autoincrement())
+  instituteCode   String                @unique @map("institute_code")
   name            String
-  slug            String          @unique
-  cityId          BigInt?         @map("city_id")
-  universityId    BigInt?         @map("university_id")
-  collegeType     String?         @map("college_type")
-  autonomous      Boolean         @default(false)
-  minorityType    String?         @map("minority_type")
-  officialWebsite String?         @map("official_website")
-  city            City?           @relation(fields: [cityId], references: [id])
-  university      University?     @relation(fields: [universityId], references: [id])
+  slug            String                @unique
+  cityId          BigInt?               @map("city_id")
+  universityId    BigInt?               @map("university_id")
+  collegeType     String?               @map("college_type")
+  autonomous      Boolean               @default(false)
+  minorityType    String?               @map("minority_type")
+  officialWebsite String?               @map("official_website")
+  city            City?                 @relation(fields: [cityId], references: [id])
+  university      University?           @relation(fields: [universityId], references: [id])
   collegeBranches CollegeBranch[]
   profile         CollegeProfile?
   fees            CollegeFee[]
   rankings        CollegeRanking[]
+  routeArchives   CollegeRouteArchive[]
 
   @@index([cityId])
   @@map("colleges")
@@ -162,21 +163,37 @@ model SeatType {
 }
 
 model CutoffDataset {
-  id             BigInt    @id @default(autoincrement())
-  academicYear   String    @map("academic_year")
-  admissionRoute String    @map("admission_route")
-  capRound       Int       @map("cap_round")
-  quota          String
-  sourceFilename String    @map("source_filename")
-  sourceUrl      String?   @map("source_url")
-  fileHash       String?   @map("file_hash")
-  status         String
-  importedAt     DateTime  @default(now()) @map("imported_at")
-  verifiedAt     DateTime? @map("verified_at")
-  cutoffs        Cutoff[]
+  id                BigInt    @id @default(autoincrement())
+  academicYear      String    @map("academic_year")
+  admissionRoute    String    @map("admission_route")
+  capRound          Int       @map("cap_round")
+  quota             String
+  sourceFilename    String    @map("source_filename")
+  sourceUrl         String?   @map("source_url")
+  fileHash          String?   @map("file_hash")
+  status            String
+  predictionEnabled Boolean   @default(true) @map("prediction_enabled")
+  historyEnabled    Boolean   @default(true) @map("history_enabled")
+  archivedAt        DateTime? @map("archived_at")
+  importedAt        DateTime  @default(now()) @map("imported_at")
+  verifiedAt        DateTime? @map("verified_at")
+  cutoffs           Cutoff[]
 
   @@index([admissionRoute, academicYear, capRound, quota, status])
   @@map("cutoff_datasets")
+}
+
+model CollegeRouteArchive {
+  id             BigInt   @id @default(autoincrement())
+  collegeId      BigInt   @map("college_id")
+  admissionRoute String   @map("admission_route")
+  reason         String?
+  archivedAt     DateTime @default(now()) @map("archived_at")
+  college        College  @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+
+  @@unique([collegeId, admissionRoute])
+  @@index([admissionRoute, archivedAt])
+  @@map("college_route_archives")
 }
 
 model Cutoff {

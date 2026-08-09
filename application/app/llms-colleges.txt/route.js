@@ -1,12 +1,14 @@
 import { buildCollegeCatalog } from "../../lib/aiDiscovery";
 import { prisma } from "../../lib/prisma";
+import { currentCollegeWhere } from "../../lib/publishedData";
 import { getSiteUrl } from "../../lib/site";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const currentFilter = await currentCollegeWhere(prisma);
   const colleges = await prisma.college.findMany({
-    where: { profile: { is: { currentCap2025: "Yes" } } },
+    where: currentFilter,
     select: {
       instituteCode: true,
       name: true,
@@ -35,7 +37,7 @@ export async function GET() {
   return new Response(content, {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
-      "Cache-Control": "public, max-age=0, s-maxage=86400, stale-while-revalidate=604800"
+      "Cache-Control": "no-store"
     }
   });
 }

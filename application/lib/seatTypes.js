@@ -73,7 +73,7 @@ export function matchesSeatGroup(code, group) {
   if (group === "ALL") return true;
   if (group === "TFWS") return cleanCode === "TFWS";
   if (group === "EWS") return cleanCode === "EWS";
-  if (group === "ORPHAN") return cleanCode === "ORPHAN";
+  if (group === "ORPHAN") return cleanCode.startsWith("ORPHAN") || cleanCode === "ORP";
   if (group === "PWD") return cleanCode.startsWith("PWD");
   if (group === "DEFENCE") return cleanCode.startsWith("DEF");
   if (group === "LADIES") return cleanCode.startsWith("L");
@@ -93,6 +93,15 @@ export function explainSeatType(code) {
   }
 
   const cleanCode = String(code).trim().toUpperCase();
+
+  if (cleanCode.startsWith("ORPHAN") || cleanCode === "ORP") {
+    return {
+      code: cleanCode,
+      label: `${cleanCode} - Orphan candidate seat`,
+      title: "Orphan candidate seat",
+      note: "Special state-level seat for eligible orphan candidates."
+    };
+  }
 
   if (exactSeatTypes[cleanCode]) {
     return {

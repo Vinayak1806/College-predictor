@@ -50,3 +50,85 @@ def test_parses_multiple_dse_courses_on_one_page() -> None:
     assert rows[0]["needs_review"] == "false"
     assert rows[1]["vacant_seats"] == "1"
     assert rows[1]["orphan_seats"] == "1"
+
+
+def test_parses_2026_dse_layout_with_wrapped_course_and_split_institute_header() -> None:
+    text = """
+    Provisional Seat Matrix for CAP Round I for Direct Second Year Engineering / Technology 2026-27
+    Sr No : 223 Institute Code & Name : 2114 - Deogiri Institute of Engineering and Management Studies, Aurangabad Orphan : 0
+    Course Name : Computer Science and Engineering(Artificial Intelligence and
+    Choice Code : 0211491110 Inst. Non-Inst.
+    Machine Learning)
+    Status : Un-Aided - Autonomous Vacant Seats within SI : 3 Lateral Entry : 6 0 0
+    Non-Minority Seats Minority Seats OPEN SC ST VJ/DT NTB NTC NTD OBC SEBC
+    G L G L G L G L G L G L G L G L G L
+    11 0 3 1 0 1 1 0 1 0 0 0 0 0 0 0 2 0 0 1
+    Total EWS:1[Calculated EWS:1+Carry Forward First Year EWS Vacancy from AY 2025-26:0]
+    Institute Code & Name : 2116 - Matoshri Pratishan's Group of Institutions (Integrated Campus),
+    Sr No : 224 Orphan : 0
+    Kupsarwadi , Nanded
+    Choice Code : 0211619110 Course Name : Civil Engineering Inst. Non-Inst.
+    Status : Un-Aided Vacant Seats within SI : 33 Lateral Entry : 6 0 0
+    Non-Minority Seats Minority Seats OPEN SC ST VJ/DT NTB NTC NTD OBC SEBC
+    G L G L G L G L G L G L G L G L G L
+    41 0 9 5 3 2 2 1 1 0 1 0 1 0 1 0 5 3 3 1
+    Total EWS:4[Calculated EWS:1+Carry Forward First Year EWS Vacancy from AY 2025-26:3]
+    """
+
+    rows = parse_dse_page(text, 87, "dse-seat-matrix-2026.pdf", "2026-27")
+
+    assert len(rows) == 2
+    assert rows[0]["institute_code"] == "02114"
+    assert rows[0]["branch_code"] == "0211491110"
+    assert rows[0]["branch_name"] == "Computer Science and Engineering(Artificial Intelligence and Machine Learning)"
+    assert rows[0]["college_name"] == "Deogiri Institute of Engineering and Management Studies, Aurangabad"
+    assert rows[0]["college_type"] == "Un-Aided -"
+    assert rows[0]["autonomous"] == "true"
+    assert rows[0]["lateral_entry_seats"] == "6"
+    assert rows[0]["needs_review"] == "false"
+
+    assert rows[1]["institute_code"] == "02116"
+    assert rows[1]["branch_code"] == "0211619110"
+    assert rows[1]["college_name"] == "Matoshri Pratishan's Group of Institutions (Integrated Campus), Kupsarwadi , Nanded"
+    assert rows[1]["branch_name"] == "Civil Engineering"
+    assert rows[1]["vacant_seats"] == "33"
+    assert rows[1]["needs_review"] == "false"
+
+
+def test_marks_dse_choice_code_that_does_not_match_its_institute() -> None:
+    text = """
+    Sr No : 1 Institute Code & Name : 2114 - Example College Orphan : 0
+    Choice Code : 0211619110 Course Name : Civil Engineering Inst. Non-Inst.
+    Status : Un-Aided Vacant Seats within SI : 0 Lateral Entry : 6 0 0
+    Non-Minority Seats Minority Seats OPEN SC ST VJ/DT NTB NTC NTD OBC SEBC
+    G L G L G L G L G L G L G L G L G L
+    8 0 2 1 0 1 1 0 0 0 0 0 0 0 0 0 1 0 0 1
+    """
+
+    rows = parse_dse_page(text, 1, "dse-seat-matrix.pdf", "2026-27")
+
+    assert len(rows) == 1
+    assert rows[0]["needs_review"] == "true"
+    assert "BRANCH_INSTITUTE_MISMATCH" in rows[0]["review_reason"]
+
+
+def test_parses_wrapped_dse_minority_status() -> None:
+    text = """
+    Institute Code & Name : 3148 - Mahavir Education Trust's Shah & Anchor Kutchhi Engineering College,
+    Sr No : 450 Orphan : 0
+    Mumbai
+    Choice Code : 0314824510 Course Name : Computer Engineering Inst. Non-Inst.
+    Status : Un-Aided - Autonomous - Linguistic Minority -
+    Vacant Seats within SI : 3 Lateral Entry : 18 0 0
+    Non-Minority Seats Minority Seats OPEN SC ST VJ/DT NTB NTC NTD OBC SEBC
+    G L G L G L G L G L G L G L G L G L
+    0 18 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+    """
+
+    rows = parse_dse_page(text, 175, "dse-seat-matrix.pdf", "2026-27")
+
+    assert len(rows) == 1
+    assert rows[0]["college_status"] == "Un-Aided - Autonomous - Linguistic Minority -"
+    assert rows[0]["vacant_seats"] == "3"
+    assert rows[0]["lateral_entry_seats"] == "18"
+    assert rows[0]["needs_review"] == "false"

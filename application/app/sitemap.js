@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma";
+import { currentCollegeWhere } from "../lib/publishedData";
 import { absoluteUrl } from "../lib/site";
 
 export const dynamic = "force-dynamic";
@@ -13,8 +14,9 @@ const publicPages = [
 ];
 
 export default async function sitemap() {
+  const currentFilter = await currentCollegeWhere(prisma);
   const colleges = await prisma.college.findMany({
-    where: { profile: { is: { currentCap2025: "Yes" } } },
+    where: currentFilter,
     select: { slug: true },
     orderBy: { instituteCode: "asc" }
   });

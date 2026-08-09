@@ -24,6 +24,7 @@ import { explainSeatType } from "../../lib/seatTypes";
 
 const PAGE_SIZE = 10;
 const RESULT_MODE = "BEST_BRANCH_PER_COLLEGE";
+const fallbackAcademicYears = ["2025-26", "2024-25", "2023-24"];
 
 const defaultForm = {
   percentile: "89.20",
@@ -50,7 +51,7 @@ const zoneFilters = [
   { label: "Highly Ambitious", value: "HIGHLY_AMBITIOUS" }
 ];
 
-const branchOptions = [
+const baseBranchOptions = [
   { label: "Computer / CS / AI / Data Science", value: "Computer" },
   { label: "Computer Engineering", value: "Computer Engineering" },
   { label: "Information Technology", value: "Information Technology" },
@@ -219,11 +220,6 @@ function CompactMultiSelect({
     return () => document.removeEventListener("pointerdown", closeWhenClickingOutside);
   }, []);
 
-  useEffect(() => {
-    const pendingForm = readPendingPredictorForm("FE");
-    if (pendingForm) setForm({ ...defaultForm, ...pendingForm });
-  }, []);
-
   return (
     <div ref={containerRef} className="relative grid min-w-0 w-full gap-2 text-sm">
       <label className="font-medium" htmlFor={inputId}>{label}</label>
@@ -336,6 +332,8 @@ export default function FePredictorPage() {
   const [form, setForm] = useState(defaultForm);
   const [cities, setCities] = useState([]);
   const [universities, setUniversities] = useState([]);
+  const [academicYears, setAcademicYears] = useState(fallbackAcademicYears);
+  const [publishedBranches, setPublishedBranches] = useState([]);
   const [instituteCount, setInstituteCount] = useState(null);
   const [results, setResults] = useState([]);
   const [selectedZone, setSelectedZone] = useState("ALL");
@@ -350,32 +348,49 @@ export default function FePredictorPage() {
   const [loading, setLoading] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
   const [mobileStep, setMobileStep] = useState(1);
+  const branchOptions = [
+    ...baseBranchOptions,
+    ...publishedBranches
+      .filter((branch) => !baseBranchOptions.some((option) => option.value.toLowerCase() === branch.toLowerCase()))
+      .map((branch) => ({ label: branch, value: branch }))
+  ];
 
   const percentileNumber = Number(form.percentile);
   const percentileValid = form.percentile !== "" && Number.isFinite(percentileNumber) && percentileNumber >= 0 && percentileNumber <= 100;
   const canPredict = Boolean(percentileValid && form.category && form.gender && form.homeUniversity);
 
   useEffect(() => {
+    const pendingForm = readPendingPredictorForm("FE");
+    if (pendingForm) setForm({ ...defaultForm, ...pendingForm });
+  }, []);
+
+  useEffect(() => {
     async function loadReferenceData() {
       try {
-        const [cityResponse, universityResponse, statsResponse] = await Promise.all([
-          fetch("/api/cities"),
-          fetch("/api/universities"),
-          fetch("/api/stats")
+        const [cityResponse, universityResponse, statsResponse, cutoffOptionsResponse] = await Promise.all([
+          fetch("/api/cities?route=FE", { cache: "no-store" }),
+          fetch("/api/universities?route=FE", { cache: "no-store" }),
+          fetch("/api/stats"),
+          fetch("/api/cutoffs/options?route=FE", { cache: "no-store" })
         ]);
-        const [cityData, universityData, statsData] = await Promise.all([
+        const [cityData, universityData, statsData, cutoffOptionsData] = await Promise.all([
           cityResponse.json(),
           universityResponse.json(),
-          statsResponse.json()
+          statsResponse.json(),
+          cutoffOptionsResponse.json()
         ]);
         const uniqueCities = [...new Map((cityData.data || []).map((city) => [city.name, city])).values()];
         setCities(uniqueCities);
         setUniversities(universityData.data || []);
-        setInstituteCount(statsData.data?.currentInstitutes || null);
+        setInstituteCount(statsData.data?.currentFeInstitutes || statsData.data?.currentInstitutes || null);
+        setAcademicYears(cutoffOptionsData.years?.length ? cutoffOptionsData.years : fallbackAcademicYears);
+        setPublishedBranches(cutoffOptionsData.branches || []);
       } catch {
         setCities([]);
         setUniversities([]);
         setInstituteCount(null);
+        setAcademicYears(fallbackAcademicYears);
+        setPublishedBranches([]);
       }
     }
 
@@ -577,9 +592,7 @@ export default function FePredictorPage() {
                 onChange={(event) => updateField("academicYear", event.target.value)}
               >
                 <option value="">All available years</option>
-                <option value="2025-26">2025-26</option>
-                <option value="2024-25">2024-25</option>
-                <option value="2023-24">2023-24</option>
+                {academicYears.map((year) => <option key={year} value={year}>{year}</option>)}
               </select>
               </label>
 

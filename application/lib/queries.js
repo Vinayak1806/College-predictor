@@ -24,7 +24,10 @@ export async function getPublishedCutoffs(where, page = 1, pageSize = 20, orderB
   const query = {
     where: {
       needsReview: false,
-      dataset: { status: { in: ["VERIFIED", "PUBLISHED"] } },
+      dataset: {
+        status: { in: ["VERIFIED", "PUBLISHED"] },
+        predictionEnabled: true
+      },
       ...where
     },
     include: cutoffInclude(),

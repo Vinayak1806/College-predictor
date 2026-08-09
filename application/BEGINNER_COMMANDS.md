@@ -1,7 +1,11 @@
 # Beginner Commands
 
-Your Windows PowerShell does not know plain `pnpm`, so use the full Codex pnpm
-path.
+Install Node.js, then enable pnpm once:
+
+```powershell
+corepack enable
+corepack prepare pnpm@latest --activate
+```
 
 Run these commands from:
 
@@ -12,7 +16,7 @@ D:\Programs\Web Development Project\College Project\application
 ## Start Website
 
 ```powershell
-& 'C:\Users\User\.cache\codex-runtimes\codex-primary-runtime\dependencies\bin\fallback\pnpm.cmd' dev
+pnpm dev
 ```
 
 Open:
@@ -24,17 +28,17 @@ http://127.0.0.1:3000
 ## Create/Update Database Tables
 
 ```powershell
-& 'C:\Users\User\.cache\codex-runtimes\codex-primary-runtime\dependencies\bin\fallback\pnpm.cmd' prisma generate
+pnpm prisma generate
 ```
 
 ```powershell
-& 'C:\Users\User\.cache\codex-runtimes\codex-primary-runtime\dependencies\bin\fallback\pnpm.cmd' prisma db push
+pnpm prisma db push
 ```
 
 ## Check Build
 
 ```powershell
-& 'C:\Users\User\.cache\codex-runtimes\codex-primary-runtime\dependencies\bin\fallback\pnpm.cmd' build
+pnpm build
 ```
 
 ## Important
@@ -46,4 +50,3 @@ Example:
 ```env
 DATABASE_URL="postgresql://postgres:Natepute%40123@localhost:5432/college_predictor?schema=public"
 ```
-

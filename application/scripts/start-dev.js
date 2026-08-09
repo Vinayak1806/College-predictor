@@ -27,8 +27,16 @@ if (!await portIsAvailable()) {
   process.exit(1);
 }
 
-rmSync(path.join(projectDirectory, ".next-dev"), { recursive: true, force: true });
-console.log(`Starting a clean development server at http://localhost:${port}`);
+const developmentCache = path.join(projectDirectory, ".next-dev");
+let cacheCleared = true;
+try {
+  rmSync(developmentCache, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+} catch (error) {
+  cacheCleared = false;
+  console.warn(`Could not clear ${developmentCache}: ${error.message}`);
+  console.warn("Continuing with the existing development cache.");
+}
+console.log(`Starting ${cacheCleared ? "a clean " : "the "}development server at http://localhost:${port}`);
 
 const nextBinary = require.resolve("next/dist/bin/next");
 const child = spawn(process.execPath, [nextBinary, "dev", "-p", String(port)], {

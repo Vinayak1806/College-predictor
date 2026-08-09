@@ -1,14 +1,22 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  adminBulkReviewSchema,
   adminImportMetadataSchema,
   adminRecordCorrectionSchema,
   canonicalBranchCode,
+  repairSeatMatrixInstituteMismatches,
   recordIssues,
   sanitizeRecordCorrection,
   stagedRecordKey,
   validateStagedRecords
 } from "./adminImportValidation.js";
+
+test("bulk review accepts only explicit approval or exclusion actions", () => {
+  assert.equal(adminBulkReviewSchema.safeParse({ action: "APPROVE_INSTITUTES" }).success, true);
+  assert.equal(adminBulkReviewSchema.safeParse({ action: "EXCLUDE_ROWS", instituteCode: "06041" }).success, true);
+  assert.equal(adminBulkReviewSchema.safeParse({ action: "PUBLISH_EVERYTHING" }).success, false);
+});
 
 test("requires a CAP round for cutoff PDFs", () => {
   const result = adminImportMetadataSchema.safeParse({
@@ -35,6 +43,54 @@ test("seat-matrix uploads support DSE", () => {
 
 test("current institute aliases are applied to branch codes", () => {
   assert.equal(canonicalBranchCode("0600624210"), "1600624210");
+});
+
+test("seat-matrix boundary rows use the branch prefix to match an existing college", () => {
+  const result = repairSeatMatrixInstituteMismatches(
+    [{
+      recordType: "SEAT_MATRIX",
+      data: {
+        institute_code: "06283",
+        college_name: "Previous college",
+        branch_code: "0628419110",
+        branch_name: "Civil Engineering",
+        cap_seats: "10",
+        autonomous: false,
+        source_page: "720"
+      }
+    }],
+    [{
+      instituteCode: "06284",
+      name: "Correct college",
+      collegeType: "Un-Aided Autonomous",
+      autonomous: true
+    }]
+  );
+
+  assert.equal(result.repairs.length, 1);
+  assert.equal(result.records[0].data.institute_code, "06284");
+  assert.equal(result.records[0].data.college_name, "Correct college");
+  assert.equal(result.records[0].data.autonomous, true);
+  assert.equal(result.records[0].data.cap_seats, "10");
+});
+
+test("seat-matrix mismatches remain for review when the branch institute is unknown", () => {
+  const record = {
+    recordType: "SEAT_MATRIX",
+    data: {
+      institute_code: "06283",
+      college_name: "Previous college",
+      branch_code: "0999919110"
+    }
+  };
+  const result = repairSeatMatrixInstituteMismatches([record], []);
+
+  assert.equal(result.repairs.length, 0);
+  assert.equal(result.records[0], record);
+});
+
+test("official branch variants keep multi-letter suffixes", () => {
+  assert.equal(canonicalBranchCode("0303337293LK"), "0303337293LK");
 });
 
 test("unknown institutes are held for review", () => {

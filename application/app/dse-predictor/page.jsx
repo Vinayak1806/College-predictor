@@ -344,7 +344,7 @@ export default function DsePredictorPage() {
 
     fetch("/api/stats")
       .then((response) => response.json())
-      .then((stats) => setInstituteCount(stats.data?.currentInstitutes || null))
+      .then((stats) => setInstituteCount(stats.data?.currentDseInstitutes || stats.data?.currentInstitutes || null))
       .catch(() => setInstituteCount(null));
   }, []);
 

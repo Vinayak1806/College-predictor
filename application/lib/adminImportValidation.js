@@ -45,6 +45,11 @@ export const adminRecordCorrectionSchema = z.object({
   message: "Provide corrected record data or exclude the record."
 });
 
+export const adminBulkReviewSchema = z.object({
+  action: z.enum(["APPROVE_INSTITUTES", "EXCLUDE_ROWS"]),
+  instituteCode: z.string().regex(/^\d{5}$/).optional()
+});
+
 export const ADMIN_RECORD_FIELDS = {
   CUTOFF: new Set([
     "institute_code",
@@ -101,11 +106,57 @@ export function sanitizeRecordCorrection(recordType, data) {
 
 export function canonicalBranchCode(value) {
   const text = String(value || "").trim().toUpperCase();
-  const suffix = /[A-Z]$/.test(text) ? text.slice(-1) : "";
-  const digits = text.replace(/\D/g, "");
+  const match = text.match(/^(\d+)([A-Z]{0,3})$/);
+  const digits = match?.[1] || "";
+  const suffix = match?.[2] || "";
   if (!digits) return "";
   const normalized = digits.padStart(10, "0");
   return `${currentInstituteCode(normalized.slice(0, 5))}${normalized.slice(5)}${suffix}`;
+}
+
+export function repairSeatMatrixInstituteMismatches(records, colleges) {
+  const collegeByCode = new Map(
+    colleges.map((college) => [currentInstituteCode(college.instituteCode), college])
+  );
+  const repairs = [];
+
+  const repairedRecords = records.map((record, index) => {
+    if (record.recordType !== "SEAT_MATRIX") return record;
+
+    const instituteCode = currentInstituteCode(record.data?.institute_code);
+    const branchCode = canonicalBranchCode(record.data?.branch_code);
+    const branchInstituteCode = branchCode.slice(0, 5);
+    const matchedCollege = collegeByCode.get(branchInstituteCode);
+
+    if (!instituteCode || !branchCode || instituteCode === branchInstituteCode || !matchedCollege) {
+      return record;
+    }
+
+    repairs.push({
+      rowNumber: index + 1,
+      sourcePage: Number(record.data?.source_page) || null,
+      branchCode,
+      fromInstituteCode: instituteCode,
+      fromCollegeName: String(record.data?.college_name || "").trim(),
+      toInstituteCode: branchInstituteCode,
+      toCollegeName: matchedCollege.name
+    });
+
+    return {
+      ...record,
+      data: {
+        ...record.data,
+        institute_code: branchInstituteCode,
+        college_name: matchedCollege.name,
+        college_type: matchedCollege.collegeType || record.data?.college_type || "",
+        college_status: matchedCollege.collegeType || record.data?.college_status || "",
+        autonomous: Boolean(matchedCollege.autonomous),
+        review_reason: ""
+      }
+    };
+  });
+
+  return { records: repairedRecords, repairs };
 }
 
 export function stagedRecordKey(recordType, data) {

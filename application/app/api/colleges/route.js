@@ -2,41 +2,29 @@ import { prisma } from "../../../lib/prisma";
 import { json } from "../../../lib/http";
 import { listQuerySchema } from "../../../lib/validation";
 import { currentInstituteCodeSearch } from "../../../lib/instituteCodes";
+import { currentCollegeWhere } from "../../../lib/publishedData";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const query = listQuerySchema.parse(Object.fromEntries(searchParams));
   const currentCodeQuery = currentInstituteCodeSearch(query.q);
-  const routeFilter = query.route
-    ? {
-      collegeBranches: {
-        some: {
-          cutoffs: {
-            some: {
-              needsReview: false,
-              dataset: {
-                admissionRoute: query.route,
-                status: { in: ["VERIFIED", "PUBLISHED"] }
-              }
-            }
-          }
-        }
-      }
-    }
-    : {};
+  const routeFilter = await currentCollegeWhere(prisma, query.route);
   const collegeRecords = await prisma.college.findMany({
     where: {
-      profile: { is: { currentCap2025: "Yes" } },
-      ...routeFilter,
-      OR: query.q
-        ? [
-            { name: { contains: query.q, mode: "insensitive" } },
-            { instituteCode: { contains: query.q, mode: "insensitive" } },
-            { city: { name: { contains: query.q, mode: "insensitive" } } },
-            ...(currentCodeQuery ? [{ instituteCode: currentCodeQuery }] : [])
-          ]
-        : undefined,
-      city: query.city ? { name: { contains: query.city, mode: "insensitive" } } : undefined
+      AND: [
+        routeFilter,
+        query.q
+          ? {
+              OR: [
+                { name: { contains: query.q, mode: "insensitive" } },
+                { instituteCode: { contains: query.q, mode: "insensitive" } },
+                { city: { name: { contains: query.q, mode: "insensitive" } } },
+                ...(currentCodeQuery ? [{ instituteCode: currentCodeQuery }] : [])
+              ]
+            }
+          : {},
+        query.city ? { city: { name: { contains: query.city, mode: "insensitive" } } } : {}
+      ]
     },
     include: { city: true, university: true },
     orderBy: { name: "asc" },

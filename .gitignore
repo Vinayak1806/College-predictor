@@ -12,8 +12,11 @@ tmp/
 .env.*
 !.env.example
 database/backups/
+backups/
 data/admin-imports/
 application/data/admin-imports/
 application/uploads/
 *.pem
 *.key
+application/test-results/
+application/playwright-report/

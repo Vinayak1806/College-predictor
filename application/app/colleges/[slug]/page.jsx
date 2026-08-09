@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { CollegeBranchExplorer } from "../../../components/CollegeBranchExplorer";
 import { SiteHeader } from "../../../components/SiteHeader";
 import { SharePageButton } from "../../../components/SharePageButton";
 import { explainSeatType } from "../../../lib/seatTypes";
 import { prisma } from "../../../lib/prisma";
+import { currentCollegeWhere } from "../../../lib/publishedData";
 import { absoluteUrl, SITE_NAME } from "../../../lib/site";
 
 const zoneClass = {
@@ -22,19 +23,20 @@ const zoneText = {
   HIGHLY_AMBITIOUS: "Highly Ambitious"
 };
 
-const findCurrentCollege = cache((slug) => prisma.college.findFirst({
-  where: {
-    slug,
-    profile: { is: { currentCap2025: "Yes" } }
-  },
-  include: {
-    city: true,
-    university: true,
-    collegeBranches: {
-      include: { branch: true }
+const findCurrentCollege = cache(async (slug) => {
+  const currentFilter = await currentCollegeWhere(prisma);
+  return prisma.college.findFirst({
+    where: { slug, ...currentFilter },
+    include: {
+      city: true,
+      university: true,
+      routeArchives: true,
+      collegeBranches: {
+        include: { branch: true }
+      }
     }
-  }
-}));
+  });
+});
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -195,7 +197,7 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
 
   const branchCodes = college.collegeBranches.map((collegeBranch) => collegeBranch.branch.branchCode);
 
-  const [seatMatrices, cutoffs, profile, fees, rankings] = await Promise.all([
+  const [seatMatrices, cutoffs, profile, fees, rankings, routeCutoffRows] = await Promise.all([
     prisma.seatMatrix.findMany({
       where: {
         admissionRoute,
@@ -212,7 +214,8 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
         collegeBranch: { collegeId: college.id },
         dataset: {
           admissionRoute,
-          status: { in: ["VERIFIED", "PUBLISHED"] }
+          status: { in: ["VERIFIED", "PUBLISHED"] },
+          historyEnabled: true
         }
       },
       include: {
@@ -246,8 +249,30 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
         verified: true
       },
       orderBy: [{ rankingYear: "desc" }, { rank: "asc" }]
+    }),
+    prisma.cutoffDataset.findMany({
+      where: {
+        status: { in: ["VERIFIED", "PUBLISHED"] },
+        historyEnabled: true,
+        cutoffs: {
+          some: {
+            needsReview: false,
+            collegeBranch: { collegeId: college.id }
+          }
+        }
+      },
+      distinct: ["admissionRoute"],
+      select: { admissionRoute: true }
     })
   ]);
+
+  const archivedRoutes = new Set(college.routeArchives.map((archive) => archive.admissionRoute));
+  const availableRoutes = routeCutoffRows.map((row) => row.admissionRoute)
+    .filter((route) => ["FE", "DSE"].includes(route));
+  const visibleRoutes = availableRoutes.filter((route) => !archivedRoutes.has(route));
+  if (!visibleRoutes.includes(admissionRoute) && visibleRoutes.length) {
+    redirect(`/colleges/${college.slug}?route=${visibleRoutes[0]}`);
+  }
 
   const sortedCutoffs = sortCutoffs(cutoffs);
   const routeBranchCodes = new Set([
@@ -346,10 +371,11 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
 
   if (!approvedFee) missingData.push("Approved fee information is not available for this institute.");
 
+  const similarCurrentFilter = await currentCollegeWhere(prisma, admissionRoute);
   const similarCandidates = await prisma.college.findMany({
     where: {
       id: { not: college.id },
-      profile: { is: { currentCap2025: "Yes" } },
+      ...similarCurrentFilter,
       OR: [
         ...(college.cityId ? [{ cityId: college.cityId }] : []),
         ...(college.universityId ? [{ universityId: college.universityId }] : [])
@@ -429,7 +455,7 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
         </header>
 
         <nav className="mt-4 inline-grid min-h-11 grid-cols-2 overflow-hidden rounded border border-line bg-white" aria-label="College admission data route">
-          {["FE", "DSE"].map((route) => (
+          {visibleRoutes.map((route) => (
             <Link
               key={route}
               aria-current={admissionRoute === route ? "page" : undefined}

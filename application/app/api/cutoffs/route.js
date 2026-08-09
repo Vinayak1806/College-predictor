@@ -26,6 +26,7 @@ export async function GET(request) {
     {
       dataset: {
         status: { in: ["VERIFIED", "PUBLISHED"] },
+        predictionEnabled: true,
         admissionRoute: query.route,
         academicYear: query.year,
         capRound: query.round
@@ -37,7 +38,7 @@ export async function GET(request) {
       collegeBranch: {
         branch: query.branch ? { displayName: { contains: query.branch, mode: "insensitive" } } : undefined,
         college: {
-          profile: { is: { currentCap2025: "Yes" } },
+          routeArchives: query.route ? { none: { admissionRoute: query.route } } : undefined,
           city: query.city ? { name: { equals: query.city, mode: "insensitive" } } : undefined,
           OR: query.q
             ? [

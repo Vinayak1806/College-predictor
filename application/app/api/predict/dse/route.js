@@ -8,6 +8,8 @@ import { dsePredictSchema } from "../../../../lib/validation";
 import { CutoffQueryTooLargeError, findCutoffsInBatches } from "../../../../lib/cutoffQuery";
 import { createRequestId, logServerError, publicServerError } from "../../../../lib/observability";
 import { readResponseCache, responseCacheKey, writeResponseCache } from "../../../../lib/responseCache";
+import { predictionDataRevision } from "../../../../lib/publishedData";
+import { groupCutoffRowsByCollegeBranch } from "../../../../lib/cutoffGroups";
 
 function normalizeOwnership(value) {
   if (!value) return null;
@@ -30,17 +32,6 @@ function matchesCollegeType(collegeType, selectedTypes) {
     if (selectedType === "PRIVATE") return value.includes("private") || value.includes("un-aided");
     return false;
   });
-}
-
-function groupRowsByCollegeBranch(rows) {
-  const groups = new Map();
-  for (const row of rows) {
-    const key = `${row.collegeBranch.college.instituteCode}:${row.collegeBranch.branch.branchCode}`;
-    const group = groups.get(key) || [];
-    group.push(row);
-    groups.set(key, group);
-  }
-  return [...groups.values()];
 }
 
 function confidenceWarning(analysis, input) {
@@ -109,13 +100,14 @@ async function createPrediction(request) {
         admissionRoute: "DSE",
         quota: "MH",
         status: { in: ["VERIFIED", "PUBLISHED"] },
+        predictionEnabled: true,
         academicYear: input.academicYear || undefined,
         capRound: input.capRound || undefined
       },
       collegeBranch: {
         branch: branchFilters.length ? { OR: branchFilters } : undefined,
         college: {
-          profile: { is: { currentCap2025: "Yes" } },
+          routeArchives: { none: { admissionRoute: "DSE" } },
           OR: cityFilters.length ? cityFilters : undefined
         }
       }
@@ -156,7 +148,7 @@ async function createPrediction(request) {
     matrices.map((matrix) => [`${matrix.academicYear}-${matrix.branchCode}`, matrix])
   );
 
-  const results = groupRowsByCollegeBranch(eligibleRows).map((groupRows) => {
+  const results = groupCutoffRowsByCollegeBranch(eligibleRows, { branchIdentity: "code" }).map((groupRows) => {
     const records = groupRows.map((row) => ({
       year: row.dataset.academicYear,
       round: row.dataset.capRound,
@@ -272,7 +264,11 @@ export async function POST(request) {
   const limited = await limitPublicRequest(request, "prediction");
   if (limited) return limited;
 
-  const cacheKey = responseCacheKey("prediction:DSE", await request.clone().text());
+  const dataRevision = await predictionDataRevision(prisma, "DSE");
+  const cacheKey = responseCacheKey(
+    `prediction:DSE:${dataRevision}`,
+    await request.clone().text()
+  );
   const cached = readResponseCache(cacheKey);
   if (cached) {
     const response = NextResponse.json(cached);

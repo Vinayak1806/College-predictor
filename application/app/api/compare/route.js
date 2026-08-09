@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { json } from "../../../lib/http";
 import { prisma } from "../../../lib/prisma";
+import { currentCollegeWhere } from "../../../lib/publishedData";
 import { limitPublicRequest } from "../../../lib/rateLimit";
 import { compareRequestSchema } from "../../../lib/validation";
 
@@ -105,11 +106,12 @@ export async function POST(request) {
   const { admissionRoute, selections } = parsed.data;
   const instituteCodes = [...new Set(selections.map((selection) => selection.instituteCode))];
   const branchCodes = [...new Set(selections.map((selection) => selection.branchCode).filter(Boolean))];
+  const currentFilter = await currentCollegeWhere(prisma, admissionRoute);
 
   const colleges = await prisma.college.findMany({
     where: {
       instituteCode: { in: instituteCodes },
-      profile: { is: { currentCap2025: "Yes" } }
+      ...currentFilter
     },
     include: {
       city: true,
@@ -146,7 +148,8 @@ export async function POST(request) {
         closingScore: { not: null },
         dataset: {
           admissionRoute,
-          status: { in: ["VERIFIED", "PUBLISHED"] }
+          status: { in: ["VERIFIED", "PUBLISHED"] },
+          predictionEnabled: true
         },
         collegeBranch: {
           college: { instituteCode: { in: instituteCodes } },

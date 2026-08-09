@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AdminSessionBar } from "../../components/AdminSessionBar";
 import { SiteHeader } from "../../components/SiteHeader";
 import { AdminImportCentre } from "../../components/AdminImportCentre";
+import { AdminDataControls } from "../../components/AdminDataControls";
 import { DataQualityDashboard } from "../../components/DataQualityDashboard";
 import { PredictionHealthDashboard } from "../../components/PredictionHealthDashboard";
 import { ADMIN_SESSION_COOKIE, checkAdminCookieAccess } from "../../lib/adminImportAuth";
@@ -28,6 +29,7 @@ export default async function AdminPage() {
         </div>
         <div className="mt-5 grid gap-5">
           <AdminImportCentre />
+          <AdminDataControls />
           <PredictionHealthDashboard />
           <DataQualityDashboard />
         </div>
