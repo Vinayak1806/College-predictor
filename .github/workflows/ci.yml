@@ -25,6 +25,7 @@ jobs:
         working-directory: application
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/college_predictor_test?schema=public
+      ADMIN_IMPORT_TOKEN: ci-only-admin-token-with-more-than-thirty-two-characters
       BETTER_AUTH_SECRET: ci-only-secret-with-more-than-thirty-two-characters
       BETTER_AUTH_URL: http://localhost:3000
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
