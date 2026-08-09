@@ -4,8 +4,15 @@
 
 :root {
   color-scheme: light;
-  background: #f6f8fb;
-  color: #18202a;
+  --page: #f3f7f8;
+  --surface: #ffffff;
+  --ink: #132838;
+  --muted: #5f7180;
+  --line: #d6e1e6;
+  --action: #0f7188;
+  --action-dark: #0a596d;
+  background: var(--page);
+  color: var(--ink);
 }
 
 * {
@@ -18,8 +25,10 @@ html {
 
 body {
   margin: 0;
-  background: #f6f8fb;
-  color: #18202a;
+  min-width: 320px;
+  overflow-x: clip;
+  background: var(--page);
+  color: var(--ink);
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.5;
   text-rendering: optimizeLegibility;
@@ -28,6 +37,19 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+main,
+section,
+article,
+form,
+fieldset {
+  min-width: 0;
+}
+
+img,
+svg {
+  max-width: 100%;
 }
 
 input,
@@ -41,6 +63,46 @@ input,
 select,
 textarea {
   background: #ffffff;
+  color: var(--ink);
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):hover,
+select:hover,
+textarea:hover {
+  border-color: #aac0ca;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):focus,
+select:focus,
+textarea:focus {
+  border-color: var(--action);
+  box-shadow: 0 0 0 3px rgba(15, 113, 136, 0.12);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--action);
+}
+
+label:has(input[type="checkbox"]),
+label:has(input[type="radio"]) {
+  transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+label:has(input[type="checkbox"]:checked),
+label:has(input[type="radio"]:checked) {
+  border-color: #78afbd;
+  background: #eef9fb;
+  box-shadow: inset 3px 0 0 var(--action);
+}
+
+@media (hover: hover) {
+  label:has(input[type="checkbox"]):hover,
+  label:has(input[type="radio"]):hover {
+    border-color: #aac0ca;
+    background: #f8fbfc;
+  }
 }
 
 button,
@@ -49,8 +111,39 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
+button:not(:disabled),
+summary,
+a[href] {
+  cursor: pointer;
+}
+
+button,
+a.focus-ring,
+summary {
+  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease,
+    box-shadow 160ms ease, opacity 160ms ease, transform 120ms ease;
+}
+
+button:not(:disabled):active,
+a.focus-ring:active,
+summary:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+details[open] > summary {
+  color: var(--action);
+}
+
+main {
+  animation: page-enter 300ms ease-out both;
+}
+
 .focus-ring:focus-visible {
-  outline: 3px solid #67b5c8;
+  outline: 3px solid #6eb9ca;
   outline-offset: 2px;
 }
 
@@ -73,6 +166,53 @@ a {
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  .menu-enter {
+    animation: menu-enter 180ms ease-out both;
+    transform-origin: top right;
+  }
+
+  .result-card {
+    animation: result-enter 300ms ease-out both;
+  }
+
+  @keyframes page-enter {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes menu-enter {
+    from {
+      opacity: 0;
+      transform: translateY(-5px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes result-enter {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .result-card:hover {
+    border-color: #aac0ca;
+    box-shadow: 0 14px 34px rgba(18, 52, 69, 0.1);
   }
 }
 

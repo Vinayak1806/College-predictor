@@ -65,10 +65,10 @@ export function SiteHeader({ showStudentAccount = true }) {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-white/95 shadow-[0_1px_10px_rgba(15,45,58,0.04)] backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-line bg-white/95 shadow-[0_4px_18px_rgba(18,52,69,0.06)] backdrop-blur">
       <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4">
-        <Link href="/" className="focus-ring flex min-w-0 items-center gap-3 rounded" onClick={() => setMenuOpen(false)}>
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-action text-white">
+        <Link href="/" className="focus-ring group flex min-w-0 items-center gap-3 rounded" onClick={() => setMenuOpen(false)}>
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-action text-white shadow-sm transition-colors group-hover:bg-[#0a596d]">
             <GraduationCap aria-hidden="true" size={22} strokeWidth={2.2} />
           </span>
           <span className="min-w-0">
@@ -84,8 +84,8 @@ export function SiteHeader({ showStudentAccount = true }) {
               <Link
                 key={href}
                 href={href}
-                className={`focus-ring whitespace-nowrap rounded px-3 py-2 text-sm font-medium transition-colors ${
-                  active ? "bg-cyan-50 text-action" : "text-slate-600 hover:bg-panel hover:text-ink"
+                className={`focus-ring whitespace-nowrap rounded border-b-2 px-3 py-2 text-sm font-medium ${
+                  active ? "border-action bg-cyan-50 text-action" : "border-transparent text-slate-600 hover:bg-panel hover:text-ink"
                 }`}
               >
                 {label}
@@ -102,7 +102,7 @@ export function SiteHeader({ showStudentAccount = true }) {
                 aria-label={`Open account menu for ${user.name}`}
                 aria-expanded={accountOpen}
                 title={user.name}
-                className="focus-ring flex h-11 w-11 items-center justify-center rounded-full text-slate-600 hover:bg-panel"
+                className="focus-ring flex h-11 w-11 items-center justify-center rounded-full text-slate-600 hover:bg-panel hover:text-action"
                 onClick={() => {
                   setMenuOpen(false);
                   setAccountOpen((current) => !current);
@@ -129,14 +129,14 @@ export function SiteHeader({ showStudentAccount = true }) {
                 href="/login"
                 aria-label="Student login"
                 title={isPending ? "Checking account" : "Student login"}
-                className="focus-ring flex h-11 w-11 items-center justify-center rounded border border-line text-slate-600 hover:bg-panel"
+                className="focus-ring flex h-11 w-11 items-center justify-center rounded border border-line bg-white text-slate-600 shadow-sm hover:border-[#aac0ca] hover:bg-panel hover:text-action"
               >
                 <CircleUserRound aria-hidden="true" size={20} />
               </Link>
             )}
 
             {user && accountOpen ? (
-              <div className="absolute right-0 top-[calc(100%+0.5rem)] w-72 overflow-hidden rounded border border-line bg-white shadow-lg" role="menu">
+              <div className="menu-enter absolute right-0 top-[calc(100%+0.5rem)] w-72 overflow-hidden rounded border border-line bg-white shadow-raised" role="menu">
                 <div className="border-b border-line px-4 py-3">
                   <p className="truncate text-sm font-semibold text-ink">{user.name}</p>
                   <p className="mt-0.5 truncate text-xs text-slate-500">{user.email}</p>
@@ -168,12 +168,12 @@ export function SiteHeader({ showStudentAccount = true }) {
             href="/colleges"
             aria-label="Search colleges"
             title="Search colleges"
-            className="focus-ring hidden h-11 w-11 items-center justify-center rounded border border-line text-slate-600 hover:bg-panel sm:flex xl:hidden"
+            className="focus-ring hidden h-11 w-11 items-center justify-center rounded border border-line bg-white text-slate-600 shadow-sm hover:border-[#aac0ca] hover:bg-panel hover:text-action sm:flex xl:hidden"
           >
             <Search aria-hidden="true" size={19} />
           </Link>
           <Link
-            className="focus-ring hidden min-h-11 items-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white hover:bg-[#11566d] sm:inline-flex"
+            className="focus-ring hidden min-h-11 items-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#0a596d] hover:shadow-soft sm:inline-flex"
             href={pathname.startsWith("/dse-predictor") ? "/dse-predictor" : "/fe-predictor"}
           >
             <BarChart3 aria-hidden="true" size={17} />
@@ -181,7 +181,7 @@ export function SiteHeader({ showStudentAccount = true }) {
           </Link>
           <button
             type="button"
-            className="focus-ring flex h-11 w-11 items-center justify-center rounded border border-line text-slate-700 xl:hidden"
+            className="focus-ring flex h-11 w-11 items-center justify-center rounded border border-line bg-white text-slate-700 shadow-sm hover:border-[#aac0ca] hover:bg-panel xl:hidden"
             aria-label={menuOpen ? "Close navigation" : "Open navigation"}
             aria-expanded={menuOpen}
             onClick={() => {
@@ -195,7 +195,7 @@ export function SiteHeader({ showStudentAccount = true }) {
       </div>
 
       {menuOpen ? (
-        <nav className="border-t border-line bg-white px-4 py-3 xl:hidden" aria-label="Mobile navigation">
+        <nav className="menu-enter border-t border-line bg-white px-4 py-3 shadow-soft xl:hidden" aria-label="Mobile navigation">
           <div className="mx-auto grid max-w-7xl sm:grid-cols-2">
             {links.map(([label, href]) => {
               const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -203,7 +203,7 @@ export function SiteHeader({ showStudentAccount = true }) {
                 <Link
                   key={href}
                   href={href}
-                  className={`focus-ring flex min-h-11 items-center rounded px-3 text-sm font-medium ${active ? "bg-cyan-50 text-action" : "text-slate-700"}`}
+                  className={`focus-ring flex min-h-11 items-center rounded border-l-2 px-3 text-sm font-medium ${active ? "border-action bg-cyan-50 text-action" : "border-transparent text-slate-700 hover:bg-panel"}`}
                   onClick={() => setMenuOpen(false)}
                 >
                   {label}

@@ -60,7 +60,7 @@ export default async function LoginPage({ searchParams }) {
           </div>
         </section>
 
-        <section className="order-1 enter-up overflow-hidden rounded-lg border border-line bg-white shadow-sm lg:order-2">
+        <section className="order-1 enter-up overflow-hidden rounded-lg border border-line bg-white shadow-raised lg:order-2">
           <div className="border-b border-line px-6 py-6 sm:px-8">
             <span className="flex h-11 w-11 items-center justify-center rounded bg-action text-white">
               <ShieldCheck aria-hidden="true" size={22} />

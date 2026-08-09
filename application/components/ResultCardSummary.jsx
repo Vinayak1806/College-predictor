@@ -11,7 +11,7 @@ function Metric({ label, value, tone = "normal", note }) {
   };
 
   return (
-    <div className="min-w-0 px-3 py-3">
+    <div className="min-w-0 px-4 py-3.5">
       <dt className="text-xs font-medium uppercase text-slate-500">{label}</dt>
       <dd className={`mt-1 break-words text-lg font-semibold ${toneClass[tone]}`}>{value}</dd>
       {note ? <p className="mt-1 text-xs leading-5 text-slate-500">{note}</p> : null}
@@ -66,7 +66,7 @@ export function ResultCardSummary({
       <section className="border-y border-line bg-panel px-4 py-4 md:px-5">
         <p className="text-xs font-medium uppercase text-slate-500">Admission match</p>
         <p className="mt-1 text-sm font-semibold text-ink">{comparisonText}</p>
-        <dl className="mt-3 grid divide-y divide-line bg-white sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        <dl className="mt-3 grid overflow-hidden rounded border border-line divide-y divide-line bg-white sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           <Metric label={`Your ${result.scoreLabel || "percentile"}`} value={formatResultNumber(result.studentScore)} />
           <Metric label="Selected official cutoff" value={formatResultNumber(officialCutoff)} note={`${result.year}, CAP Round ${result.round}`} />
           <Metric label="Difference from selected cutoff" value={selectedDifferenceText} tone={marginTone} note="Positive means your score is above this cutoff" />

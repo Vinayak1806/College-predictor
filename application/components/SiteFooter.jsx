@@ -4,11 +4,11 @@ import { AnalyticsSettingsButton } from "./AnalyticsSettingsButton";
 
 export function SiteFooter() {
   return (
-    <footer className="mt-16 border-t border-line bg-[#102a43] text-white">
+    <footer className="mt-16 border-t-4 border-action bg-[#102b3a] text-white">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 md:grid-cols-[1.3fr_0.7fr_0.7fr]">
         <div className="max-w-md">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded bg-white/10"><GraduationCap aria-hidden="true" size={22} /></span>
+            <span className="flex h-10 w-10 items-center justify-center rounded bg-white/10 text-cyan-100"><GraduationCap aria-hidden="true" size={22} /></span>
             <p className="font-semibold">CAP Predictor</p>
           </div>
           <p className="mt-4 text-sm leading-6 text-slate-300">

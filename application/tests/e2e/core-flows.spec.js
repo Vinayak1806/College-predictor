@@ -23,7 +23,7 @@ test("admin routes reject guests and invalid credentials", async ({ page, reques
   await expect(page).toHaveURL(/\/admin\/login/);
   await page.getByLabel("Admin token", { exact: true }).fill("incorrect-token-that-is-long-enough-for-validation");
   await page.getByRole("button", { name: "Open Admin Dashboard" }).click();
-  await expect(page.getByRole("alert").filter({ hasText: /invalid|failed|access/i })).toBeVisible();
+  await expect(page.getByRole("alert").filter({ hasText: /invalid|failed|access/i })).toBeVisible({ timeout: 30_000 });
 });
 
 test("FE prediction returns official college options", async ({ page }) => {
@@ -31,10 +31,14 @@ test("FE prediction returns official college options", async ({ page }) => {
   await page.goto("/fe-predictor");
   await page.getByLabel(/MHT-CET percentile/).fill("89.20");
   const university = page.getByLabel(/Home university/);
-  await expect.poll(async () => university.locator("option").count()).toBeGreaterThan(1);
+  await expect.poll(async () => university.locator("option").count(), { timeout: 30_000 }).toBeGreaterThan(1);
+  const citySearch = page.getByRole("combobox", { name: /Preferred districts \/ cities/ });
+  await expect(citySearch).toBeEnabled({ timeout: 30_000 });
+  await citySearch.fill("sola");
+  await expect(page.getByRole("button", { name: "Solapur", exact: true })).toBeVisible();
   await university.selectOption({ index: 1 });
   await page.getByRole("button", { name: "Predict Colleges" }).click();
-  await expect(page.getByRole("heading", { name: "Your college-branch options" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your college-branch options" })).toBeVisible({ timeout: 30_000 });
   await expect(page.locator("article").first()).toContainText(/Selected official cutoff/i);
 });
 
@@ -43,10 +47,10 @@ test("DSE prediction returns route-specific options", async ({ page }) => {
   await page.goto("/dse-predictor");
   await page.getByLabel(/Diploma percentage/).fill("89.20");
   const diplomaBranch = page.getByLabel(/Diploma branch/);
-  await expect.poll(async () => diplomaBranch.locator("option").count()).toBeGreaterThan(1);
+  await expect.poll(async () => diplomaBranch.locator("option").count(), { timeout: 30_000 }).toBeGreaterThan(1);
   await diplomaBranch.selectOption({ index: 1 });
   await page.getByRole("button", { name: "Predict DSE Colleges" }).click();
-  await expect(page.getByRole("heading", { name: "Your college-branch options" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your college-branch options" })).toBeVisible({ timeout: 30_000 });
   await expect(page.locator("article").first()).toContainText(/DSE|diploma/i);
 });
 

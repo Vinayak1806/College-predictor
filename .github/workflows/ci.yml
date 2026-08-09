@@ -28,6 +28,7 @@ jobs:
       BETTER_AUTH_SECRET: ci-only-secret-with-more-than-thirty-two-characters
       BETTER_AUTH_URL: http://localhost:3000
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      BASE_URL: http://localhost:3000
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -56,3 +57,13 @@ jobs:
       - run: pnpm test:e2e
         env:
           E2E_SKIP_DATA: "true"
+      - name: Upload Playwright failure report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            application/playwright-report
+            application/test-results
+          if-no-files-found: ignore
+          retention-days: 7

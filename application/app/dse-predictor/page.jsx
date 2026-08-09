@@ -97,6 +97,7 @@ function CompactMultiSelect({
   emptyText,
   onToggle,
   onClear,
+  loading = false,
   searchPlaceholder,
   noOptionsText = "No matching options found."
 }) {
@@ -121,11 +122,6 @@ function CompactMultiSelect({
     return () => document.removeEventListener("pointerdown", closeWhenClickingOutside);
   }, []);
 
-  useEffect(() => {
-    const pendingForm = readPendingPredictorForm("DSE");
-    if (pendingForm) setForm({ ...initialForm, ...pendingForm });
-  }, []);
-
   return (
     <div ref={containerRef} className="relative grid min-w-0 w-full gap-2 text-sm">
       <label className="font-medium" htmlFor={inputId}>{label}</label>
@@ -134,9 +130,11 @@ function CompactMultiSelect({
           id={inputId}
           aria-autocomplete="list"
           aria-expanded={open}
+          aria-busy={loading}
           autoComplete="off"
           className="min-h-10 w-0 min-w-0 flex-1 border-0 bg-transparent p-0 text-sm outline-none"
-          placeholder={searchPlaceholder}
+          disabled={loading}
+          placeholder={loading ? "Loading options..." : searchPlaceholder}
           role="combobox"
           value={query}
           onChange={(event) => {
@@ -152,6 +150,7 @@ function CompactMultiSelect({
           aria-label={open ? `Close ${label}` : `Open ${label}`}
           className="flex h-10 w-8 shrink-0 items-center justify-center"
           type="button"
+          disabled={loading}
           onClick={() => setOpen((current) => !current)}
         >
           {open ? <ChevronUp aria-hidden="true" size={17} /> : <ChevronDown aria-hidden="true" size={17} />}
@@ -218,7 +217,9 @@ function CompactMultiSelect({
                 </button>
               );
             })}
-            {!matchingOptions.length ? <p className="px-3 py-3 text-slate-600">{noOptionsText}</p> : null}
+            {!matchingOptions.length ? (
+              <p className="px-3 py-3 text-slate-600">{loading ? "Loading options..." : noOptionsText}</p>
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -304,6 +305,7 @@ export default function DsePredictorPage() {
   const resultsTopRef = useRef(null);
   const [form, setForm] = useState(initialForm);
   const [options, setOptions] = useState({ years: [], rounds: [], branches: [], cities: [] });
+  const [optionsLoading, setOptionsLoading] = useState(true);
   const [instituteCount, setInstituteCount] = useState(null);
   const [zone, setZone] = useState("ALL");
   const [results, setResults] = useState([]);
@@ -327,6 +329,12 @@ export default function DsePredictorPage() {
   const totalPages = pagination?.totalPages || 0;
 
   useEffect(() => {
+    const pendingForm = readPendingPredictorForm("DSE");
+    if (pendingForm) setForm({ ...initialForm, ...pendingForm });
+  }, []);
+
+  useEffect(() => {
+    setOptionsLoading(true);
     fetch("/api/cutoffs/options?route=DSE")
       .then((response) => {
         if (!response.ok) throw new Error("DSE options request failed.");
@@ -339,8 +347,12 @@ export default function DsePredictorPage() {
           branches: data.branches || [],
           cities: data.cities || []
         });
+        setOptionsLoading(false);
       })
-      .catch(() => setError("DSE filter options could not be loaded."));
+      .catch(() => {
+        setOptionsLoading(false);
+        setError("DSE filter options could not be loaded. Refresh the page to try again.");
+      });
 
     fetch("/api/stats")
       .then((response) => response.json())
@@ -440,8 +452,8 @@ export default function DsePredictorPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto grid min-w-0 max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[340px_minmax(0,1fr)] lg:items-start xl:grid-cols-[360px_minmax(0,1fr)]">
-        <section className="min-w-0 lg:self-stretch">
+      <main className={`mx-auto grid min-w-0 gap-6 px-4 py-6 ${hasPredicted ? "max-w-7xl lg:grid-cols-[340px_minmax(0,1fr)] lg:items-start xl:grid-cols-[360px_minmax(0,1fr)]" : "max-w-6xl"}`}>
+        <section className="min-w-0 w-full lg:self-stretch">
           <header className="border-l-4 border-action pl-4">
             <p className="text-xs font-semibold uppercase text-action">Direct second year engineering</p>
             <h1 className="mt-1 text-2xl font-semibold text-ink">DSE College Predictor</h1>
@@ -450,7 +462,7 @@ export default function DsePredictorPage() {
             </p>
           </header>
 
-          <dl className="mt-4 grid grid-cols-3 border-y border-line py-3 text-center">
+          <dl className="mt-4 grid grid-cols-3 rounded border border-line bg-white py-3 text-center shadow-sm">
             <div className="border-r border-line px-2">
               <dt className="text-lg font-semibold text-ink">45k+</dt>
               <dd className="mt-1 text-xs text-slate-500">DSE cutoffs</dd>
@@ -467,7 +479,7 @@ export default function DsePredictorPage() {
 
           <form
             ref={predictorFormRef}
-            className="mt-4 grid min-w-0 gap-5 rounded-lg border border-line bg-white p-4"
+            className="mt-4 grid min-w-0 gap-5 rounded-lg border border-line bg-white p-4 shadow-soft"
             onSubmit={(event) => {
               event.preventDefault();
               predict(1);
@@ -486,7 +498,7 @@ export default function DsePredictorPage() {
               </div>
             </div>
 
-            <fieldset className={`${mobileStep === 1 ? "grid" : "hidden"} min-w-0 gap-4 md:grid`}>
+            <fieldset className={`${mobileStep === 1 ? "grid" : "hidden"} min-w-0 gap-4 md:grid ${hasPredicted ? "" : "md:grid-cols-2 xl:grid-cols-4"}`}>
               <legend className="sr-only">Diploma score and cutoff history</legend>
               <label className="grid min-w-0 gap-2 text-sm font-medium">
                 <span>Diploma percentage<RequiredMark /></span>
@@ -552,7 +564,7 @@ export default function DsePredictorPage() {
               </div>
             </fieldset>
 
-            <fieldset className={`${mobileStep === 2 ? "grid" : "hidden"} min-w-0 gap-4 md:grid`}>
+            <fieldset className={`${mobileStep === 2 ? "grid" : "hidden"} min-w-0 gap-4 md:grid md:border-t md:border-line md:pt-5 ${hasPredicted ? "" : "md:grid-cols-2"}`}>
               <legend className="sr-only">Admission eligibility</legend>
               <div className="grid grid-cols-2 gap-2">
                 <label className="grid min-w-0 gap-2 text-sm font-medium">
@@ -572,7 +584,7 @@ export default function DsePredictorPage() {
 
               <div className="grid gap-2 text-sm">
                 <p className="font-medium">Special eligibility</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className={`grid grid-cols-2 gap-2 ${hasPredicted ? "" : "xl:grid-cols-3"}`}>
                   {["ews", "pwd", "defence"].map((name) => (
                     <label key={name} className="flex min-h-11 items-center gap-2 rounded border border-line px-3">
                       <input type="checkbox" checked={form[name]} onChange={(event) => update(name, event.target.checked)} />
@@ -582,13 +594,13 @@ export default function DsePredictorPage() {
                 </div>
               </div>
 
-              <div className="flex gap-2 border border-line bg-panel p-3 text-xs leading-5 text-slate-600">
+              <div className={`flex gap-2 border border-line bg-panel p-3 text-xs leading-5 text-slate-600 ${hasPredicted ? "" : "md:col-span-2"}`}>
                 <Info className="mt-0.5 shrink-0 text-action" aria-hidden="true" size={16} />
                 <p>DSE CAP records use state-level seat eligibility, so a home-university field is not required here.</p>
               </div>
             </fieldset>
 
-            <fieldset className={`${mobileStep === 3 ? "grid" : "hidden"} min-w-0 gap-4 md:grid`}>
+            <fieldset className={`${mobileStep === 3 ? "grid" : "hidden"} min-w-0 gap-4 md:grid md:border-t md:border-line md:pt-5 ${hasPredicted ? "" : "md:grid-cols-2"}`}>
               <legend className="sr-only">College preferences</legend>
               <CompactMultiSelect
                 label="Preferred B.E./B.Tech branches"
@@ -597,16 +609,19 @@ export default function DsePredictorPage() {
                 emptyText="All degree branches"
                 onToggle={(value) => toggleListValue("branches", value)}
                 onClear={() => update("branches", [])}
+                loading={optionsLoading}
                 searchPlaceholder="Type branch name"
               />
               <CompactMultiSelect
-                label={`Preferred districts / cities (${options.cities.length})`}
+                label={`Preferred districts / cities${optionsLoading ? "" : ` (${options.cities.length})`}`}
                 options={cityOptions}
                 selectedValues={form.cities}
                 emptyText="All Maharashtra"
                 onToggle={(value) => toggleListValue("cities", value)}
                 onClear={() => update("cities", [])}
+                loading={optionsLoading}
                 searchPlaceholder="Type district or city"
+                noOptionsText="No matching district or city found."
               />
               <CompactMultiSelect
                 label="Institute ownership"
@@ -640,7 +655,7 @@ export default function DsePredictorPage() {
             </div>
 
             <button
-              className={`${mobileStep === 3 ? "flex" : "hidden"} focus-ring min-h-11 w-full items-center justify-center gap-2 rounded bg-action px-4 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 md:flex`}
+              className={`${mobileStep === 3 ? "flex" : "hidden"} focus-ring min-h-11 items-center justify-center gap-2 rounded bg-action px-5 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 md:flex ${hasPredicted ? "w-full" : "w-full md:ml-auto md:w-auto md:min-w-64"}`}
               disabled={!canPredict || loading}
             >
               <BarChart3 aria-hidden="true" size={18} /> {loading ? "Checking DSE records..." : "Predict DSE Colleges"}
@@ -695,8 +710,8 @@ export default function DsePredictorPage() {
           ) : null}
         </section>
 
-        <section ref={resultsTopRef} className="grid min-w-0 scroll-mt-20 content-start gap-4">
-          <div className="overflow-hidden rounded-lg border border-line bg-white">
+        <section ref={resultsTopRef} className={`min-w-0 scroll-mt-20 content-start gap-4 ${hasPredicted ? "grid" : "hidden"}`}>
+          <div className="overflow-hidden rounded-lg border border-line bg-white shadow-soft">
             <div className={`grid items-start gap-4 p-4 md:p-5 ${hasPredicted ? "md:grid-cols-[minmax(0,1fr)_96px]" : ""}`}>
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase text-action">Prediction workspace</p>

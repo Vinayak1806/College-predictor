@@ -47,9 +47,10 @@ const questions = [
 
 export default async function HomePage() {
   const liveStats = await getPublicStats();
+  const verifiedCutoffTotal = liveStats.cutoffCoverage.reduce((sum, row) => sum + row.FE + row.DSE, 0);
   const statistics = [
     [liveStats.currentInstitutes.toLocaleString("en-IN"), "Current CAP institutes"],
-    [liveStats.verifiedCutoffs.toLocaleString("en-IN"), "Verified FE cutoffs"],
+    [verifiedCutoffTotal.toLocaleString("en-IN"), "Verified cutoff records"],
     [liveStats.districtsCovered.toLocaleString("en-IN"), "Districts covered"],
     [liveStats.exactSeatTypes.toLocaleString("en-IN"), "Exact seat types"]
   ];
@@ -67,26 +68,26 @@ export default async function HomePage() {
             sizes="100vw"
             className="object-cover object-[62%_center]"
           />
-          <div className="absolute inset-0 bg-black/55" />
+          <div className="absolute inset-0 bg-[#071923]/65" />
           <div className="relative mx-auto flex min-h-[calc(100svh-104px)] max-w-7xl items-center px-4 py-12">
             <div className="enter-up max-w-3xl">
               <div className="inline-flex items-center gap-2 border-l-2 border-amber-400 pl-3 text-sm font-semibold text-white">
                 <CheckCircle2 aria-hidden="true" size={17} />
                 Structured Maharashtra CAP data
               </div>
-              <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-tight md:text-6xl">
-                Find engineering colleges that match your real admission profile.
+              <h1 className="mt-5 max-w-4xl text-4xl font-bold leading-tight md:text-6xl">
+                Find Maharashtra engineering colleges that fit your score.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-100 md:text-lg">
-                Compare your percentile with eligible seat types and multi-year FE cutoffs, then research every college before building your CAP choices.
+                Compare MHT-CET percentile or diploma percentage with eligible seat types, verified CAP cutoffs and current college data.
               </p>
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <Link className="focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded bg-action px-5 font-semibold text-white shadow-lg hover:bg-[#11566d]" href="/fe-predictor">
-                  Predict my colleges <ArrowRight aria-hidden="true" size={18} />
+                <Link className="focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded bg-action px-5 font-semibold text-white shadow-lg hover:bg-[#0a596d] hover:shadow-raised" href="/fe-predictor">
+                  FE Predictor <ArrowRight aria-hidden="true" size={18} />
                 </Link>
-                <Link className="focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded border border-white/60 bg-white/10 px-5 font-semibold text-white backdrop-blur-sm hover:bg-white/20" href="/colleges">
-                  Explore colleges <Search aria-hidden="true" size={18} />
+                <Link className="focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded border border-white/70 bg-white/10 px-5 font-semibold text-white backdrop-blur-sm hover:border-white hover:bg-white/20" href="/dse-predictor">
+                  DSE Predictor <GraduationCap aria-hidden="true" size={18} />
                 </Link>
               </div>
 
@@ -118,9 +119,9 @@ export default async function HomePage() {
           </div>
           <div className="mt-8 grid gap-px overflow-hidden rounded border border-line bg-line md:grid-cols-4">
             {steps.map((step, index) => (
-              <article key={step.title} className="bg-white p-5">
+              <article key={step.title} className="group bg-white p-5 transition-[background-color,box-shadow] duration-200 hover:bg-[#fbfdfd] hover:shadow-soft">
                 <div className="flex items-center justify-between">
-                  <span className="flex h-10 w-10 items-center justify-center rounded bg-cyan-50 text-action"><step.icon aria-hidden="true" size={20} /></span>
+                  <span className="flex h-10 w-10 items-center justify-center rounded bg-cyan-50 text-action transition-colors group-hover:bg-action group-hover:text-white"><step.icon aria-hidden="true" size={20} /></span>
                   <span className="text-xs font-semibold text-slate-400">0{index + 1}</span>
                 </div>
                 <h3 className="mt-5 font-semibold text-ink">{step.title}</h3>
@@ -176,7 +177,7 @@ export default async function HomePage() {
               <p className="text-xs font-semibold uppercase text-action">Ready to check your options?</p>
               <h2 className="mt-2 text-2xl font-bold text-ink">Start with your MHT-CET percentile.</h2>
             </div>
-            <Link className="focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded bg-action px-5 font-semibold text-white" href="/fe-predictor">Open FE Predictor <ArrowRight aria-hidden="true" size={18} /></Link>
+            <Link className="focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded bg-action px-5 font-semibold text-white shadow-sm hover:bg-[#0a596d] hover:shadow-soft" href="/fe-predictor">Open FE Predictor <ArrowRight aria-hidden="true" size={18} /></Link>
           </div>
         </section>
       </main>

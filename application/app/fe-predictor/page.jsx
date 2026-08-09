@@ -34,7 +34,7 @@ const defaultForm = {
   gender: "MALE",
   homeUniversity: "",
   branches: ["Computer"],
-  cities: ["Pune"],
+  cities: [],
   collegeTypes: [],
   autonomousOnly: false,
   tfws: false,
@@ -194,6 +194,7 @@ function CompactMultiSelect({
   emptyText,
   onToggle,
   onClear,
+  loading = false,
   searchPlaceholder = "Type to search",
   noOptionsText = "No matching options found."
 }) {
@@ -228,9 +229,11 @@ function CompactMultiSelect({
           id={inputId}
           aria-autocomplete="list"
           aria-expanded={open}
+          aria-busy={loading}
           autoComplete="off"
           className="min-h-10 w-0 min-w-0 flex-1 border-0 bg-transparent p-0 text-sm outline-none"
-          placeholder={searchPlaceholder}
+          disabled={loading}
+          placeholder={loading ? "Loading options..." : searchPlaceholder}
           role="combobox"
           value={query}
           onChange={(event) => {
@@ -246,6 +249,7 @@ function CompactMultiSelect({
           aria-label={open ? `Close ${label}` : `Open ${label}`}
           className="flex h-10 w-8 shrink-0 items-center justify-center"
           type="button"
+          disabled={loading}
           onClick={() => setOpen((current) => !current)}
         >
           {open ? <ChevronUp aria-hidden="true" size={17} /> : <ChevronDown aria-hidden="true" size={17} />}
@@ -318,7 +322,9 @@ function CompactMultiSelect({
                 </button>
               );
             })}
-            {!matchingOptions.length ? <p className="px-3 py-3 text-slate-600">{noOptionsText}</p> : null}
+            {!matchingOptions.length ? (
+              <p className="px-3 py-3 text-slate-600">{loading ? "Loading options..." : noOptionsText}</p>
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -332,6 +338,10 @@ export default function FePredictorPage() {
   const [form, setForm] = useState(defaultForm);
   const [cities, setCities] = useState([]);
   const [universities, setUniversities] = useState([]);
+  const [citiesLoading, setCitiesLoading] = useState(true);
+  const [universitiesLoading, setUniversitiesLoading] = useState(true);
+  const [cityError, setCityError] = useState("");
+  const [universityError, setUniversityError] = useState("");
   const [academicYears, setAcademicYears] = useState(fallbackAcademicYears);
   const [publishedBranches, setPublishedBranches] = useState([]);
   const [instituteCount, setInstituteCount] = useState(null);
@@ -365,36 +375,77 @@ export default function FePredictorPage() {
   }, []);
 
   useEffect(() => {
-    async function loadReferenceData() {
+    const readJson = async (url) => {
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) throw new Error(`${url} returned ${response.status}`);
+      return response.json();
+    };
+    const normalizeCities = (items) => [...new Map(
+      items
+        .filter((city) => city?.name)
+        .map((city) => [city.name.trim().toLowerCase(), { ...city, name: city.name.trim() }])
+    ).values()].sort((left, right) => left.name.localeCompare(right.name));
+
+    async function loadCities() {
       try {
-        const [cityResponse, universityResponse, statsResponse, cutoffOptionsResponse] = await Promise.all([
-          fetch("/api/cities?route=FE", { cache: "no-store" }),
-          fetch("/api/universities?route=FE", { cache: "no-store" }),
-          fetch("/api/stats"),
-          fetch("/api/cutoffs/options?route=FE", { cache: "no-store" })
-        ]);
-        const [cityData, universityData, statsData, cutoffOptionsData] = await Promise.all([
-          cityResponse.json(),
-          universityResponse.json(),
-          statsResponse.json(),
-          cutoffOptionsResponse.json()
-        ]);
-        const uniqueCities = [...new Map((cityData.data || []).map((city) => [city.name, city])).values()];
-        setCities(uniqueCities);
-        setUniversities(universityData.data || []);
-        setInstituteCount(statsData.data?.currentFeInstitutes || statsData.data?.currentInstitutes || null);
-        setAcademicYears(cutoffOptionsData.years?.length ? cutoffOptionsData.years : fallbackAcademicYears);
-        setPublishedBranches(cutoffOptionsData.branches || []);
+        const data = await readJson("/api/cities?route=FE");
+        const nextCities = normalizeCities(data.data || []);
+        setCities(nextCities);
+        setCityError(nextCities.length ? "" : "City options are temporarily unavailable. Refresh the page to try again.");
       } catch {
-        setCities([]);
-        setUniversities([]);
+        setCityError("City options are temporarily unavailable. Refresh the page to try again.");
+      } finally {
+        setCitiesLoading(false);
+      }
+    }
+
+    async function loadUniversities() {
+      try {
+        const data = await readJson("/api/universities?route=FE");
+        const nextUniversities = data.data || [];
+        setUniversities(nextUniversities);
+        setUniversityError(nextUniversities.length ? "" : "University options are temporarily unavailable. Refresh the page to try again.");
+      } catch {
+        setUniversityError("University options are temporarily unavailable. Refresh the page to try again.");
+      } finally {
+        setUniversitiesLoading(false);
+      }
+    }
+
+    async function loadStats() {
+      try {
+        const data = await readJson("/api/stats");
+        setInstituteCount(data.data?.currentFeInstitutes || data.data?.currentInstitutes || null);
+      } catch {
         setInstituteCount(null);
+      }
+    }
+
+    async function loadCutoffOptions() {
+      try {
+        const data = await readJson("/api/cutoffs/options?route=FE");
+        setAcademicYears(data.years?.length ? data.years : fallbackAcademicYears);
+        setPublishedBranches(data.branches || []);
+
+        const fallbackCities = normalizeCities((data.cities || []).map((name) => ({ id: `cutoff-${name}`, name })));
+        if (fallbackCities.length) {
+          setCities((current) => current.length ? current : fallbackCities);
+          setCityError("");
+          setCitiesLoading(false);
+        }
+      } catch {
         setAcademicYears(fallbackAcademicYears);
         setPublishedBranches([]);
       }
     }
 
-    loadReferenceData();
+    async function loadInPriorityOrder() {
+      await Promise.allSettled([loadCities(), loadUniversities()]);
+      void loadStats();
+      void loadCutoffOptions();
+    }
+
+    void loadInPriorityOrder();
   }, []);
 
   function updateField(name, value) {
@@ -538,8 +589,8 @@ export default function FePredictorPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto grid min-w-0 max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[340px_minmax(0,1fr)] lg:items-start xl:grid-cols-[360px_minmax(0,1fr)]">
-        <section className="min-w-0 lg:self-stretch">
+      <main className={`mx-auto grid min-w-0 gap-6 px-4 py-6 ${hasPredicted ? "max-w-7xl lg:grid-cols-[340px_minmax(0,1fr)] lg:items-start xl:grid-cols-[360px_minmax(0,1fr)]" : "max-w-6xl"}`}>
+        <section className="min-w-0 w-full lg:self-stretch">
           <div className="border-l-4 border-action pl-4">
             <p className="text-xs font-semibold uppercase text-action">First-year engineering</p>
             <h1 className="mt-1 text-2xl font-semibold">FE College Predictor</h1>
@@ -547,13 +598,13 @@ export default function FePredictorPage() {
               Find realistic options from verified Maharashtra CAP cutoffs and your official seat eligibility.
             </p>
           </div>
-          <div className="mt-4 grid grid-cols-3 divide-x divide-line border-y border-line py-3 text-center">
+          <div className="mt-4 grid grid-cols-3 divide-x divide-line rounded border border-line bg-white py-3 text-center shadow-sm">
             <div><strong className="block text-base text-ink">103k+</strong><span className="text-xs text-slate-500">Cutoffs</span></div>
             <div><strong className="block text-base text-ink">3</strong><span className="text-xs text-slate-500">Years</span></div>
             <div><strong className="block text-base text-ink">{instituteCount ?? "--"}</strong><span className="text-xs text-slate-500">Institutes</span></div>
           </div>
 
-          <form ref={predictorFormRef} noValidate onSubmit={submitForm} className="mt-4 grid min-w-0 scroll-mt-20 gap-4 rounded-lg border border-line bg-white p-4">
+          <form ref={predictorFormRef} noValidate onSubmit={submitForm} className="mt-4 grid min-w-0 scroll-mt-20 gap-4 rounded-lg border border-line bg-white p-4 shadow-soft">
             <p className="text-right text-xs text-slate-500"><span className="font-semibold text-danger">*</span> Required</p>
             <div className="md:hidden">
               <div className="flex items-center justify-between text-xs font-semibold">
@@ -565,7 +616,7 @@ export default function FePredictorPage() {
               </div>
             </div>
 
-            <fieldset data-step="1" className={`${mobileStep === 1 ? "grid" : "hidden"} min-w-0 gap-4 md:grid`}>
+            <fieldset data-step="1" className={`${mobileStep === 1 ? "grid" : "hidden"} min-w-0 gap-4 md:grid ${hasPredicted ? "" : "md:grid-cols-3"}`}>
               <legend className="sr-only">Score and cutoff history</legend>
               <label className="grid min-w-0 gap-2 text-sm font-medium">
               <span>MHT-CET percentile<RequiredMark /></span>
@@ -612,7 +663,7 @@ export default function FePredictorPage() {
               </label>
             </fieldset>
 
-            <fieldset data-step="2" className={`${mobileStep === 2 ? "grid" : "hidden"} min-w-0 gap-4 md:grid`}>
+            <fieldset data-step="2" className={`${mobileStep === 2 ? "grid" : "hidden"} min-w-0 gap-4 md:grid md:border-t md:border-line md:pt-5 ${hasPredicted ? "" : "md:grid-cols-3"}`}>
               <legend className="sr-only">Admission eligibility</legend>
               <label className="grid min-w-0 gap-2 text-sm font-medium">
               <span>Category<RequiredMark /></span>
@@ -649,22 +700,27 @@ export default function FePredictorPage() {
               <span>Home university<RequiredMark /></span>
               <select
                 aria-invalid={showValidation && !form.homeUniversity}
+                aria-busy={universitiesLoading}
                 className={`focus-ring min-h-11 w-full min-w-0 max-w-full rounded border px-3 ${showValidation && !form.homeUniversity ? "border-danger" : "border-line"}`}
+                disabled={universitiesLoading || !universities.length}
                 required
                 value={form.homeUniversity}
                 onChange={(event) => updateField("homeUniversity", event.target.value)}
               >
-                <option value="">Select your home university</option>
+                <option value="">
+                  {universitiesLoading ? "Loading universities..." : universities.length ? "Select your home university" : "Universities unavailable"}
+                </option>
                 {universities.map((university) => (
                   <option key={university.id} value={university.name}>{university.name}</option>
                 ))}
               </select>
               {showValidation && !form.homeUniversity ? <span className="text-xs font-normal text-danger">Select your home university to continue.</span> : null}
+              {universityError && !universitiesLoading && !universities.length ? <span className="text-xs font-normal text-danger">{universityError}</span> : null}
               </label>
 
-              <div className="grid gap-2 text-sm">
+              <div className={`grid gap-2 text-sm ${hasPredicted ? "" : "md:col-span-3"}`}>
                 <p className="font-medium">Special eligibility</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className={`grid grid-cols-2 gap-2 ${hasPredicted ? "" : "md:grid-cols-4"}`}>
                 {["tfws", "pwd", "defence", "ews"].map((name) => (
                   <label key={name} className="flex min-h-11 items-center gap-2 rounded border border-line px-3">
                     <input
@@ -679,7 +735,7 @@ export default function FePredictorPage() {
               </div>
             </fieldset>
 
-            <fieldset data-step="3" className={`${mobileStep === 3 ? "grid" : "hidden"} min-w-0 gap-4 md:grid`}>
+            <fieldset data-step="3" className={`${mobileStep === 3 ? "grid" : "hidden"} min-w-0 gap-4 md:grid md:border-t md:border-line md:pt-5 ${hasPredicted ? "" : "md:grid-cols-2"}`}>
               <legend className="sr-only">College preferences</legend>
               <CompactMultiSelect
               label="Preferred branches"
@@ -692,14 +748,15 @@ export default function FePredictorPage() {
               />
 
               <CompactMultiSelect
-              label={`Preferred districts / cities (${cities.length})`}
+              label={`Preferred districts / cities${citiesLoading ? "" : ` (${cities.length})`}`}
               options={cities.map((city) => ({ label: city.name, value: city.name }))}
               selectedValues={form.cities}
               emptyText="All Maharashtra"
               onToggle={(value) => toggleListValue("cities", value)}
               onClear={() => updateField("cities", [])}
+              loading={citiesLoading}
               searchPlaceholder="Type district or city name"
-              noOptionsText="No matching district or city found."
+              noOptionsText={cityError && !cities.length ? cityError : "No matching district or city found."}
               />
 
               <CompactMultiSelect
@@ -739,7 +796,7 @@ export default function FePredictorPage() {
             </div>
 
             <button
-              className={`${mobileStep === 3 ? "flex" : "hidden"} focus-ring min-h-11 w-full items-center justify-center gap-2 rounded bg-action px-4 font-semibold text-white disabled:opacity-60 md:flex`}
+              className={`${mobileStep === 3 ? "flex" : "hidden"} focus-ring min-h-11 items-center justify-center gap-2 rounded bg-action px-5 font-semibold text-white disabled:opacity-60 md:flex ${hasPredicted ? "w-full" : "w-full md:ml-auto md:w-auto md:min-w-64"}`}
               disabled={loading || !canPredict}
             >
               <BarChart3 aria-hidden="true" size={18} /> {loading ? "Predicting..." : "Predict Colleges"}
@@ -802,8 +859,8 @@ export default function FePredictorPage() {
           ) : null}
         </section>
 
-        <section ref={resultsTopRef} className="grid min-w-0 scroll-mt-20 content-start gap-4">
-          <div className="overflow-hidden rounded-lg border border-line bg-white">
+        <section ref={resultsTopRef} className={`min-w-0 scroll-mt-20 content-start gap-4 ${hasPredicted ? "grid" : "hidden"}`}>
+          <div className="overflow-hidden rounded-lg border border-line bg-white shadow-soft">
             <div className={`grid items-start gap-4 p-4 md:p-5 ${hasPredicted ? "md:grid-cols-[minmax(0,1fr)_96px]" : ""}`}>
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase text-action">Prediction workspace</p>
