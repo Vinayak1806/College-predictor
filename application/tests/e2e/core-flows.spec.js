@@ -6,8 +6,11 @@ test("public navigation, student login and protected account routes work", async
 
   await page.goto("/preference-list");
   await expect(page.getByRole("heading", { name: "CAP Preference List Builder" })).toBeVisible();
-  await expect(page.getByText("Account tools")).toBeVisible();
-  await page.getByRole("link", { name: "Sign in", exact: true }).click();
+  await expect(page.getByText("Sign in to use account tools", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Download list PDF" }).click();
+  const signInDialog = page.getByRole("dialog", { name: "Sign in to continue" });
+  await expect(signInDialog).toBeVisible();
+  await signInDialog.getByRole("link", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/login\?callbackURL=/);
   await expect(page.getByRole("heading", { name: "Sign in to Admission Compass" })).toBeVisible();
 
