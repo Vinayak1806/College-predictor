@@ -485,7 +485,7 @@ export function AdminImportCentre() {
   }
 
   return (
-    <section className="overflow-hidden rounded-lg border border-line bg-white">
+    <section className="surface-card overflow-hidden">
       <div className="grid border-b border-line lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
         <div className="p-4 md:p-5">
           <div className="flex items-start gap-3">

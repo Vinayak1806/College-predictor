@@ -31,6 +31,7 @@ export function SiteHeader({ showStudentAccount = true }) {
 
   useEffect(() => {
     setAccountOpen(false);
+    setMenuOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -45,7 +46,10 @@ export function SiteHeader({ showStudentAccount = true }) {
     }
 
     function closeOnEscape(event) {
-      if (event.key === "Escape") setAccountOpen(false);
+      if (event.key === "Escape") {
+        setAccountOpen(false);
+        setMenuOpen(false);
+      }
     }
 
     document.addEventListener("pointerdown", closeAccountMenu);
@@ -55,6 +59,15 @@ export function SiteHeader({ showStudentAccount = true }) {
       document.removeEventListener("keydown", closeOnEscape);
     };
   }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [menuOpen]);
 
   async function signOut() {
     setSigningOut(true);
@@ -66,25 +79,25 @@ export function SiteHeader({ showStudentAccount = true }) {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-white/95 shadow-[0_4px_18px_rgba(18,52,69,0.06)] backdrop-blur">
-      <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4">
+    <header className="sticky top-0 z-50 border-b border-line/90 bg-white/90 shadow-[0_4px_24px_rgba(23,32,51,0.06)] backdrop-blur-xl">
+      <div className="mx-auto flex min-h-[68px] max-w-7xl items-center justify-between gap-3 px-3 sm:px-5 lg:px-6">
         <Link href="/" className="focus-ring group flex min-w-0 items-center gap-3 rounded" onClick={() => setMenuOpen(false)}>
-          <BrandMark className="h-10 w-10 transition-transform duration-200 group-hover:scale-[1.04]" />
+          <BrandMark className="h-11 w-11 transition-transform duration-200 group-hover:scale-[1.04]" />
           <span className="min-w-0">
-            <span className="block truncate text-base font-bold leading-5 text-ink">Admission Compass</span>
+            <span className="block truncate text-[17px] font-bold leading-5 text-ink">Admission Compass</span>
             <span className="hidden text-xs text-slate-500 sm:block">Maharashtra engineering college predictor</span>
           </span>
         </Link>
 
-        <nav className="hidden shrink-0 items-center gap-0.5 xl:flex" aria-label="Main navigation">
+        <nav className="hidden shrink-0 items-center gap-1 xl:flex" aria-label="Main navigation">
           {links.map(([label, href]) => {
             const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
             return (
               <Link
                 key={href}
                 href={href}
-                className={`focus-ring whitespace-nowrap rounded border-b-2 px-3 py-2 text-sm font-medium ${
-                  active ? "border-action bg-cyan-50 text-action" : "border-transparent text-slate-600 hover:bg-panel hover:text-ink"
+                className={`focus-ring whitespace-nowrap rounded-md border px-3 py-2 text-sm font-medium ${
+                  active ? "border-cyan-100 bg-cyan-50 text-action shadow-sm" : "border-transparent text-slate-600 hover:bg-panel hover:text-ink"
                 }`}
               >
                 {label}
@@ -101,7 +114,7 @@ export function SiteHeader({ showStudentAccount = true }) {
                 aria-label={`Open account menu for ${user.name}`}
                 aria-expanded={accountOpen}
                 title={user.name}
-                className="focus-ring flex h-11 w-11 items-center justify-center rounded-full text-slate-600 hover:bg-panel hover:text-action"
+                className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-transparent text-slate-600 hover:border-line hover:bg-panel hover:text-action"
                 onClick={() => {
                   setMenuOpen(false);
                   setAccountOpen((current) => !current);
@@ -128,14 +141,14 @@ export function SiteHeader({ showStudentAccount = true }) {
                 href="/login"
                 aria-label="Student login"
                 title={isPending ? "Checking account" : "Student login"}
-                className="focus-ring flex h-11 w-11 items-center justify-center rounded border border-line bg-white text-slate-600 shadow-sm hover:border-[#aac0ca] hover:bg-panel hover:text-action"
+                className="focus-ring flex h-11 w-11 items-center justify-center rounded-md border border-line bg-white text-slate-600 shadow-sm hover:border-[#aac0ca] hover:bg-panel hover:text-action"
               >
                 <CircleUserRound aria-hidden="true" size={20} />
               </Link>
             )}
 
             {user && accountOpen ? (
-              <div className="menu-enter absolute right-0 top-[calc(100%+0.5rem)] w-72 overflow-hidden rounded border border-line bg-white shadow-raised" role="menu">
+              <div className="menu-enter absolute right-0 top-[calc(100%+0.5rem)] w-72 overflow-hidden rounded-lg border border-line bg-white shadow-raised" role="menu">
                 <div className="border-b border-line px-4 py-3">
                   <p className="truncate text-sm font-semibold text-ink">{user.name}</p>
                   <p className="mt-0.5 truncate text-xs text-slate-500">{user.email}</p>
@@ -167,12 +180,12 @@ export function SiteHeader({ showStudentAccount = true }) {
             href="/colleges"
             aria-label="Search colleges"
             title="Search colleges"
-            className="focus-ring hidden h-11 w-11 items-center justify-center rounded border border-line bg-white text-slate-600 shadow-sm hover:border-[#aac0ca] hover:bg-panel hover:text-action sm:flex xl:hidden"
+            className="focus-ring hidden h-11 w-11 items-center justify-center rounded-md border border-line bg-white text-slate-600 shadow-sm hover:border-[#aac0ca] hover:bg-panel hover:text-action sm:flex xl:hidden"
           >
             <Search aria-hidden="true" size={19} />
           </Link>
           <Link
-            className="focus-ring hidden min-h-11 items-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#0a596d] hover:shadow-soft sm:inline-flex"
+            className="focus-ring hidden min-h-11 items-center gap-2 rounded-md bg-action px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#0a596d] hover:shadow-soft sm:inline-flex"
             href={pathname.startsWith("/dse-predictor") ? "/dse-predictor" : "/fe-predictor"}
           >
             <BarChart3 aria-hidden="true" size={17} />
@@ -180,7 +193,7 @@ export function SiteHeader({ showStudentAccount = true }) {
           </Link>
           <button
             type="button"
-            className="focus-ring flex h-11 w-11 items-center justify-center rounded border border-line bg-white text-slate-700 shadow-sm hover:border-[#aac0ca] hover:bg-panel xl:hidden"
+            className="focus-ring flex h-11 w-11 items-center justify-center rounded-md border border-line bg-white text-slate-700 shadow-sm hover:border-[#aac0ca] hover:bg-panel xl:hidden"
             aria-label={menuOpen ? "Close navigation" : "Open navigation"}
             aria-expanded={menuOpen}
             onClick={() => {
@@ -194,23 +207,37 @@ export function SiteHeader({ showStudentAccount = true }) {
       </div>
 
       {menuOpen ? (
-        <nav className="menu-enter border-t border-line bg-white px-4 py-3 shadow-soft xl:hidden" aria-label="Mobile navigation">
-          <div className="mx-auto grid max-w-7xl sm:grid-cols-2">
+        <div className="absolute inset-x-0 top-full flex h-[calc(100dvh-68px)] justify-end bg-slate-950/30 backdrop-blur-sm xl:hidden">
+          <button className="absolute inset-0 cursor-default" type="button" aria-label="Close navigation" onClick={() => setMenuOpen(false)} />
+          <nav className="menu-enter relative h-full w-full max-w-sm overflow-y-auto border-l border-line bg-white p-4 shadow-raised" aria-label="Mobile navigation">
+            <div className="mb-4 border-b border-line pb-4">
+              <p className="text-xs font-semibold uppercase text-action">Student navigation</p>
+              <p className="mt-1 text-sm text-slate-500">Predict, research and prepare your CAP list.</p>
+            </div>
+            <div className="grid gap-1">
             {links.map(([label, href]) => {
               const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
               return (
                 <Link
                   key={href}
                   href={href}
-                  className={`focus-ring flex min-h-11 items-center rounded border-l-2 px-3 text-sm font-medium ${active ? "border-action bg-cyan-50 text-action" : "border-transparent text-slate-700 hover:bg-panel"}`}
+                  className={`focus-ring flex min-h-12 items-center rounded-md border px-3 text-sm font-medium ${active ? "border-cyan-100 bg-cyan-50 text-action" : "border-transparent text-slate-700 hover:bg-panel"}`}
                   onClick={() => setMenuOpen(false)}
                 >
                   {label}
                 </Link>
               );
             })}
+            </div>
+            <Link
+              href={pathname.startsWith("/dse-predictor") ? "/dse-predictor" : "/fe-predictor"}
+              className="focus-ring mt-5 flex min-h-12 items-center justify-center gap-2 rounded-md bg-action px-4 text-sm font-semibold text-white shadow-soft"
+              onClick={() => setMenuOpen(false)}
+            >
+              <BarChart3 aria-hidden="true" size={17} /> Predict colleges
+            </Link>
+          </nav>
           </div>
-        </nav>
       ) : null}
     </header>
   );

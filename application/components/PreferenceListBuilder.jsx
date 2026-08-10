@@ -243,7 +243,7 @@ export function PreferenceListBuilder() {
 
   return (
     <div className="preference-list-page">
-      <section className="overflow-visible rounded-lg border border-line bg-white shadow-soft">
+      <section className="surface-card overflow-visible">
         <div className="preference-builder-controls grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-[190px_minmax(260px,1.35fr)_minmax(210px,0.9fr)_170px_96px] lg:items-end md:p-5">
           <div className="sm:col-span-2 lg:col-span-1 lg:self-center">
             <p className="text-xs font-semibold uppercase text-action">Add a choice</p>
@@ -300,7 +300,7 @@ export function PreferenceListBuilder() {
       </section>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
-        <section className="min-w-0 overflow-hidden rounded-lg border border-line bg-white shadow-soft">
+        <section className="surface-card min-w-0 overflow-hidden">
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line p-4 md:px-5">
             <div>
               <p className="text-xs font-semibold uppercase text-action">CAP preference order</p>
@@ -409,7 +409,7 @@ export function PreferenceListBuilder() {
           ) : null}
         </section>
 
-        <aside className="overflow-hidden rounded-lg border border-line bg-white lg:sticky lg:top-20">
+        <aside className="surface-card overflow-hidden lg:sticky lg:top-20">
           <div className="border-b border-line p-4">
             <p className="text-xs font-semibold uppercase text-action">Plan summary</p>
             <h2 className="mt-1 font-semibold text-ink">Admission-chance balance</h2>

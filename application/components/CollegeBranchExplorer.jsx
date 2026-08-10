@@ -136,7 +136,7 @@ export function CollegeBranchExplorer({ branches, initialBranchName, initialYear
       </div>
 
       <div className="mt-3 grid gap-4">
-        <aside className="rounded-lg border border-line bg-white p-4">
+        <aside className="surface-card p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm font-semibold text-ink">Available branches ({branches.length})</p>
             <p className="text-xs text-slate-500">Choose one to update the information below</p>
@@ -171,7 +171,7 @@ export function CollegeBranchExplorer({ branches, initialBranchName, initialYear
             </div>
           ) : (
             <>
-              <section className="rounded-lg border border-line bg-white p-4">
+              <section className="surface-card p-4">
                 <div>
                   <h3 className="text-lg font-semibold text-ink">{selectedBranch.branchName}</h3>
                   <p className="mt-1 text-sm text-slate-600">Branch code: {selectedBranch.branchCode}</p>
@@ -245,7 +245,7 @@ export function CollegeBranchExplorer({ branches, initialBranchName, initialYear
                 </div>
               </section>
 
-              <details className="rounded-lg border border-line bg-white p-4">
+              <details className="surface-card p-4">
                 <summary className="focus-ring cursor-pointer font-semibold text-action">Compare available branches at a glance</summary>
                 <p className="mt-2 text-sm text-slate-600">Latest available intake and cutoff are shown for orientation. Choose a branch above for category-wise records.</p>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
@@ -272,7 +272,7 @@ export function CollegeBranchExplorer({ branches, initialBranchName, initialYear
               </details>
 
               {selectedSeatType !== "ALL" ? (
-                <section className="rounded-lg border border-line bg-white p-4">
+                <section className="surface-card p-4">
                   <h3 className="font-semibold text-ink">Cutoff trend for {selectedSeatType}</h3>
                   <p className="mt-1 text-sm text-slate-600">The latest available CAP round from each year is compared.</p>
                   {trendData.length >= 2 ? (
@@ -293,7 +293,7 @@ export function CollegeBranchExplorer({ branches, initialBranchName, initialYear
                 </section>
               ) : null}
 
-              <section className="rounded-lg border border-line bg-white p-4">
+              <section className="surface-card p-4">
                 <h3 className="font-semibold text-ink">Seat availability by year</h3>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
                   {seatRows.map((row) => (
@@ -321,7 +321,7 @@ export function CollegeBranchExplorer({ branches, initialBranchName, initialYear
                 </div>
               </section>
 
-              <section className="rounded-lg border border-line bg-white p-4">
+              <section className="surface-card p-4">
                 <h3 className="font-semibold text-ink">Cutoff history</h3>
                 <div className="mt-3 grid gap-2">
                   {cutoffRows.slice(0, 80).map((row) => (

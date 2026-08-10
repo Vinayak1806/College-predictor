@@ -1,4 +1,5 @@
 import "./globals.css";
+import "@fontsource-variable/inter";
 import { GoogleAnalytics } from "../components/GoogleAnalytics";
 import { SiteFooter } from "../components/SiteFooter";
 import { getSiteUrl, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE } from "../lib/site";

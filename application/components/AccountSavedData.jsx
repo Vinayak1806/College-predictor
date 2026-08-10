@@ -170,7 +170,7 @@ export function AccountSavedData() {
       ) : null}
 
       {hasBrowserChoices && !migrationDismissed ? (
-        <section className="border border-action bg-white px-4 py-4 md:px-5">
+        <section className="surface-card border-action px-4 py-4 md:px-5">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>
               <p className="font-semibold text-ink">Choices found in this browser</p>
@@ -191,7 +191,7 @@ export function AccountSavedData() {
         </section>
       ) : null}
 
-      <section>
+      <section className="surface-card p-4 sm:p-5">
         <div className="flex items-end justify-between gap-3 border-b border-line pb-3">
           <div>
             <p className="text-xs font-semibold uppercase text-action">Reusable details</p>
@@ -224,7 +224,7 @@ export function AccountSavedData() {
         ) : <p className="py-6 text-sm text-slate-500">No saved profile yet. Sign in on either predictor and save the current form with a clear name.</p>}
       </section>
 
-      <section>
+      <section className="surface-card p-4 sm:p-5">
         <div className="flex items-end justify-between gap-3 border-b border-line pb-3">
           <div>
             <p className="text-xs font-semibold uppercase text-action">Recent searches</p>
@@ -258,7 +258,7 @@ export function AccountSavedData() {
         ) : <p className="py-6 text-sm text-slate-500">Successful FE and DSE predictions will appear here after you sign in.</p>}
       </section>
 
-      <section>
+      <section className="surface-card p-4 sm:p-5">
         <div className="flex items-end justify-between gap-3 border-b border-line pb-3">
           <div>
             <p className="text-xs font-semibold uppercase text-action">CAP planning</p>
@@ -288,7 +288,7 @@ export function AccountSavedData() {
         ) : <p className="py-6 text-sm text-slate-500">No account CAP list yet. Build one from prediction results or the CAP List page.</p>}
       </section>
 
-      <section>
+      <section className="surface-card p-4 sm:p-5">
         <div className="flex items-end justify-between gap-3 border-b border-line pb-3">
           <div>
             <p className="text-xs font-semibold uppercase text-action">Decision tools</p>
@@ -318,7 +318,7 @@ export function AccountSavedData() {
         ) : <p className="py-6 text-sm text-slate-500">No account comparison yet. Add at least two choices on the Compare page.</p>}
       </section>
 
-      <section>
+      <section className="surface-card p-4 sm:p-5">
         <div className="flex items-end justify-between gap-3 border-b border-line pb-3">
           <div>
             <p className="text-xs font-semibold uppercase text-action">College research</p>
@@ -348,7 +348,7 @@ export function AccountSavedData() {
         ) : <p className="py-6 text-sm text-slate-500">No saved colleges yet. You can still use CAP lists and comparisons without creating a separate shortlist.</p>}
       </section>
 
-      <nav className="grid gap-3 border-y border-line bg-panel px-4 py-5 sm:grid-cols-3" aria-label="Admission tools">
+      <nav className="surface-card grid gap-3 bg-panel px-4 py-5 sm:grid-cols-3" aria-label="Admission tools">
         <Link className="focus-ring inline-flex min-h-11 items-center gap-2 rounded bg-white px-4 text-sm font-semibold text-ink" href="/fe-predictor"><UserRound aria-hidden="true" className="text-action" size={18} /> Open predictor</Link>
         <Link className="focus-ring inline-flex min-h-11 items-center gap-2 rounded bg-white px-4 text-sm font-semibold text-ink" href="/compare"><GitCompareArrows aria-hidden="true" className="text-action" size={18} /> Compare colleges</Link>
         <Link className="focus-ring inline-flex min-h-11 items-center gap-2 rounded bg-white px-4 text-sm font-semibold text-ink" href="/preference-list"><ListOrdered aria-hidden="true" className="text-action" size={18} /> Open CAP List</Link>

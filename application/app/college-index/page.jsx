@@ -221,7 +221,7 @@ export default async function CollegeIndexPage({ searchParams }) {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-7xl px-4 py-8">
+      <main className="page-shell mx-auto max-w-7xl px-4 py-8 sm:px-5 lg:px-6">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, "\\u003c") }}
@@ -249,7 +249,7 @@ export default async function CollegeIndexPage({ searchParams }) {
           ))}
         </nav>
 
-        <section className="mt-6 grid gap-px overflow-hidden rounded border border-line bg-line sm:grid-cols-4">
+        <section className="mt-6 grid gap-px overflow-hidden rounded-lg border border-line bg-line shadow-soft sm:grid-cols-4">
           <div className="bg-white p-4"><p className="text-xs uppercase text-slate-500">Colleges ranked</p><p className="mt-1 text-xl font-semibold">{rankedColleges.length}</p></div>
           <div className="bg-white p-4"><p className="text-xs uppercase text-slate-500">Cutoff contribution</p><p className="mt-1 text-xl font-semibold">90%</p></div>
           <div className="bg-white p-4"><p className="text-xs uppercase text-slate-500">Other signals</p><p className="mt-1 text-sm font-semibold">Autonomy, {admissionRoute === "DSE" ? "DSE seats" : "intake"}, coverage</p></div>
@@ -265,7 +265,7 @@ export default async function CollegeIndexPage({ searchParams }) {
             <Link className="font-medium text-action underline" href={predictorHref}>Check your {routeName} admission fit</Link>
           </div>
 
-          <div className="mt-4 hidden overflow-hidden rounded border border-line bg-white md:block">
+          <div className="mt-4 hidden overflow-hidden rounded-lg border border-line bg-white shadow-soft md:block">
             <table className="w-full border-collapse text-left text-sm">
               <thead className="bg-panel text-xs uppercase text-slate-500">
                 <tr>
@@ -278,7 +278,7 @@ export default async function CollegeIndexPage({ searchParams }) {
               </thead>
               <tbody className="divide-y divide-line">
                 {colleges.map((college, index) => (
-                  <tr key={college.instituteCode}>
+                  <tr key={college.instituteCode} className="transition-colors hover:bg-cyan-50/40">
                     <td className="px-4 py-4 text-lg font-semibold text-action">#{firstPosition + index + 1}</td>
                     <td className="px-4 py-4">
                       <Link className="font-semibold text-ink hover:text-action hover:underline" href={`/colleges/${college.slug}?route=${admissionRoute}`}>{college.name}</Link>
@@ -295,7 +295,7 @@ export default async function CollegeIndexPage({ searchParams }) {
 
           <div className="mt-4 grid gap-3 md:hidden">
             {colleges.map((college, index) => (
-              <article key={college.instituteCode} className="rounded border border-line bg-white p-4 shadow-sm">
+              <article key={college.instituteCode} className="surface-card p-4">
                 <div className="flex items-start justify-between gap-3">
                   <span className="text-lg font-semibold text-action">#{firstPosition + index + 1}</span>
                   <span className="rounded bg-panel px-3 py-1 text-sm font-semibold">{college.demandIndex} / 100</span>

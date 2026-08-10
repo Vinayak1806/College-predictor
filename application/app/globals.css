@@ -4,13 +4,16 @@
 
 :root {
   color-scheme: light;
-  --page: #f3f7f8;
+  --page: #f6f8fc;
   --surface: #ffffff;
-  --ink: #132838;
-  --muted: #5f7180;
-  --line: #d6e1e6;
-  --action: #0f7188;
-  --action-dark: #0a596d;
+  --surface-subtle: #f8fafc;
+  --ink: #172033;
+  --muted: #64748b;
+  --line: #dbe3ee;
+  --action: #0f7185;
+  --action-dark: #095a6c;
+  --indigo: #4f46e5;
+  --focus: #70bdcd;
   background: var(--page);
   color: var(--ink);
 }
@@ -33,12 +36,15 @@ body {
   max-width: 100%;
   min-width: 0;
   overflow-x: clip;
-  background: var(--page);
+  background:
+    linear-gradient(180deg, #fbfdff 0, var(--page) 34rem, #f8fafc 100%);
   color: var(--ink);
-  font-family: "Segoe UI Variable Text", "Segoe UI", "Noto Sans", Arial, sans-serif;
+  font-family: "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.5;
   text-rendering: optimizeLegibility;
   font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 html::-webkit-scrollbar {
@@ -62,8 +68,13 @@ html::-webkit-scrollbar-button {
 h1,
 h2,
 h3 {
-  font-family: "Segoe UI Variable Display", "Segoe UI", "Noto Sans", Arial, sans-serif;
+  font-family: "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
   letter-spacing: 0;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
 }
 
 a {
@@ -96,7 +107,14 @@ select,
 textarea {
   background: #ffffff;
   color: var(--ink);
-  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+  border-radius: 0.5rem;
+  transition: border-color 220ms ease, box-shadow 220ms ease, background-color 220ms ease;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+select,
+textarea {
+  min-height: 44px;
 }
 
 input:not([type="checkbox"]):not([type="radio"]):hover,
@@ -109,7 +127,8 @@ input:not([type="checkbox"]):not([type="radio"]):focus,
 select:focus,
 textarea:focus {
   border-color: var(--action);
-  box-shadow: 0 0 0 3px rgba(15, 113, 136, 0.12);
+  box-shadow: 0 0 0 3px rgba(15, 113, 133, 0.13);
+  outline: none;
 }
 
 input[type="checkbox"],
@@ -119,7 +138,7 @@ input[type="radio"] {
 
 label:has(input[type="checkbox"]),
 label:has(input[type="radio"]) {
-  transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+  transition: border-color 220ms ease, background-color 220ms ease, box-shadow 220ms ease;
 }
 
 label:has(input[type="checkbox"]:checked),
@@ -152,8 +171,8 @@ a[href] {
 button,
 a.focus-ring,
 summary {
-  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease,
-    box-shadow 160ms ease, opacity 160ms ease, transform 120ms ease;
+  transition: color 220ms ease, background-color 220ms ease, border-color 220ms ease,
+    box-shadow 220ms ease, opacity 220ms ease, transform 180ms ease;
 }
 
 button:not(:disabled):active,
@@ -171,17 +190,90 @@ details[open] > summary {
 }
 
 main {
-  animation: page-enter 300ms ease-out both;
+  animation: page-enter 260ms ease-out both;
 }
 
 .focus-ring:focus-visible {
-  outline: 3px solid #6eb9ca;
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
 
 ::selection {
-  background: #ccebf1;
+  background: #cbeaf1;
   color: #102a43;
+}
+
+.page-shell {
+  width: 100%;
+}
+
+.surface-card {
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 1px 2px rgba(23, 32, 51, 0.04), 0 10px 28px rgba(23, 32, 51, 0.06);
+}
+
+.surface-card.border-t-4 {
+  border-top-width: 4px;
+}
+
+.surface-card.border-action {
+  border-color: var(--action);
+}
+
+.surface-card.border-success {
+  border-color: var(--success);
+}
+
+.section-kicker {
+  color: var(--action);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.soft-grid-bg {
+  background-image:
+    linear-gradient(rgba(79, 70, 229, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 113, 133, 0.035) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.legal-content > section,
+.legal-content > p {
+  border-top: 1px solid var(--line);
+  padding-block: 1.5rem;
+}
+
+.legal-content > :first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.legal-content > :last-child {
+  padding-bottom: 0;
+}
+
+@media (hover: hover) {
+  .surface-card:hover {
+    border-color: #bdcad9;
+    box-shadow: 0 2px 5px rgba(23, 32, 51, 0.05), 0 16px 36px rgba(23, 32, 51, 0.09);
+  }
+
+  button:not(:disabled):hover,
+  a.focus-ring:hover {
+    transform: translateY(-1px);
+  }
+}
+
+@media (max-width: 639px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {

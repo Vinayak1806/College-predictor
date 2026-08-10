@@ -170,7 +170,7 @@ export function AdminDataControls() {
   }
 
   return (
-    <section className="overflow-hidden rounded-lg border border-line bg-white">
+    <section className="surface-card overflow-hidden">
       <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-4 py-4 md:px-5">
         <div className="flex items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-action text-white">

@@ -414,7 +414,7 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
           __html: JSON.stringify(breadcrumbData).replace(/</g, "\\u003c")
         }}
       />
-      <main className="mx-auto max-w-7xl px-4 py-8">
+      <main className="page-shell mx-auto max-w-7xl px-4 py-8 sm:px-5 lg:px-6">
         <nav aria-label="Breadcrumb" className="text-sm text-slate-600">
           <ol className="flex flex-wrap items-center gap-2">
             <li><Link className="hover:text-action hover:underline" href="/">Home</Link></li>
@@ -425,7 +425,7 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
           </ol>
         </nav>
 
-        <header className="mt-4 border-y border-line bg-white px-4 py-5 sm:px-5">
+        <header className="surface-card mt-4 px-4 py-5 sm:px-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm font-medium text-slate-500">Institute code: {college.instituteCode}</p>
             <span className="rounded bg-cyan-50 px-3 py-1 text-xs font-semibold text-action">{admissionRoute === "DSE" ? "Direct Second-Year" : "First-Year"} admission data</span>

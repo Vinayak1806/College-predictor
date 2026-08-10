@@ -216,7 +216,7 @@ function CutoffCard({ cutoff }) {
   const isDse = cutoff.dataset.admissionRoute === "DSE";
 
   return (
-    <article className="overflow-hidden rounded-lg border border-line bg-white shadow-sm">
+    <article className="surface-card overflow-hidden">
       <header className="grid gap-4 border-b border-line px-4 py-4 sm:grid-cols-[minmax(0,1fr)_150px] md:px-5">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase text-action">
@@ -399,7 +399,7 @@ export default function CutoffExplorerPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-7xl px-4 py-7 md:py-10">
+      <main className="page-shell mx-auto max-w-7xl px-4 py-7 sm:px-5 md:py-10 lg:px-6">
         <header className="flex flex-col gap-5 border-b border-line pb-5 md:flex-row md:items-end md:justify-between">
           <div className="border-l-4 border-action pl-4">
             <p className="text-xs font-semibold uppercase text-action">Official CAP records</p>
@@ -433,7 +433,7 @@ export default function CutoffExplorerPage() {
           <p><span className="font-semibold text-ink">Start with a college or branch.</span> Choose an academic year, then open category and seat filters only when you need an exact official record.</p>
         </div>
 
-        <div className="mt-4 flex items-center justify-between gap-3 rounded border border-line bg-white px-3 py-3 lg:hidden">
+        <div className="surface-card mt-4 flex items-center justify-between gap-3 px-3 py-3 lg:hidden">
           <div>
             <p className="text-sm font-semibold text-ink">{total.toLocaleString("en-IN")} records found</p>
             <p className="text-xs text-slate-500">{activeFilterCount ? `${activeFilterCount} filters applied` : "All published records"}</p>
@@ -445,7 +445,7 @@ export default function CutoffExplorerPage() {
 
         <div className="mt-4 grid items-start gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
           <aside
-            className="sticky top-20 hidden overflow-y-auto rounded-lg border border-line bg-white scrollbar-hidden lg:block"
+            className="surface-card sticky top-20 hidden overflow-y-auto scrollbar-hidden lg:block"
             style={{ maxHeight: "calc(100vh - 6rem)" }}
           >
             <div className="flex items-center justify-between border-b border-line px-4 py-3">
@@ -469,7 +469,7 @@ export default function CutoffExplorerPage() {
           </aside>
 
           <section className="min-w-0">
-            <div className="rounded-lg border border-line bg-white p-4">
+            <div className="surface-card p-4">
               <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase text-action">{appliedFilters.route === "DSE" ? "Direct Second-Year" : "First-Year"} search results</p>
@@ -536,7 +536,7 @@ export default function CutoffExplorerPage() {
             ) : null}
 
             {!loading && totalPages > 1 ? (
-              <nav className="mt-5 flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-white px-3 py-3" aria-label="Cutoff result pages">
+              <nav className="surface-card mt-5 flex min-w-0 flex-wrap items-center justify-between gap-3 px-3 py-3" aria-label="Cutoff result pages">
                 <p className="text-sm text-slate-600">Page {page} of {totalPages}</p>
                 <div className="scrollbar-hidden flex max-w-full items-center gap-1 overflow-x-auto">
                   <button

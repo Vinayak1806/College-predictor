@@ -11,7 +11,7 @@ export default function PreferenceListPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-7xl px-4 py-4 md:py-5">
+      <main className="page-shell mx-auto max-w-7xl px-4 py-5 sm:px-5 md:py-7 lg:px-6">
         <div className="grid gap-2 border-l-4 border-action pl-4 md:grid-cols-[340px_minmax(0,1fr)] md:items-end md:gap-8">
           <div>
             <p className="text-xs font-semibold uppercase text-action">CAP decision workspace</p>

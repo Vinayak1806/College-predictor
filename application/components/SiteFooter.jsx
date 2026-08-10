@@ -5,13 +5,14 @@ import { BrandMark } from "./BrandMark";
 
 export function SiteFooter() {
   return (
-    <footer className="mt-16 border-t-4 border-action bg-[#102b3a] text-white">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 md:grid-cols-[1.3fr_0.7fr_0.7fr]">
+    <footer className="mt-16 border-t border-cyan-900 bg-[#102737] text-white">
+      <div className="h-1 bg-gradient-to-r from-action via-indigo-500 to-cyan-400" />
+      <div className="mx-auto grid max-w-7xl gap-9 px-4 py-10 sm:px-5 md:grid-cols-[1.25fr_0.75fr_0.75fr] md:py-12 lg:px-6">
         <div className="max-w-md">
           <div className="flex items-center gap-3">
             <BrandMark />
             <div>
-              <p className="font-semibold">Admission Compass</p>
+              <p className="font-semibold tracking-normal">Admission Compass</p>
               <p className="mt-0.5 text-xs text-slate-400">Maharashtra engineering college predictor</p>
             </div>
           </div>
@@ -21,17 +22,17 @@ export function SiteFooter() {
         </div>
         <div>
           <p className="text-sm font-semibold">Student tools</p>
-          <div className="mt-3 grid gap-2 text-sm text-slate-300">
-            <Link className="hover:text-white" href="/fe-predictor">First-Year B.E./B.Tech Predictor</Link>
-            <Link className="hover:text-white" href="/dse-predictor">Direct Second-Year (DSE) Predictor</Link>
-            <Link className="hover:text-white" href="/colleges">Explore Engineering Colleges</Link>
-            <Link className="hover:text-white" href="/college-index">Top Maharashtra Engineering Colleges</Link>
-            <Link className="hover:text-white" href="/preference-list">CAP Preference List</Link>
+          <div className="mt-3 grid gap-2.5 text-sm text-slate-300">
+            <Link className="transition-colors hover:text-white" href="/fe-predictor">First-Year B.E./B.Tech Predictor</Link>
+            <Link className="transition-colors hover:text-white" href="/dse-predictor">Direct Second-Year (DSE) Predictor</Link>
+            <Link className="transition-colors hover:text-white" href="/colleges">Explore Engineering Colleges</Link>
+            <Link className="transition-colors hover:text-white" href="/college-index">Top Maharashtra Engineering Colleges</Link>
+            <Link className="transition-colors hover:text-white" href="/preference-list">CAP Preference List</Link>
           </div>
         </div>
         <div>
           <p className="text-sm font-semibold">Data and trust</p>
-          <div className="mt-3 grid gap-2 text-sm text-slate-300">
+          <div className="mt-3 grid gap-2.5 text-sm text-slate-300">
             <span className="flex items-center gap-2"><Database aria-hidden="true" size={15} /> PostgreSQL records</span>
             <Link className="hover:text-white" href="/disclaimer">Admission disclaimer</Link>
             <Link className="hover:text-white" href="/privacy">Privacy policy</Link>

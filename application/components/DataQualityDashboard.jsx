@@ -124,7 +124,7 @@ export function DataQualityDashboard() {
 
   return (
     <div className="grid gap-5">
-      <section className="overflow-hidden rounded-lg border border-line bg-white">
+      <section className="surface-card overflow-hidden">
         <div className="flex flex-wrap items-start justify-between gap-4 p-4 md:p-5">
           <div>
             <p className="text-xs font-semibold uppercase text-action">Live database audit</p>
@@ -192,7 +192,7 @@ export function DataQualityDashboard() {
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-lg border border-line bg-white">
+      <section className="surface-card overflow-hidden">
         <div className="grid gap-4 border-b border-line p-4 md:grid-cols-[1fr_auto] md:items-end md:p-5">
           <div>
             <p className="text-xs font-semibold uppercase text-action">Action queue</p>

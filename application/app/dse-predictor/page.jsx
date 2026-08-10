@@ -457,7 +457,7 @@ export default function DsePredictorPage() {
   return (
     <>
       <SiteHeader />
-      <main className={`mx-auto grid min-w-0 gap-6 px-4 py-6 ${hasPredicted ? "max-w-7xl lg:grid-cols-[340px_minmax(0,1fr)] lg:items-start xl:grid-cols-[360px_minmax(0,1fr)]" : "max-w-6xl"}`}>
+      <main className={`page-shell mx-auto grid min-w-0 gap-6 px-4 py-6 sm:px-5 lg:px-6 ${hasPredicted ? "max-w-7xl lg:grid-cols-[340px_minmax(0,1fr)] lg:items-start xl:grid-cols-[360px_minmax(0,1fr)]" : "max-w-6xl"}`}>
         <section className="min-w-0 w-full lg:self-stretch">
           <header className="border-l-4 border-action pl-4">
             <p className="text-xs font-semibold uppercase text-action">Direct Second-Year Engineering Admission (DSE)</p>
@@ -484,7 +484,7 @@ export default function DsePredictorPage() {
 
           <form
             ref={predictorFormRef}
-            className="mt-4 grid min-w-0 gap-5 rounded-lg border border-line bg-white p-4 shadow-soft"
+            className="surface-card mt-4 grid min-w-0 gap-5 p-4 sm:p-5"
             onSubmit={(event) => {
               event.preventDefault();
               predict(1);
@@ -680,7 +680,7 @@ export default function DsePredictorPage() {
           </form>
 
           {hasPredicted ? (
-            <aside className="sticky top-20 mt-4 hidden overflow-hidden rounded-lg border border-line bg-white lg:block">
+            <aside className="surface-card sticky top-20 mt-4 hidden overflow-hidden lg:block">
               <div className="flex items-start justify-between gap-3 p-4">
                 <div>
                   <p className="text-xs font-semibold uppercase text-action">Current Direct Second-Year profile</p>
@@ -731,7 +731,7 @@ export default function DsePredictorPage() {
         </section>
 
         <section ref={resultsTopRef} className={`min-w-0 scroll-mt-20 content-start gap-4 ${hasPredicted ? "grid" : "hidden"}`}>
-          <div className="overflow-hidden rounded-lg border border-line bg-white shadow-soft">
+          <div className="surface-card overflow-hidden">
             <div className={`grid items-start gap-4 p-4 md:p-5 ${hasPredicted ? "md:grid-cols-[minmax(0,1fr)_96px]" : ""}`}>
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase text-action">Prediction workspace</p>

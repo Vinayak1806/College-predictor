@@ -3,17 +3,20 @@ const config = {
   theme: {
     extend: {
       colors: {
-        ink: "#132838",
-        panel: "#f3f7f8",
-        line: "#d6e1e6",
-        action: "#0f7188",
-        success: "#167a52",
-        warning: "#aa5a0a",
-        danger: "#b13b3b"
+        ink: "#172033",
+        panel: "#f5f8fc",
+        line: "#dbe3ee",
+        action: "#0f7185",
+        success: "#147a55",
+        warning: "#a65a10",
+        danger: "#b33a48"
+      },
+      fontFamily: {
+        sans: ["Inter Variable", "Inter", "ui-sans-serif", "system-ui", "sans-serif"]
       },
       boxShadow: {
-        soft: "0 8px 24px rgba(18, 52, 69, 0.07)",
-        raised: "0 14px 34px rgba(18, 52, 69, 0.11)"
+        soft: "0 1px 2px rgba(23, 32, 51, 0.04), 0 10px 28px rgba(23, 32, 51, 0.07)",
+        raised: "0 2px 6px rgba(23, 32, 51, 0.06), 0 18px 44px rgba(23, 32, 51, 0.12)"
       }
     }
   },

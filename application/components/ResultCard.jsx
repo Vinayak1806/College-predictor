@@ -136,7 +136,7 @@ export function ResultCard(props) {
   }
 
   return (
-    <article className="result-card min-w-0 overflow-hidden rounded-lg border border-line bg-white shadow-soft transition-[border-color,box-shadow] duration-200">
+    <article className="result-card surface-card min-w-0 overflow-hidden transition-[border-color,box-shadow] duration-200">
       <div className={`h-1 ${zoneBarClass[props.zone] || "bg-action"}`} />
 
       <ResultCardSummary
@@ -167,21 +167,21 @@ export function ResultCard(props) {
       <footer className="flex flex-wrap gap-2 border-t border-line px-4 py-4 md:px-5">
         {collegeHref ? (
           <Link
-            className="focus-ring inline-flex min-h-11 items-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#0a596d]"
+            className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#0a596d] sm:w-auto"
             href={collegeHref}
           >
             View college <ArrowUpRight aria-hidden="true" size={17} />
           </Link>
         ) : null}
         <button
-          className="focus-ring inline-flex min-h-11 items-center gap-2 rounded border border-line bg-white px-4 text-sm font-medium hover:border-[#aac0ca] hover:bg-panel"
+          className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded border border-line bg-white px-4 text-sm font-medium hover:border-[#aac0ca] hover:bg-panel sm:w-auto"
           type="button"
           onClick={addToCompare}
         >
           <Scale aria-hidden="true" size={17} /> {compareStatus || "Add to compare"}
         </button>
         <button
-          className="focus-ring inline-flex min-h-11 items-center gap-2 rounded border border-line bg-white px-4 text-sm font-semibold hover:border-[#aac0ca] hover:bg-panel"
+          className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded border border-line bg-white px-4 text-sm font-semibold hover:border-[#aac0ca] hover:bg-panel sm:w-auto"
           type="button"
           onClick={addToCapList}
         >

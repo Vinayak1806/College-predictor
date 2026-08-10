@@ -29,7 +29,7 @@ export function GoogleSignInButton({ configured, callbackURL = "/account" }) {
         type="button"
         disabled={!configured || loading}
         onClick={signIn}
-        className="focus-ring flex min-h-14 w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-action hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+        className="focus-ring flex min-h-14 w-full items-center justify-center gap-3 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-action hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
       >
         {loading ? (
           <LoaderCircle aria-hidden="true" className="animate-spin" size={18} />

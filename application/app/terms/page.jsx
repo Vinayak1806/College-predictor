@@ -10,13 +10,13 @@ export default function TermsPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-4xl px-4 py-10">
+      <main className="page-shell mx-auto w-full max-w-4xl px-4 py-10 sm:px-5 lg:px-6">
         <header className="border-l-4 border-action pl-4">
           <p className="text-xs font-semibold uppercase text-action">Responsible use</p>
           <h1 className="mt-1 text-3xl font-semibold text-ink">Terms of Use</h1>
           <p className="mt-2 text-sm text-slate-500">Last updated: August 3, 2026</p>
         </header>
-        <div className="mt-8 grid gap-8 text-sm leading-7 text-slate-700">
+        <div className="legal-content mt-8 text-sm leading-7 text-slate-700">
           <section><h2 className="text-xl font-semibold text-ink">Educational decision support</h2><p className="mt-2">Admission Compass is an independent research tool. It is not operated, endorsed or approved by the Maharashtra State Common Entrance Test Cell or any college, university or government authority.</p></section>
           <section><h2 className="text-xl font-semibold text-ink">No admission guarantee</h2><p className="mt-2">Predictions, margins, confidence labels and admission zones are calculations based on historical records. They do not guarantee eligibility, seat availability, allotment or admission in a future CAP round.</p></section>
           <section><h2 className="text-xl font-semibold text-ink">Student responsibility</h2><p className="mt-2">You must verify current eligibility rules, schedules, institute codes, branch codes, fees, seat matrices and final cutoffs through official sources before submitting an application or preference list.</p></section>

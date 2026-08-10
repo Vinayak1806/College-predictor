@@ -74,7 +74,7 @@ export function HomeEvidenceCharts({ coverage = [] }) {
           <p>88.4% of FE and 92.2% of DSE options stayed in the same or neighboring admission zone.</p>
         </div>
 
-        <div className="mt-3 grid overflow-hidden rounded border border-line bg-white lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)]">
+        <div className="surface-card mt-3 grid overflow-hidden lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)]">
           <article className="min-w-0 border-b border-line p-4 lg:border-b-0 lg:border-r">
             <div className="flex flex-wrap items-end justify-between gap-2">
               <div>

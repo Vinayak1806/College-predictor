@@ -100,8 +100,8 @@ export default async function HomePage() {
             sizes="100vw"
             className="h-full w-full max-w-none object-cover object-[62%_center]"
           />
-          <div className="absolute inset-0 bg-[#071923]/65" />
-          <div className="relative mx-auto flex min-h-[calc(100svh-88px)] w-full min-w-0 max-w-7xl items-center px-4 py-12">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#071923]/90 via-[#071923]/72 to-[#071923]/42" />
+          <div className="relative mx-auto flex min-h-[min(720px,calc(100svh-68px))] w-full min-w-0 max-w-7xl items-center px-4 py-12 sm:px-5 md:py-16 lg:px-6">
             <div className="enter-up min-w-0 max-w-3xl">
               <div className="inline-flex items-center gap-2 border-l-2 border-amber-400 pl-3 text-sm font-semibold text-white">
                 <CheckCircle2 aria-hidden="true" size={17} />
@@ -123,10 +123,10 @@ export default async function HomePage() {
                 </Link>
               </div>
 
-              <form action="/colleges" className="relative z-20 mt-8 flex min-w-0 max-w-2xl rounded bg-white shadow-xl">
+              <form action="/colleges" className="relative z-20 mt-8 grid min-w-0 max-w-2xl gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-0 sm:rounded-lg sm:bg-white sm:p-1 sm:shadow-xl">
                 <label className="sr-only" htmlFor="home-college-search">Search college name, code or city</label>
-                <CollegeAutocomplete id="home-college-search" name="q" className="flex min-h-12 flex-1 items-center px-4" placeholder="Search college name or institute code" />
-                <button className="focus-ring min-h-12 rounded-r bg-[#d97706] px-5 text-sm font-semibold text-white hover:bg-[#b85f05]" type="submit">Search</button>
+                <CollegeAutocomplete id="home-college-search" name="q" className="flex min-h-12 min-w-0 items-center rounded-lg bg-white px-4 text-ink shadow-lg sm:rounded-none sm:shadow-none" placeholder="Search college name or institute code" />
+                <button className="focus-ring min-h-12 rounded-lg bg-[#d97706] px-5 text-sm font-semibold text-white shadow-lg hover:bg-[#b85f05] sm:shadow-none" type="submit">Search colleges</button>
               </form>
             </div>
           </div>
@@ -167,7 +167,7 @@ export default async function HomePage() {
 
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
             {admissionRoutes.map((route) => (
-              <article key={route.code} className={`overflow-hidden rounded-lg border border-line border-t-4 bg-white shadow-sm ${route.accent}`}>
+              <article key={route.code} className={`surface-card overflow-hidden border-t-4 ${route.accent}`}>
                 <div className="grid gap-5 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start md:p-6">
                   <div className="min-w-0">
                     <div className="flex items-center gap-3">
@@ -214,7 +214,7 @@ export default async function HomePage() {
             <h2 className="mt-2 text-3xl font-bold text-ink">From profile to explainable options</h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">The predictor keeps admission possibility, college strength and personal preference separate.</p>
           </div>
-          <div className="mt-8 grid gap-px overflow-hidden rounded border border-line bg-line md:grid-cols-4">
+          <div className="mt-8 grid gap-px overflow-hidden rounded-lg border border-line bg-line shadow-soft md:grid-cols-4">
             {steps.map((step, index) => (
               <article key={step.title} className="group bg-white p-5 transition-[background-color,box-shadow] duration-200 hover:bg-[#fbfdfd] hover:shadow-soft">
                 <div className="flex items-center justify-between">

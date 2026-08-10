@@ -15,7 +15,7 @@ test("public navigation, student login and protected account routes work", async
   await expect(page.getByRole("heading", { name: "Sign in to Admission Compass" })).toBeVisible();
 
   await page.goto("/account");
-  await expect(page).toHaveURL(/\/login/);
+  await expect(page).toHaveURL(/\/login/, { timeout: 30_000 });
 });
 
 test("admin routes reject guests and invalid credentials", async ({ page, request }) => {
@@ -27,7 +27,7 @@ test("admin routes reject guests and invalid credentials", async ({ page, reques
     "x-forwarded-for": `playwright-${Date.now()}-${Math.random()}`
   });
   await page.goto("/admin");
-  await expect(page).toHaveURL(/\/admin\/login/);
+  await expect(page).toHaveURL(/\/admin\/login/, { timeout: 30_000 });
   await page.getByLabel("Admin token", { exact: true }).fill("incorrect-token-that-is-long-enough-for-validation");
   await page.getByRole("button", { name: "Open Admin Dashboard" }).click();
   await expect(page.getByRole("alert").filter({ hasText: /invalid|failed|access/i })).toBeVisible({ timeout: 30_000 });

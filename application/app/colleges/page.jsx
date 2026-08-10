@@ -180,7 +180,7 @@ export default async function CollegesPage({ searchParams }) {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-7xl px-4 py-8 md:py-12">
+      <main className="page-shell mx-auto max-w-7xl px-4 py-8 sm:px-5 md:py-12 lg:px-6">
         <header className="max-w-3xl border-l-4 border-action pl-4">
           <p className="text-xs font-semibold uppercase text-action">{routeName} College Research</p>
           <h1 className="mt-2 text-3xl font-bold text-ink md:text-4xl">Explore Maharashtra Engineering Colleges</h1>
@@ -220,7 +220,7 @@ export default async function CollegesPage({ searchParams }) {
           </dl>
         </div>
 
-        <form className="relative z-20 mt-7 flex rounded border border-line bg-white shadow-sm" action="/colleges">
+        <form className="surface-card relative z-20 mt-7 flex overflow-visible" action="/colleges">
           <input type="hidden" name="route" value={admissionRoute} />
           <label className="sr-only" htmlFor="college-search">Search colleges</label>
           <CollegeAutocomplete
@@ -258,7 +258,7 @@ export default async function CollegesPage({ searchParams }) {
               const collegeHref = `/colleges/${college.slug}?route=${admissionRoute}`;
 
               return (
-                <article key={college.id.toString()} className="group rounded border border-line bg-white p-4 shadow-sm transition hover:border-[#9bcbd6] hover:shadow-md">
+                <article key={college.id.toString()} className="group surface-card p-4 transition hover:border-[#9bcbd6]">
                   <div className="flex items-start justify-between gap-3">
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-cyan-50 text-action"><Building2 aria-hidden="true" size={20} /></span>
                     <span className="text-xs font-semibold text-slate-400">{college.instituteCode}</span>

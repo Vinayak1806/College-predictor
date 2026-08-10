@@ -18,7 +18,7 @@ export default async function AccountPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-5xl px-4 py-8">
+      <main className="page-shell mx-auto w-full max-w-5xl px-4 py-8 sm:px-5 lg:px-6">
         <div className="flex flex-col justify-between gap-5 border-b border-line pb-6 sm:flex-row sm:items-center">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase text-action">Student account</p>

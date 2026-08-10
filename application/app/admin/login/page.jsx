@@ -3,7 +3,7 @@
 import { AlertCircle, Database, Eye, EyeOff, FileCheck2, LockKeyhole, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SiteHeader } from "../../../components/SiteHeader";
 
 export default function AdminLoginPage() {
@@ -12,6 +12,11 @@ export default function AdminLoginPage() {
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
   const [showToken, setShowToken] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   async function signIn(event) {
     event.preventDefault();
@@ -37,7 +42,7 @@ export default function AdminLoginPage() {
   return (
     <>
       <SiteHeader showStudentAccount={false} />
-      <main className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl items-stretch px-4 py-10 lg:grid-cols-[minmax(0,1fr)_460px] lg:py-14">
+      <main className="page-shell soft-grid-bg mx-auto grid min-h-[calc(100vh-68px)] w-full max-w-6xl items-stretch px-4 py-8 sm:px-5 lg:grid-cols-[minmax(0,1fr)_440px] lg:px-6 lg:py-14">
         <section className="order-2 enter-up flex flex-col justify-center rounded-b-lg bg-[#123448] px-6 py-10 text-white lg:order-1 lg:rounded-l-lg lg:rounded-br-none lg:rounded-tr-none lg:px-10">
           <span className="flex h-12 w-12 items-center justify-center rounded bg-white/10 text-cyan-100">
             <ShieldCheck aria-hidden="true" size={24} />
@@ -86,6 +91,7 @@ export default function AdminLoginPage() {
                 type={showToken ? "text" : "password"}
                 autoComplete="current-password"
                 required
+                disabled={!hydrated || working}
                 aria-invalid={Boolean(error)}
                 aria-describedby="admin-token-help"
                 value={token}
@@ -113,7 +119,7 @@ export default function AdminLoginPage() {
             <button
               className="focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white disabled:opacity-60"
               type="submit"
-              disabled={working}
+              disabled={working || !hydrated}
             >
               <ShieldCheck aria-hidden="true" size={17} />
               {working ? "Checking access..." : "Open Admin Dashboard"}

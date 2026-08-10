@@ -104,7 +104,7 @@ function ComparisonCard({ item, position }) {
   if (item.branch) collegeParams.set("branch", item.branch.name);
 
   return (
-    <article className="min-w-0 overflow-hidden rounded-lg border border-line bg-white">
+    <article className="surface-card min-w-0 overflow-hidden">
       <div className={`h-1 ${prediction?.zone === "SAFE" ? "bg-success" : prediction?.zone === "TARGET" ? "bg-action" : prediction ? "bg-warning" : "bg-slate-300"}`} />
       <header className="min-h-[178px] p-4 md:p-5">
         <p className="text-xs font-semibold uppercase text-slate-500">{routeName} choice {position} | Institute {item.instituteCode}</p>
@@ -465,7 +465,7 @@ export default function ComparePage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-7xl px-4 py-7 md:py-9">
+      <main className="page-shell mx-auto max-w-7xl px-4 py-7 sm:px-5 md:py-9 lg:px-6">
         <header className="border-l-4 border-action pl-4">
           <p className="text-xs font-semibold uppercase text-action">Decision workspace</p>
           <h1 className="mt-1 text-2xl font-semibold text-ink md:text-3xl">Compare Engineering Colleges and Branches</h1>
@@ -496,7 +496,7 @@ export default function ComparePage() {
           </div>
         </section>
 
-        <section className="mt-5 overflow-visible rounded-lg border border-line bg-white">
+        <section className="surface-card mt-5 overflow-visible">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-4 md:px-5">
             <div>
               <h2 className="font-semibold text-ink">Choose {routeName} colleges</h2>

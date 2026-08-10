@@ -128,7 +128,7 @@ export function PredictionHealthDashboard() {
   }
 
   return (
-    <section className="overflow-hidden rounded-lg border border-line bg-white">
+    <section className="surface-card overflow-hidden">
       <div className="flex flex-wrap items-start justify-between gap-4 p-4 md:p-5">
         <div className="flex min-w-0 items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-cyan-50 text-action">

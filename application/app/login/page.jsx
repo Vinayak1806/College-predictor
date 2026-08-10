@@ -19,7 +19,7 @@ export default async function LoginPage({ searchParams }) {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center gap-10 px-4 py-10 lg:grid-cols-[minmax(0,1fr)_460px] lg:gap-16 lg:py-16">
+      <main className="page-shell soft-grid-bg mx-auto grid min-h-[calc(100vh-68px)] w-full max-w-6xl items-center gap-8 px-4 py-8 sm:px-5 lg:grid-cols-[minmax(0,1fr)_440px] lg:gap-14 lg:px-6 lg:py-14">
         <section className="order-2 max-w-xl enter-up lg:order-1">
           <p className="text-xs font-semibold uppercase text-action">Student account</p>
           <h1 className="mt-3 text-3xl font-semibold leading-tight text-ink sm:text-4xl">

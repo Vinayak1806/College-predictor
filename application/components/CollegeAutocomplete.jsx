@@ -140,13 +140,13 @@ export function CollegeAutocomplete({
       </div>
 
       {open ? (
-        <div id={listId} className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded border border-line bg-white shadow-xl" role="listbox">
+        <div id={listId} className="menu-enter absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-lg border border-line bg-white shadow-raised" role="listbox">
           {loading ? <p className="px-4 py-3 text-sm text-slate-500">Searching colleges...</p> : null}
           {!loading && suggestions.map((college, index) => (
             <button
               key={college.slug}
               aria-selected={activeIndex === index}
-              className={`grid min-h-14 w-full gap-1 border-t border-line px-4 py-2 text-left first:border-t-0 ${
+              className={`grid min-h-14 w-full gap-1 border-t border-line px-4 py-2.5 text-left first:border-t-0 ${
                 activeIndex === index ? "bg-cyan-50" : "hover:bg-panel"
               }`}
               role="option"
