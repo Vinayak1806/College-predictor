@@ -136,8 +136,8 @@ export function ResultCard(props) {
   }
 
   return (
-    <article className="result-card surface-card min-w-0 overflow-hidden transition-[border-color,box-shadow] duration-200">
-      <div className={`h-1 ${zoneBarClass[props.zone] || "bg-action"}`} />
+    <article className="result-card surface-card min-w-0 overflow-hidden rounded-xl transition-[border-color,box-shadow] duration-250">
+      <div className={`h-1.5 ${zoneBarClass[props.zone] || "bg-gradient-to-r from-action to-cyan-500"}`} />
 
       <ResultCardSummary
         result={props}
@@ -156,32 +156,32 @@ export function ResultCard(props) {
       <ResultCardDetails result={props} detailFacts={detailFacts} otherSeatTypes={otherSeatTypes} />
 
       {!hasResultValue(props.latestFee) ? (
-        <div className="flex items-start gap-2 border-t border-line bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900 md:px-5">
-          <Info aria-hidden="true" className="mt-0.5 shrink-0" size={16} />
+        <div className="flex items-start gap-2.5 border-t border-amber-200 bg-amber-50/80 px-4 py-3 text-xs leading-5 text-amber-800 md:px-5">
+          <Info aria-hidden="true" className="mt-0.5 shrink-0 text-amber-500" size={16} />
           <p>
             A verified current fee is not available in our records. Use <strong>View college</strong> below and confirm the latest fee on the college&apos;s official website or the Maharashtra Fee Regulating Authority website.
           </p>
         </div>
       ) : null}
 
-      <footer className="flex flex-wrap gap-2 border-t border-line px-4 py-4 md:px-5">
+      <footer className="flex flex-wrap gap-2 border-t border-line bg-slate-50/50 px-4 py-4 md:px-5">
         {collegeHref ? (
           <Link
-            className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#0a596d] sm:w-auto"
+            className="btn-primary focus-ring w-full shadow-sm sm:w-auto"
             href={collegeHref}
           >
             View college <ArrowUpRight aria-hidden="true" size={17} />
           </Link>
         ) : null}
         <button
-          className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded border border-line bg-white px-4 text-sm font-medium hover:border-[#aac0ca] hover:bg-panel sm:w-auto"
+          className="btn-secondary focus-ring w-full sm:w-auto"
           type="button"
           onClick={addToCompare}
         >
           <Scale aria-hidden="true" size={17} /> {compareStatus || "Add to compare"}
         </button>
         <button
-          className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded border border-line bg-white px-4 text-sm font-semibold hover:border-[#aac0ca] hover:bg-panel sm:w-auto"
+          className="btn-secondary focus-ring w-full sm:w-auto"
           type="button"
           onClick={addToCapList}
         >

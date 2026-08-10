@@ -6,6 +6,8 @@ import {
   ArrowLeft,
   ArrowRight,
   BarChart3,
+  Building2,
+  CalendarDays,
   Check,
   ChevronDown,
   ChevronLeft,
@@ -14,6 +16,7 @@ import {
   SlidersHorizontal,
   X
 } from "lucide-react";
+import { CompactMetricGrid } from "../../components/CompactMetricGrid";
 import { ResultCard } from "../../components/ResultCard";
 import { PredictionReportButton } from "../../components/PredictionReportButton";
 import { SiteHeader } from "../../components/SiteHeader";
@@ -77,8 +80,8 @@ const collegeTypeOptions = [
 function FilterButton({ active, children, onClick }) {
   return (
     <button
-      className={`focus-ring min-h-11 max-w-full shrink-0 rounded border px-3 py-2 text-left text-sm font-medium ${
-        active ? "border-action bg-action text-white" : "border-line bg-white text-slate-700"
+      className={`focus-ring min-h-11 max-w-full shrink-0 rounded-full border px-4 py-2 text-left text-sm font-medium transition-colors duration-200 ${
+        active ? "border-action bg-action text-white shadow-sm" : "border-line bg-white text-slate-600 hover:border-action/30 hover:bg-slate-50"
       }`}
       type="button"
       onClick={onClick}
@@ -598,11 +601,14 @@ export default function FePredictorPage() {
               Find realistic options from verified Maharashtra CAP cutoffs and your official seat eligibility.
             </p>
           </div>
-          <div className="mt-4 grid grid-cols-3 divide-x divide-line rounded border border-line bg-white py-3 text-center shadow-sm">
-            <div><strong className="block text-base text-ink">103k+</strong><span className="text-xs text-slate-500">Cutoffs</span></div>
-            <div><strong className="block text-base text-ink">3</strong><span className="text-xs text-slate-500">Years</span></div>
-            <div><strong className="block text-base text-ink">{instituteCount ?? "--"}</strong><span className="text-xs text-slate-500">Institutes</span></div>
-          </div>
+          <CompactMetricGrid
+            className="mt-4 grid-cols-3"
+            items={[
+              { label: "FE cutoffs", value: "103k+", icon: BarChart3, tone: "indigo" },
+              { label: "Data years", value: "3", icon: CalendarDays, tone: "success" },
+              { label: "Institutes", value: instituteCount ?? "--", icon: Building2, tone: "action" }
+            ]}
+          />
 
           <form ref={predictorFormRef} noValidate onSubmit={submitForm} className="surface-card mt-4 grid min-w-0 scroll-mt-20 gap-4 p-4 sm:p-5">
             <p className="text-right text-xs text-slate-500"><span className="font-semibold text-danger">*</span> Required</p>
@@ -611,8 +617,8 @@ export default function FePredictorPage() {
                 <span className="text-action">Step {mobileStep} of 3</span>
                 <span className="text-slate-500">{mobileStep === 1 ? "Score" : mobileStep === 2 ? "Eligibility" : "Preferences"}</span>
               </div>
-              <div className="mt-3 h-2 overflow-hidden rounded bg-slate-100">
-                <div className="h-full bg-action transition-[width] duration-200" style={{ width: `${(mobileStep / 3) * 100}%` }} />
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+                <div className="h-full rounded-full bg-gradient-to-r from-action to-cyan-400 transition-[width] duration-300 ease-out" style={{ width: `${(mobileStep / 3) * 100}%` }} />
               </div>
             </div>
 
@@ -999,10 +1005,10 @@ export default function FePredictorPage() {
           </div>
 
           {loading && !results.length ? (
-            <div className="rounded-lg border border-line bg-white p-8 text-center">
-              <BarChart3 aria-hidden="true" className="mx-auto text-action" size={24} />
-              <p className="mt-3 font-semibold text-ink">Checking official cutoff records...</p>
-              <p className="mt-1 text-sm text-slate-500">This usually takes a few seconds.</p>
+            <div className="grid gap-3">
+              {[1, 2, 3].map((item) => (
+                <div key={item} className="shimmer h-64 rounded-xl" />
+              ))}
             </div>
           ) : null}
 

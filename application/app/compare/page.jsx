@@ -104,8 +104,8 @@ function ComparisonCard({ item, position }) {
   if (item.branch) collegeParams.set("branch", item.branch.name);
 
   return (
-    <article className="surface-card min-w-0 overflow-hidden">
-      <div className={`h-1 ${prediction?.zone === "SAFE" ? "bg-success" : prediction?.zone === "TARGET" ? "bg-action" : prediction ? "bg-warning" : "bg-slate-300"}`} />
+    <article className="surface-card min-w-0 overflow-hidden rounded-xl">
+      <div className={`h-1.5 ${prediction?.zone === "SAFE" ? "bg-gradient-to-r from-emerald-500 to-emerald-400" : prediction?.zone === "TARGET" ? "bg-gradient-to-r from-action to-cyan-500" : prediction ? "bg-gradient-to-r from-amber-500 to-amber-400" : "bg-slate-300"}`} />
       <header className="min-h-[178px] p-4 md:p-5">
         <p className="text-xs font-semibold uppercase text-slate-500">{routeName} choice {position} | Institute {item.instituteCode}</p>
         <h2 className="mt-2 text-lg font-semibold leading-6 text-ink">{item.name}</h2>
@@ -120,7 +120,7 @@ function ComparisonCard({ item, position }) {
         <section className="border-y border-line bg-panel px-4 py-4 md:px-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs font-medium uppercase text-slate-500">Your prediction</p>
-            <span className={`rounded border px-2.5 py-1 text-xs font-semibold ${zoneStyle[prediction.zone] || "border-line"}`}>
+            <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${zoneStyle[prediction.zone] || "border-line"}`}>
               {zoneLabel[prediction.zone] || prediction.zone}
             </span>
           </div>
@@ -222,12 +222,12 @@ function ComparisonCard({ item, position }) {
         </div>
       ) : null}
 
-      <footer className="flex flex-wrap gap-2 border-t border-line px-4 py-4 md:px-5">
-        <Link className="focus-ring inline-flex min-h-11 items-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white" href={`/colleges/${item.slug}?${collegeParams.toString()}`}>
+      <footer className="flex flex-wrap gap-2 border-t border-line bg-slate-50/50 px-4 py-4 md:px-5">
+        <Link className="btn-primary focus-ring text-sm shadow-sm" href={`/colleges/${item.slug}?${collegeParams.toString()}`}>
           College details <ArrowRight aria-hidden="true" size={17} />
         </Link>
         {item.officialWebsite ? (
-          <a className="focus-ring inline-flex min-h-11 items-center gap-2 rounded border border-line px-4 text-sm font-semibold" href={item.officialWebsite} target="_blank" rel="noreferrer">
+          <a className="btn-secondary focus-ring text-sm" href={item.officialWebsite} target="_blank" rel="noreferrer">
             Official site <ExternalLink aria-hidden="true" size={16} />
           </a>
         ) : null}
@@ -480,11 +480,11 @@ export default function ComparePage() {
               <p className="text-xs font-semibold uppercase text-slate-500">Admission route</p>
               <p className="mt-1 text-sm text-slate-600">All colleges, branches, cutoffs and seats below use the selected route.</p>
             </div>
-            <div className="grid grid-cols-2 rounded border border-line bg-panel p-1" role="group" aria-label="Choose admission route">
+            <div className="grid grid-cols-2 rounded-lg border border-line bg-panel p-1" role="group" aria-label="Choose admission route">
               {[{ code: "FE", label: "First-Year" }, { code: "DSE", label: "Direct Second-Year" }].map((route) => (
                 <button
                   key={route.code}
-                  className={`focus-ring min-h-11 rounded px-4 text-sm font-semibold ${admissionRoute === route.code ? "bg-action text-white" : "text-slate-700 hover:bg-white"}`}
+                  className={`focus-ring min-h-11 rounded-md px-4 text-sm font-semibold transition-colors ${admissionRoute === route.code ? "bg-action text-white shadow-sm" : "text-slate-600 hover:bg-white"}`}
                   type="button"
                   aria-pressed={admissionRoute === route.code}
                   onClick={() => changeAdmissionRoute(route.code)}
@@ -561,7 +561,7 @@ export default function ComparePage() {
 
           <div className="flex flex-wrap items-center gap-3 border-t border-line bg-panel px-4 py-4 md:px-5">
             <button
-              className="focus-ring inline-flex min-h-11 items-center gap-2 rounded bg-action px-5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              className="btn-primary focus-ring shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
               type="button"
               disabled={!hydrated || loading}
               onClick={compareColleges}
@@ -570,7 +570,7 @@ export default function ComparePage() {
               {loading ? "Comparing..." : "Compare choices"}
             </button>
             <button
-              className="focus-ring inline-flex min-h-11 items-center gap-2 rounded border border-action bg-white px-4 text-sm font-semibold text-action disabled:cursor-not-allowed disabled:opacity-50"
+              className="btn-secondary focus-ring text-action disabled:cursor-not-allowed disabled:opacity-50"
               type="button"
               disabled={!hydrated || savingAccount || slots.filter((slot) => slot.college).length < 2}
               onClick={saveToAccount}

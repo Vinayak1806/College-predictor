@@ -79,13 +79,14 @@ export function SiteHeader({ showStudentAccount = true }) {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line/90 bg-white/90 shadow-[0_4px_24px_rgba(23,32,51,0.06)] backdrop-blur-xl">
-      <div className="mx-auto flex min-h-[68px] max-w-7xl items-center justify-between gap-3 px-3 sm:px-5 lg:px-6">
-        <Link href="/" className="focus-ring group flex min-w-0 items-center gap-3 rounded" onClick={() => setMenuOpen(false)}>
-          <BrandMark className="h-11 w-11 transition-transform duration-200 group-hover:scale-[1.04]" />
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white shadow-sm">
+      <div className="h-[3px] bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500" />
+      <div className="mx-auto flex min-h-[64px] max-w-7xl items-center justify-between gap-3 px-3 sm:px-5 lg:px-6">
+        <Link href="/" className="focus-ring group flex min-w-0 items-center gap-3 rounded-lg" onClick={() => setMenuOpen(false)}>
+          <BrandMark className="h-10 w-10 transition-transform duration-200 group-hover:scale-[1.04]" />
           <span className="min-w-0">
-            <span className="block truncate text-[17px] font-bold leading-5 text-ink">Admission Compass</span>
-            <span className="hidden text-xs text-slate-500 sm:block">Maharashtra engineering college predictor</span>
+            <span className="block truncate text-base font-bold leading-5 tracking-tight text-slate-900">Admission Compass</span>
+            <span className="hidden text-[11px] font-medium text-slate-500 sm:block">Maharashtra engineering college predictor</span>
           </span>
         </Link>
 
@@ -96,8 +97,10 @@ export function SiteHeader({ showStudentAccount = true }) {
               <Link
                 key={href}
                 href={href}
-                className={`focus-ring whitespace-nowrap rounded-md border px-3 py-2 text-sm font-medium ${
-                  active ? "border-cyan-100 bg-cyan-50 text-action shadow-sm" : "border-transparent text-slate-600 hover:bg-panel hover:text-ink"
+                className={`focus-ring whitespace-nowrap rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-200 ${
+                  active
+                    ? "border border-indigo-200/80 bg-indigo-50 font-semibold text-indigo-700 shadow-2xs"
+                    : "text-slate-700 hover:bg-slate-100/80 hover:text-indigo-600"
                 }`}
               >
                 {label}
@@ -114,14 +117,14 @@ export function SiteHeader({ showStudentAccount = true }) {
                 aria-label={`Open account menu for ${user.name}`}
                 aria-expanded={accountOpen}
                 title={user.name}
-                className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-transparent text-slate-600 hover:border-line hover:bg-panel hover:text-action"
+                className="focus-ring flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-slate-600 transition-colors hover:border-slate-200 hover:bg-slate-100 hover:text-indigo-600"
                 onClick={() => {
                   setMenuOpen(false);
                   setAccountOpen((current) => !current);
                 }}
               >
                 {user.image && !imageFailed ? (
-                  <span className="h-8 w-8 overflow-hidden rounded-full border border-line bg-white">
+                  <span className="h-8 w-8 overflow-hidden rounded-full border border-slate-200 bg-white ring-2 ring-white">
                     <img
                       src={user.image}
                       alt=""
@@ -131,8 +134,8 @@ export function SiteHeader({ showStudentAccount = true }) {
                     />
                   </span>
                 ) : (
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-white">
-                    <UserRound aria-hidden="true" size={18} />
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                    <UserRound aria-hidden="true" size={17} />
                   </span>
                 )}
               </button>
@@ -141,25 +144,25 @@ export function SiteHeader({ showStudentAccount = true }) {
                 href="/login"
                 aria-label="Student login"
                 title={isPending ? "Checking account" : "Student login"}
-                className="focus-ring flex h-11 w-11 items-center justify-center rounded-md border border-line bg-white text-slate-600 shadow-sm hover:border-[#aac0ca] hover:bg-panel hover:text-action"
+                className="focus-ring flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-xs transition-colors hover:border-indigo-200 hover:bg-indigo-50/50 hover:text-indigo-600"
               >
-                <CircleUserRound aria-hidden="true" size={20} />
+                <CircleUserRound aria-hidden="true" size={19} />
               </Link>
             )}
 
             {user && accountOpen ? (
-              <div className="menu-enter absolute right-0 top-[calc(100%+0.5rem)] w-72 overflow-hidden rounded-lg border border-line bg-white shadow-raised" role="menu">
-                <div className="border-b border-line px-4 py-3">
-                  <p className="truncate text-sm font-semibold text-ink">{user.name}</p>
+              <div className="menu-enter absolute right-0 top-[calc(100%+0.5rem)] w-72 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg" role="menu">
+                <div className="border-b border-slate-100 px-4 py-3">
+                  <p className="truncate text-sm font-semibold text-slate-900">{user.name}</p>
                   <p className="mt-0.5 truncate text-xs text-slate-500">{user.email}</p>
                 </div>
-                <div className="p-2">
+                <div className="p-1.5">
                   <Link
                     href="/account"
                     role="menuitem"
-                    className="focus-ring flex min-h-11 items-center gap-3 rounded px-3 text-sm font-medium text-slate-700 hover:bg-panel"
+                    className="focus-ring flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900"
                   >
-                    <UserRound aria-hidden="true" size={18} />
+                    <UserRound aria-hidden="true" size={17} />
                     My account
                   </Link>
                   <button
@@ -167,9 +170,9 @@ export function SiteHeader({ showStudentAccount = true }) {
                     role="menuitem"
                     disabled={signingOut}
                     onClick={signOut}
-                    className="focus-ring flex min-h-11 w-full items-center gap-3 rounded px-3 text-left text-sm font-medium text-slate-700 hover:bg-panel disabled:opacity-60"
+                    className="focus-ring flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:opacity-60"
                   >
-                    <LogOut aria-hidden="true" size={18} />
+                    <LogOut aria-hidden="true" size={17} />
                     {signingOut ? "Signing out..." : "Sign out"}
                   </button>
                 </div>
@@ -180,20 +183,13 @@ export function SiteHeader({ showStudentAccount = true }) {
             href="/colleges"
             aria-label="Search colleges"
             title="Search colleges"
-            className="focus-ring hidden h-11 w-11 items-center justify-center rounded-md border border-line bg-white text-slate-600 shadow-sm hover:border-[#aac0ca] hover:bg-panel hover:text-action sm:flex xl:hidden"
+            className="focus-ring hidden h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-xs transition-colors hover:border-indigo-200 hover:bg-indigo-50/50 hover:text-indigo-600 sm:flex xl:hidden"
           >
-            <Search aria-hidden="true" size={19} />
-          </Link>
-          <Link
-            className="focus-ring hidden min-h-11 items-center gap-2 rounded-md bg-action px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#0a596d] hover:shadow-soft sm:inline-flex"
-            href={pathname.startsWith("/dse-predictor") ? "/dse-predictor" : "/fe-predictor"}
-          >
-            <BarChart3 aria-hidden="true" size={17} />
-            Predict
+            <Search aria-hidden="true" size={18} />
           </Link>
           <button
             type="button"
-            className="focus-ring flex h-11 w-11 items-center justify-center rounded-md border border-line bg-white text-slate-700 shadow-sm hover:border-[#aac0ca] hover:bg-panel xl:hidden"
+            className="focus-ring flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-xs transition-colors hover:border-indigo-200 hover:bg-indigo-50/50 xl:hidden"
             aria-label={menuOpen ? "Close navigation" : "Open navigation"}
             aria-expanded={menuOpen}
             onClick={() => {
@@ -201,18 +197,18 @@ export function SiteHeader({ showStudentAccount = true }) {
               setMenuOpen((current) => !current);
             }}
           >
-            {menuOpen ? <X aria-hidden="true" size={21} /> : <Menu aria-hidden="true" size={21} />}
+            {menuOpen ? <X aria-hidden="true" size={20} /> : <Menu aria-hidden="true" size={20} />}
           </button>
         </div>
       </div>
 
       {menuOpen ? (
-        <div className="absolute inset-x-0 top-full flex h-[calc(100dvh-68px)] justify-end bg-slate-950/30 backdrop-blur-sm xl:hidden">
+        <div className="absolute inset-x-0 top-full flex h-[calc(100dvh-67px)] justify-end bg-slate-950/40 backdrop-blur-xs xl:hidden">
           <button className="absolute inset-0 cursor-default" type="button" aria-label="Close navigation" onClick={() => setMenuOpen(false)} />
-          <nav className="menu-enter relative h-full w-full max-w-sm overflow-y-auto border-l border-line bg-white p-4 shadow-raised" aria-label="Mobile navigation">
-            <div className="mb-4 border-b border-line pb-4">
-              <p className="text-xs font-semibold uppercase text-action">Student navigation</p>
-              <p className="mt-1 text-sm text-slate-500">Predict, research and prepare your CAP list.</p>
+          <nav className="fade-in-scale relative h-full w-full max-w-sm overflow-y-auto border-l border-slate-200 bg-white p-5 shadow-2xl" aria-label="Mobile navigation">
+            <div className="mb-5 border-b border-slate-100 pb-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">Student navigation</p>
+              <p className="mt-1 text-xs text-slate-500">Predict, research and prepare your CAP list.</p>
             </div>
             <div className="grid gap-1">
             {links.map(([label, href]) => {
@@ -221,7 +217,9 @@ export function SiteHeader({ showStudentAccount = true }) {
                 <Link
                   key={href}
                   href={href}
-                  className={`focus-ring flex min-h-12 items-center rounded-md border px-3 text-sm font-medium ${active ? "border-cyan-100 bg-cyan-50 text-action" : "border-transparent text-slate-700 hover:bg-panel"}`}
+                  className={`focus-ring flex min-h-12 items-center rounded-lg px-3 text-sm font-medium transition-colors ${
+                    active ? "bg-indigo-50 font-semibold text-indigo-700 border border-indigo-100" : "text-slate-700 hover:bg-slate-100"
+                  }`}
                   onClick={() => setMenuOpen(false)}
                 >
                   {label}
@@ -231,7 +229,7 @@ export function SiteHeader({ showStudentAccount = true }) {
             </div>
             <Link
               href={pathname.startsWith("/dse-predictor") ? "/dse-predictor" : "/fe-predictor"}
-              className="focus-ring mt-5 flex min-h-12 items-center justify-center gap-2 rounded-md bg-action px-4 text-sm font-semibold text-white shadow-soft"
+              className="btn-primary mt-6 flex w-full"
               onClick={() => setMenuOpen(false)}
             >
               <BarChart3 aria-hidden="true" size={17} /> Predict colleges

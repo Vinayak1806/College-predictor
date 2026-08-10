@@ -51,7 +51,7 @@ export function ResultCardSummary({
           </div>
         </div>
         <div className="flex items-center justify-between gap-4 sm:grid sm:justify-items-end">
-          <span className={`rounded border px-3 py-1.5 text-xs font-semibold ${zoneClass[result.zone] || "border-line"}`}>
+          <span className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${zoneClass[result.zone] || "border-line"}`}>
             {zoneText[result.zone] || result.zone}
           </span>
           <div className="text-right">
@@ -66,13 +66,13 @@ export function ResultCardSummary({
       <section className="border-y border-line bg-panel px-4 py-4 md:px-5">
         <p className="text-xs font-medium uppercase text-slate-500">Admission match</p>
         <p className="mt-1 text-sm font-semibold text-ink">{comparisonText}</p>
-        <dl className="mt-3 grid overflow-hidden rounded border border-line divide-y divide-line bg-white sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        <dl className="mt-3 grid overflow-hidden rounded-lg border border-line divide-y divide-line bg-white sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           <Metric label={`Your ${result.scoreLabel || "percentile"}`} value={formatResultNumber(result.studentScore)} />
           <Metric label="Selected official cutoff" value={formatResultNumber(officialCutoff)} note={`${result.year}, CAP Round ${result.round}`} />
           <Metric label="Difference from selected cutoff" value={selectedDifferenceText} tone={marginTone} note="Positive means your score is above this cutoff" />
         </dl>
         {zoneNeedsExplanation ? (
-          <div className="mt-3 flex items-start gap-2 border-l-2 border-action bg-cyan-50 px-3 py-2 text-xs leading-5 text-slate-700">
+          <div className="mt-3 flex items-start gap-2.5 rounded-lg border-l-2 border-action bg-cyan-50/70 px-3 py-2.5 text-xs leading-5 text-slate-600">
             <Info aria-hidden="true" className="mt-0.5 shrink-0 text-action" size={15} />
             <p>The admission status also considers multiple years and data confidence. Open the explanation below to see the calculation.</p>
           </div>

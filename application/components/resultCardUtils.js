@@ -1,15 +1,15 @@
 export const zoneClass = {
-  SAFE: "border-success bg-emerald-50 text-success",
-  TARGET: "border-action bg-cyan-50 text-action",
-  AMBITIOUS: "border-warning bg-amber-50 text-warning",
-  HIGHLY_AMBITIOUS: "border-danger bg-red-50 text-danger"
+  SAFE: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  TARGET: "border-indigo-200 bg-indigo-50 text-indigo-700",
+  AMBITIOUS: "border-amber-200 bg-amber-50 text-amber-700",
+  HIGHLY_AMBITIOUS: "border-red-200 bg-red-50 text-red-700"
 };
 
 export const zoneBarClass = {
-  SAFE: "bg-success",
-  TARGET: "bg-action",
-  AMBITIOUS: "bg-warning",
-  HIGHLY_AMBITIOUS: "bg-danger"
+  SAFE: "bg-gradient-to-r from-emerald-500 to-teal-400",
+  TARGET: "bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500",
+  AMBITIOUS: "bg-gradient-to-r from-amber-500 to-orange-400",
+  HIGHLY_AMBITIOUS: "bg-gradient-to-r from-red-500 to-rose-400"
 };
 
 export const zoneText = {

@@ -216,7 +216,7 @@ function CutoffCard({ cutoff }) {
   const isDse = cutoff.dataset.admissionRoute === "DSE";
 
   return (
-    <article className="surface-card overflow-hidden">
+    <article className="surface-card overflow-hidden rounded-xl">
       <header className="grid gap-4 border-b border-line px-4 py-4 sm:grid-cols-[minmax(0,1fr)_150px] md:px-5">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase text-action">
@@ -262,11 +262,11 @@ function CutoffCard({ cutoff }) {
           </details>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link className="focus-ring inline-flex min-h-11 items-center gap-2 rounded bg-action px-4 text-sm font-semibold text-white" href={collegeLink(cutoff)}>
+          <Link className="btn-primary focus-ring text-sm shadow-sm" href={collegeLink(cutoff)}>
             College details <ArrowRight aria-hidden="true" size={16} />
           </Link>
           {cutoff.dataset.sourceUrl ? (
-            <a className="focus-ring inline-flex min-h-11 items-center gap-2 rounded border border-line px-4 text-sm font-semibold text-slate-700" href={cutoff.dataset.sourceUrl} target="_blank" rel="noreferrer">
+            <a className="btn-secondary focus-ring text-sm" href={cutoff.dataset.sourceUrl} target="_blank" rel="noreferrer">
               Official source <ExternalLink aria-hidden="true" size={15} />
             </a>
           ) : null}
@@ -410,12 +410,12 @@ export default function CutoffExplorerPage() {
           </div>
           <div className="shrink-0">
             <p className="mb-2 text-xs font-semibold uppercase text-slate-500">Admission route</p>
-          <div className="inline-grid min-h-11 grid-cols-2 overflow-hidden rounded border border-line" role="group" aria-label="Choose cutoff admission route">
+          <div className="inline-grid min-h-11 grid-cols-2 overflow-hidden rounded-lg border border-line" role="group" aria-label="Choose cutoff admission route">
             {["FE", "DSE"].map((route) => (
               <button
                 key={route}
-                className={`focus-ring min-h-11 border-r border-line px-5 text-sm font-semibold last:border-r-0 ${
-                  filters.route === route ? "bg-action text-white" : "bg-white text-slate-700 hover:bg-panel"
+                className={`focus-ring min-h-11 border-r border-line px-5 text-sm font-semibold last:border-r-0 transition-colors ${
+                  filters.route === route ? "bg-action text-white shadow-sm" : "bg-white text-slate-600 hover:bg-slate-50"
                 }`}
                 type="button"
                 aria-pressed={filters.route === route}
@@ -487,11 +487,11 @@ export default function CutoffExplorerPage() {
               {activeFilterCount ? (
                 <div className="mt-4 flex flex-wrap gap-2 border-t border-line pt-3" aria-label="Applied filters">
                   {Object.entries(appliedFilters).filter(([field, value]) => filterLabels[field] && value).map(([field, value]) => (
-                    <button key={field} className="focus-ring inline-flex min-h-9 items-center gap-2 rounded border border-line bg-panel px-3 text-xs font-medium text-slate-700" type="button" onClick={() => removeAppliedFilter(field)}>
+                    <button key={field} className="focus-ring inline-flex min-h-8 items-center gap-1.5 rounded-full border border-line bg-panel px-3 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-200" type="button" onClick={() => removeAppliedFilter(field)}>
                       {filterLabels[field]}: {field === "round" ? `Round ${value}` : value} <X aria-hidden="true" size={13} />
                     </button>
                   ))}
-                  <button className="focus-ring min-h-9 px-2 text-xs font-semibold text-action" type="button" onClick={clearFilters}>Clear all</button>
+                  <button className="focus-ring min-h-8 px-2 text-xs font-semibold text-action" type="button" onClick={clearFilters}>Clear all</button>
                 </div>
               ) : null}
 
@@ -517,7 +517,7 @@ export default function CutoffExplorerPage() {
             {loading ? (
               <div className="mt-4 grid gap-3">
                 {[1, 2, 3].map((item) => (
-                  <div key={item} className="h-64 animate-pulse rounded-lg border border-line bg-white" />
+                  <div key={item} className="shimmer h-64 rounded-xl" />
                 ))}
               </div>
             ) : results.length ? (

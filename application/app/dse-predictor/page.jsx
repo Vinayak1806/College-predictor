@@ -6,6 +6,8 @@ import {
   ArrowLeft,
   ArrowRight,
   BarChart3,
+  Building2,
+  CalendarDays,
   Check,
   ChevronDown,
   ChevronLeft,
@@ -15,6 +17,7 @@ import {
   SlidersHorizontal,
   X
 } from "lucide-react";
+import { CompactMetricGrid } from "../../components/CompactMetricGrid";
 import { ResultCard } from "../../components/ResultCard";
 import { PredictionReportButton } from "../../components/PredictionReportButton";
 import { SiteHeader } from "../../components/SiteHeader";
@@ -72,8 +75,8 @@ function RequiredMark() {
 function FilterButton({ active, children, onClick }) {
   return (
     <button
-      className={`focus-ring min-h-11 shrink-0 rounded border px-3 text-sm font-medium ${
-        active ? "border-action bg-action text-white" : "border-line bg-white text-slate-700 hover:bg-panel"
+      className={`focus-ring min-h-11 shrink-0 rounded-full border px-4 text-sm font-medium transition-colors duration-200 ${
+        active ? "border-action bg-action text-white shadow-sm" : "border-line bg-white text-slate-600 hover:border-action/30 hover:bg-slate-50"
       }`}
       type="button"
       onClick={onClick}
@@ -467,20 +470,14 @@ export default function DsePredictorPage() {
             </p>
           </header>
 
-          <dl className="mt-4 grid grid-cols-3 rounded border border-line bg-white py-3 text-center shadow-sm">
-            <div className="border-r border-line px-2">
-              <dt className="text-lg font-semibold text-ink">45k+</dt>
-              <dd className="mt-1 text-xs text-slate-500">Direct Second-Year cutoffs</dd>
-            </div>
-            <div className="border-r border-line px-2">
-              <dt className="text-lg font-semibold text-ink">{options.years.length || 2}</dt>
-              <dd className="mt-1 text-xs text-slate-500">Years</dd>
-            </div>
-            <div className="px-2">
-              <dt className="text-lg font-semibold text-ink">{instituteCount || "..."}</dt>
-              <dd className="mt-1 text-xs text-slate-500">Institutes</dd>
-            </div>
-          </dl>
+          <CompactMetricGrid
+            className="mt-4 grid-cols-3"
+            items={[
+              { label: "DSE cutoffs", value: "45k+", icon: BarChart3, tone: "indigo" },
+              { label: "Data years", value: options.years.length || 2, icon: CalendarDays, tone: "success" },
+              { label: "Institutes", value: instituteCount || "...", icon: Building2, tone: "action" }
+            ]}
+          />
 
           <form
             ref={predictorFormRef}

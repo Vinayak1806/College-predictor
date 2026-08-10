@@ -8,16 +8,7 @@ import {
   ShieldCheck
 } from "lucide-react";
 import { useEffect, useState } from "react";
-
-function Metric({ label, value, note }) {
-  return (
-    <div className="border-r border-line px-4 py-4 last:border-r-0">
-      <dt className="text-xs uppercase text-slate-500">{label}</dt>
-      <dd className="mt-1 text-2xl font-semibold text-ink">{value}</dd>
-      <p className="mt-1 text-xs text-slate-500">{note}</p>
-    </div>
-  );
-}
+import { CompactMetricGrid } from "./CompactMetricGrid";
 
 const causeLabels = {
   WITHIN_EXPECTED_RANGE: "Within expected range",
@@ -166,12 +157,15 @@ export function PredictionHealthDashboard() {
         </div>
       </div>
 
-      <dl className="grid border-y border-line bg-panel sm:grid-cols-2 lg:grid-cols-4">
-        <Metric label="Options tested" value={report.summary.testedOptions.toLocaleString("en-IN")} note={`${report.summary.testedProfiles} student profiles`} />
-        <Metric label="Exact admission zone" value={`${report.summary.exactZoneAccuracy}%`} note="Same zone in held-out year" />
-        <Metric label="Within one zone" value={`${report.summary.adjacentZoneAccuracy}%`} note="Exact or neighboring zone" />
-        <Metric label="Mean cutoff error" value={report.summary.meanAbsoluteError.toFixed(2)} note={admissionRoute === "DSE" ? "Diploma percentage points" : "Percentile points"} />
-      </dl>
+      <CompactMetricGrid
+        className="mx-4 grid-cols-2 md:mx-5 lg:grid-cols-4"
+        items={[
+          { label: "Options tested", value: report.summary.testedOptions.toLocaleString("en-IN"), note: `${report.summary.testedProfiles} student profiles`, icon: Clock3, tone: "indigo" },
+          { label: "Exact admission zone", value: `${report.summary.exactZoneAccuracy}%`, note: "Same zone in held-out year", icon: CheckCircle2, tone: "success" },
+          { label: "Within one zone", value: `${report.summary.adjacentZoneAccuracy}%`, note: "Exact or neighboring zone", icon: ShieldCheck, tone: "action" },
+          { label: "Mean cutoff error", value: report.summary.meanAbsoluteError.toFixed(2), note: admissionRoute === "DSE" ? "Diploma percentage points" : "Percentile points", icon: AlertCircle, tone: "warning" }
+        ]}
+      />
 
       <div className="p-4 md:p-5">
         <div className="overflow-x-auto rounded border border-line">

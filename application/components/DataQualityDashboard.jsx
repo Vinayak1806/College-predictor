@@ -11,6 +11,7 @@ import {
   ShieldAlert
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { CompactMetricGrid } from "./CompactMetricGrid";
 
 const severityStyles = {
   CRITICAL: "border-danger bg-red-50 text-danger",
@@ -154,24 +155,15 @@ export function DataQualityDashboard() {
           </div>
         </div>
 
-        <dl className="grid grid-cols-2 border-y border-line bg-panel lg:grid-cols-4">
-          <div className="border-b border-r border-line px-4 py-4 lg:border-b-0">
-            <dt className="text-xs uppercase text-slate-500">Current institutes</dt>
-            <dd className="mt-1 text-2xl font-semibold text-ink">{report.summary.activeColleges}</dd>
-          </div>
-          <div className="border-b border-line px-4 py-4 lg:border-b-0 lg:border-r">
-            <dt className="text-xs uppercase text-slate-500">Published datasets</dt>
-            <dd className="mt-1 text-2xl font-semibold text-ink">{report.summary.publishedDatasets}</dd>
-          </div>
-          <div className="border-r border-line px-4 py-4">
-            <dt className="text-xs uppercase text-slate-500">Critical records</dt>
-            <dd className="mt-1 text-2xl font-semibold text-danger">{report.summary.criticalCount}</dd>
-          </div>
-          <div className="px-4 py-4">
-            <dt className="text-xs uppercase text-slate-500">Warning records</dt>
-            <dd className="mt-1 text-2xl font-semibold text-warning">{report.summary.warningCount}</dd>
-          </div>
-        </dl>
+        <CompactMetricGrid
+          className="mx-4 grid-cols-2 md:mx-5 lg:grid-cols-4"
+          items={[
+            { label: "Current institutes", value: report.summary.activeColleges, icon: Database, tone: "action" },
+            { label: "Published datasets", value: report.summary.publishedDatasets, icon: CheckCircle2, tone: "success" },
+            { label: "Critical records", value: report.summary.criticalCount, icon: ShieldAlert, tone: "danger", valueClassName: "text-danger" },
+            { label: "Warning records", value: report.summary.warningCount, icon: AlertTriangle, tone: "warning", valueClassName: "text-warning" }
+          ]}
+        />
 
         <div className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-5 md:p-5">
           {report.coverage.map((item) => (

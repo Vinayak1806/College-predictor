@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Building2, GraduationCap, MapPin, Search, University } from "lucide-react";
+import { ArrowRight, Building2, CalendarDays, GraduationCap, Layers3, MapPin, Search, University } from "lucide-react";
 import { CollegeAutocomplete } from "../../components/CollegeAutocomplete";
 import { SiteHeader } from "../../components/SiteHeader";
 import { currentInstituteCodeSearch } from "../../lib/instituteCodes";
@@ -187,14 +187,14 @@ export default async function CollegesPage({ searchParams }) {
           <p className="mt-3 text-sm leading-6 text-slate-600">{routeDescription}</p>
         </header>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-[300px_minmax(0,1fr)] md:items-stretch">
-          <nav className="grid min-h-11 grid-cols-2 overflow-hidden rounded border border-line bg-white" aria-label="Admission route">
+        <div className="mt-6 grid gap-3 lg:grid-cols-[340px_minmax(0,1fr)] lg:items-stretch">
+          <nav className="grid min-h-11 grid-cols-2 overflow-hidden rounded-lg border border-line bg-white" aria-label="Admission route">
             {["FE", "DSE"].map((route) => (
               <Link
                 key={route}
                 aria-current={admissionRoute === route ? "page" : undefined}
-                className={`focus-ring flex min-h-11 items-center justify-center gap-2 border-r border-line px-4 text-sm font-semibold last:border-r-0 ${
-                  admissionRoute === route ? "bg-action text-white" : "text-slate-700 hover:bg-panel"
+                className={`focus-ring flex min-h-11 items-center justify-center gap-2 border-r border-line px-4 text-sm font-semibold last:border-r-0 transition-colors ${
+                  admissionRoute === route ? "bg-action text-white" : "text-slate-600 hover:bg-slate-50"
                 }`}
                 href={routeHref(route, search)}
               >
@@ -204,23 +204,38 @@ export default async function CollegesPage({ searchParams }) {
             ))}
           </nav>
 
-          <dl className="grid grid-cols-3 border-y border-line py-3 text-center">
-            <div className="border-r border-line px-2">
-              <dt className="text-lg font-semibold text-ink">{totalMatchingColleges}</dt>
-              <dd className="mt-1 text-xs text-slate-500">Institutes</dd>
+          <dl className="grid grid-cols-3 gap-2 sm:gap-3">
+            <div className="flex min-w-0 items-center justify-center gap-3 rounded-lg border border-line bg-white/90 px-2 py-3 shadow-sm sm:justify-start sm:px-4">
+              <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-md bg-indigo-50 text-indigo-600 sm:flex">
+                <Building2 aria-hidden="true" size={17} />
+              </span>
+              <div className="min-w-0 text-center sm:text-left">
+                <dt className="text-lg font-bold leading-5 text-ink">{totalMatchingColleges}</dt>
+                <dd className="mt-1 truncate text-[11px] font-medium text-slate-500 sm:text-xs">Institutes</dd>
+              </div>
             </div>
-            <div className="border-r border-line px-2">
-              <dt className="text-lg font-semibold text-ink">{routeBranchCount}</dt>
-              <dd className="mt-1 text-xs text-slate-500">Branch types</dd>
+            <div className="flex min-w-0 items-center justify-center gap-3 rounded-lg border border-line bg-white/90 px-2 py-3 shadow-sm sm:justify-start sm:px-4">
+              <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-md bg-cyan-50 text-action sm:flex">
+                <Layers3 aria-hidden="true" size={17} />
+              </span>
+              <div className="min-w-0 text-center sm:text-left">
+                <dt className="text-lg font-bold leading-5 text-ink">{routeBranchCount}</dt>
+                <dd className="mt-1 truncate text-[11px] font-medium text-slate-500 sm:text-xs">Branch types</dd>
+              </div>
             </div>
-            <div className="px-2">
-              <dt className="text-lg font-semibold text-ink">{routeYears.length}</dt>
-              <dd className="mt-1 text-xs text-slate-500">Data years</dd>
+            <div className="flex min-w-0 items-center justify-center gap-3 rounded-lg border border-line bg-white/90 px-2 py-3 shadow-sm sm:justify-start sm:px-4">
+              <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-md bg-emerald-50 text-emerald-700 sm:flex">
+                <CalendarDays aria-hidden="true" size={17} />
+              </span>
+              <div className="min-w-0 text-center sm:text-left">
+                <dt className="text-lg font-bold leading-5 text-ink">{routeYears.length}</dt>
+                <dd className="mt-1 truncate text-[11px] font-medium text-slate-500 sm:text-xs">Data years</dd>
+              </div>
             </div>
           </dl>
         </div>
 
-        <form className="surface-card relative z-20 mt-7 flex overflow-visible" action="/colleges">
+        <form className="surface-card relative z-20 mt-7 flex overflow-visible rounded-xl" action="/colleges">
           <input type="hidden" name="route" value={admissionRoute} />
           <label className="sr-only" htmlFor="college-search">Search colleges</label>
           <CollegeAutocomplete
@@ -231,7 +246,7 @@ export default async function CollegesPage({ searchParams }) {
             className="flex min-h-12 flex-1 items-center px-4"
             placeholder="Example: COEP, Pune or institute code 16006"
           />
-          <button className="focus-ring min-h-12 rounded-r bg-action px-5 text-sm font-semibold text-white hover:bg-[#11566d]" type="submit">Search</button>
+          <button className="btn-primary focus-ring rounded-l-none rounded-r-xl" type="submit">Search</button>
         </form>
 
         <div className="mt-8 flex flex-wrap items-end justify-between gap-3 border-b border-line pb-3">
@@ -260,7 +275,7 @@ export default async function CollegesPage({ searchParams }) {
               return (
                 <article key={college.id.toString()} className="group surface-card p-4 transition hover:border-[#9bcbd6]">
                   <div className="flex items-start justify-between gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-cyan-50 text-action"><Building2 aria-hidden="true" size={20} /></span>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-action"><Building2 aria-hidden="true" size={20} /></span>
                     <span className="text-xs font-semibold text-slate-400">{college.instituteCode}</span>
                   </div>
                   <h3 className="mt-4 text-base font-semibold leading-6 text-ink">
@@ -270,10 +285,10 @@ export default async function CollegesPage({ searchParams }) {
                     {college.city?.name ? <p className="flex items-center gap-2"><MapPin aria-hidden="true" size={14} /> {college.city.name}</p> : null}
                     {college.university?.name ? <p className="flex items-center gap-2"><University aria-hidden="true" size={14} /> {college.university.name}</p> : null}
                   </div>
-                  <div className="mt-4 flex flex-wrap gap-2 text-xs">
-                    {ownership ? <span className="rounded bg-panel px-2 py-1 font-medium text-slate-700">{ownership}</span> : null}
-                    {autonomous ? <span className="rounded bg-emerald-50 px-2 py-1 font-medium text-success">Autonomous</span> : null}
-                    <span className="rounded bg-panel px-2 py-1 font-medium text-slate-700">{routeBranches.length} {routeName} branches</span>
+                  <div className="mt-4 flex flex-wrap gap-1.5 text-xs">
+                    {ownership ? <span className="tag tag-default">{ownership}</span> : null}
+                    {autonomous ? <span className="tag tag-success">Autonomous</span> : null}
+                    <span className="tag tag-default">{routeBranches.length} {routeName} branches</span>
                   </div>
                   {branchNames.length ? (
                     <p className="mt-4 text-xs leading-5 text-slate-600">

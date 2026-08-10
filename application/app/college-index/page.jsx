@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { BadgeInfo, Building2, Gauge, Percent } from "lucide-react";
+import { CompactMetricGrid } from "../../components/CompactMetricGrid";
 import { SiteHeader } from "../../components/SiteHeader";
 import { calculateStrengthIndex } from "../../lib/prediction";
 import { prisma } from "../../lib/prisma";
@@ -234,13 +236,13 @@ export default async function CollegeIndexPage({ searchParams }) {
           </p>
         </header>
 
-        <nav className="mt-5 inline-grid min-h-11 grid-cols-2 overflow-hidden rounded border border-line bg-white" aria-label="Historical demand admission route">
+        <nav className="mt-5 inline-grid min-h-11 grid-cols-2 overflow-hidden rounded-lg border border-line bg-white" aria-label="Historical demand admission route">
           {["FE", "DSE"].map((route) => (
             <Link
               key={route}
               aria-current={admissionRoute === route ? "page" : undefined}
-              className={`focus-ring flex min-h-11 items-center justify-center border-r border-line px-5 text-sm font-semibold last:border-r-0 ${
-                admissionRoute === route ? "bg-action text-white" : "text-slate-700 hover:bg-panel"
+              className={`focus-ring flex min-h-11 items-center justify-center border-r border-line px-5 text-sm font-semibold last:border-r-0 transition-colors ${
+                admissionRoute === route ? "bg-action text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
               }`}
               href={`/college-index?route=${route}`}
             >
@@ -249,12 +251,15 @@ export default async function CollegeIndexPage({ searchParams }) {
           ))}
         </nav>
 
-        <section className="mt-6 grid gap-px overflow-hidden rounded-lg border border-line bg-line shadow-soft sm:grid-cols-4">
-          <div className="bg-white p-4"><p className="text-xs uppercase text-slate-500">Colleges ranked</p><p className="mt-1 text-xl font-semibold">{rankedColleges.length}</p></div>
-          <div className="bg-white p-4"><p className="text-xs uppercase text-slate-500">Cutoff contribution</p><p className="mt-1 text-xl font-semibold">90%</p></div>
-          <div className="bg-white p-4"><p className="text-xs uppercase text-slate-500">Other signals</p><p className="mt-1 text-sm font-semibold">Autonomy, {admissionRoute === "DSE" ? "DSE seats" : "intake"}, coverage</p></div>
-          <div className="bg-white p-4"><p className="text-xs uppercase text-slate-500">Data type</p><p className="mt-1 text-sm font-semibold">Calculated, not official</p></div>
-        </section>
+        <CompactMetricGrid
+          className="mt-6 grid-cols-2 lg:grid-cols-4"
+          items={[
+            { label: "Colleges indexed", value: rankedColleges.length, icon: Building2, tone: "action" },
+            { label: "Cutoff contribution", value: "90%", icon: Percent, tone: "indigo" },
+            { label: "Additional signals", value: admissionRoute === "DSE" ? "DSE seats" : "Intake", note: "Autonomy and coverage", icon: Gauge, tone: "success" },
+            { label: "Index type", value: "Calculated", note: "Not an official ranking", icon: BadgeInfo, tone: "warning" }
+          ]}
+        />
 
         <section className="mt-8">
           <div className="flex flex-wrap items-end justify-between gap-3">
@@ -265,9 +270,9 @@ export default async function CollegeIndexPage({ searchParams }) {
             <Link className="font-medium text-action underline" href={predictorHref}>Check your {routeName} admission fit</Link>
           </div>
 
-          <div className="mt-4 hidden overflow-hidden rounded-lg border border-line bg-white shadow-soft md:block">
+          <div className="mt-4 hidden overflow-hidden rounded-xl border border-line bg-white shadow-soft md:block">
             <table className="w-full border-collapse text-left text-sm">
-              <thead className="bg-panel text-xs uppercase text-slate-500">
+              <thead className="bg-panel/80 text-xs font-semibold uppercase tracking-wider text-slate-500">
                 <tr>
                   <th className="px-4 py-3">Position</th>
                   <th className="px-4 py-3">College</th>
@@ -295,10 +300,10 @@ export default async function CollegeIndexPage({ searchParams }) {
 
           <div className="mt-4 grid gap-3 md:hidden">
             {colleges.map((college, index) => (
-              <article key={college.instituteCode} className="surface-card p-4">
+              <article key={college.instituteCode} className="surface-card rounded-xl p-4">
                 <div className="flex items-start justify-between gap-3">
-                  <span className="text-lg font-semibold text-action">#{firstPosition + index + 1}</span>
-                  <span className="rounded bg-panel px-3 py-1 text-sm font-semibold">{college.demandIndex} / 100</span>
+                  <span className="text-lg font-bold text-action">#{firstPosition + index + 1}</span>
+                  <span className="tag tag-action">{college.demandIndex} / 100</span>
                 </div>
                 <Link className="mt-3 block font-semibold leading-6 text-ink hover:text-action hover:underline" href={`/colleges/${college.slug}?route=${admissionRoute}`}>{college.name}</Link>
                 <p className="mt-1 text-sm text-slate-500">{college.city || "Maharashtra"}</p>
