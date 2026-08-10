@@ -45,6 +45,7 @@ Prisma generation/migrations, import the processed CSVs, and then start the app.
 For beginner-friendly Windows commands, see `BEGINNER_COMMANDS.md`.
 For production environment variables, OAuth, backups, monitoring and launch checks,
 see `DEPLOYMENT.md`.
+For the exact pre-launch order, use `STAGING_CHECKLIST.md`.
 
 Useful checks while the website is running:
 

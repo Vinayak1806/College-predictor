@@ -276,7 +276,7 @@ async function main() {
 
   const report = {
     mode: applyChanges ? "apply" : "dry-run",
-    source: path.resolve(process.cwd(), "..", "maharashtra_dse_engineering_college_dataset.xlsx"),
+    source: dataDir,
     currentColleges: colleges.length,
     sourceRows: {
       profiles: profiles.length,

@@ -20,3 +20,5 @@ application/uploads/
 *.key
 application/test-results/
 application/playwright-report/
+/*.xlsx
+/*.xls

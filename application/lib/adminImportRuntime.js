@@ -7,7 +7,11 @@ const execFileAsync = promisify(execFile);
 const projectRoot = path.resolve(process.cwd(), "..");
 const processorPath = path.join(projectRoot, "data-pipeline", "process_admin_upload.py");
 
-export const adminImportsRoot = path.join(projectRoot, "data", "admin-imports");
+// Local development uses the project data folder. A deployed app should point
+// this at a mounted persistent disk so uploaded source PDFs survive restarts.
+export const adminImportsRoot = process.env.ADMIN_IMPORTS_ROOT
+  ? path.resolve(process.env.ADMIN_IMPORTS_ROOT)
+  : path.join(projectRoot, "data", "admin-imports");
 
 export async function runAdminImportProcessor(args) {
   const configured = process.env.PYTHON_EXECUTABLE;

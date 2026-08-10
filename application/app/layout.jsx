@@ -34,10 +34,6 @@ export const metadata = {
     description: SITE_DESCRIPTION,
     images: ["/images/engineering-students-campus.png"]
   },
-  robots: {
-    index: true,
-    follow: true
-  },
   verification: process.env.GOOGLE_SITE_VERIFICATION
     ? { google: process.env.GOOGLE_SITE_VERIFICATION }
     : undefined
