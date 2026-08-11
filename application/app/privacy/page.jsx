@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SiteHeader } from "../../components/SiteHeader";
+import { SUPPORT_EMAIL } from "../../lib/site";
 
 export const metadata = {
   title: "Privacy Policy",
@@ -25,6 +26,7 @@ export default function PrivacyPage() {
           <section><h2 className="text-xl font-semibold text-ink">Cookies and security</h2><p className="mt-2">Authentication uses secure session cookies. Administrative access uses a separate protected session. Reasonable technical controls are used, but no internet service can promise absolute security.</p></section>
           <section><h2 className="text-xl font-semibold text-ink">Data sharing</h2><p className="mt-2">We do not sell student account information. Data may be processed by infrastructure, database, authentication, analytics or monitoring providers required to operate the service. Their use is limited by their own terms and privacy commitments.</p></section>
           <section><h2 className="text-xl font-semibold text-ink">Your choices</h2><p className="mt-2">You may use predictions without signing in, decline analytics, clear browser storage and remove saved profiles or history using account controls. Signed-in students can permanently delete their account and all associated saved data from the account page.</p></section>
+          <section><h2 className="text-xl font-semibold text-ink">Contact</h2><p className="mt-2">For privacy questions or account-support requests, email <a className="font-semibold text-action underline" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.</p></section>
           <p className="border-t border-line pt-5">See the <Link className="font-semibold text-action underline" href="/terms">Terms of Use</Link> and <Link className="font-semibold text-action underline" href="/disclaimer">Admission Disclaimer</Link> for additional conditions.</p>
         </div>
       </main>

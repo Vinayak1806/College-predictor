@@ -2,6 +2,7 @@ export const SITE_NAME = "Admission Compass";
 export const SITE_TITLE = "Maharashtra Engineering College Predictor | Admission Compass";
 export const SITE_DESCRIPTION =
   "Use Admission Compass to predict First-Year and Direct Second-Year B.E./B.Tech college options from verified Maharashtra CAP cutoffs and eligible seat types.";
+export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "admissioncompass.in@gmail.com";
 
 export function normalizeSiteUrl(value) {
   try {

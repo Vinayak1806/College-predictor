@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, RotateCcw } from "lucide-react";
+import { AlertTriangle, Mail, RotateCcw } from "lucide-react";
 import { useEffect } from "react";
+import { SUPPORT_EMAIL } from "../lib/site";
 
 export default function ErrorPage({ error, reset }) {
   useEffect(() => {
@@ -29,6 +30,9 @@ export default function ErrorPage({ error, reset }) {
           <Link className="focus-ring inline-flex min-h-11 items-center rounded border border-line px-4 text-sm font-semibold text-ink" href="/">
             Return home
           </Link>
+          <a className="focus-ring inline-flex min-h-11 items-center gap-2 rounded border border-line px-4 text-sm font-semibold text-ink" href={`mailto:${SUPPORT_EMAIL}?subject=Admission%20Compass%20page%20problem`}>
+            <Mail aria-hidden="true" size={17} /> Contact support
+          </a>
         </div>
       </section>
     </main>

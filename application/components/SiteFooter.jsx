@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Database, ExternalLink } from "lucide-react";
+import { Database, ExternalLink, Mail } from "lucide-react";
 import { AnalyticsSettingsButton } from "./AnalyticsSettingsButton";
 import { BrandMark } from "./BrandMark";
+import { SUPPORT_EMAIL } from "../lib/site";
 
 export function SiteFooter() {
   return (
@@ -37,6 +38,9 @@ export function SiteFooter() {
             <Link className="transition-colors duration-200 hover:text-white" href="/disclaimer">Admission disclaimer</Link>
             <Link className="transition-colors duration-200 hover:text-white" href="/privacy">Privacy policy</Link>
             <Link className="transition-colors duration-200 hover:text-white" href="/terms">Terms of use</Link>
+            <a className="flex items-center gap-2 transition-colors duration-200 hover:text-white" href={`mailto:${SUPPORT_EMAIL}?subject=Admission%20Compass%20support`}>
+              <Mail aria-hidden="true" size={14} /> Contact support
+            </a>
             <AnalyticsSettingsButton />
             <a className="flex items-center gap-2 transition-colors duration-200 hover:text-white" href="https://cetcell.mahacet.org/" target="_blank" rel="noreferrer">
               Maharashtra CET Cell <ExternalLink aria-hidden="true" size={14} />
