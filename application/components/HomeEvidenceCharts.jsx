@@ -29,9 +29,9 @@ function CoverageTooltip({ active, payload }) {
   const entry = payload[0];
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs shadow-md">
-      <p className="font-semibold text-slate-900">Academic year {entry.name}</p>
-      <p className="mt-1 text-slate-600"><strong className="text-indigo-600">{Number(entry.value).toLocaleString("en-IN")}</strong> verified records</p>
+    <div className="rounded-xl border border-slate-200 bg-white/95 backdrop-blur-md px-3.5 py-2 text-xs shadow-xl ring-1 ring-slate-900/5">
+      <p className="font-bold text-slate-900">Academic year {entry.name}</p>
+      <p className="mt-0.5 text-slate-600"><strong className="text-indigo-600 font-extrabold">{Number(entry.value).toLocaleString("en-IN")}</strong> verified records</p>
     </div>
   );
 }
@@ -41,9 +41,9 @@ function AccuracyTooltip({ active, payload }) {
   const entry = payload[0];
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs shadow-md">
-      <p className="font-semibold text-slate-900">{entry.name}</p>
-      <p className="mt-1 text-slate-600"><strong className="text-indigo-600">{Number(entry.value).toFixed(1)}%</strong> of tested options</p>
+    <div className="rounded-xl border border-slate-200 bg-white/95 backdrop-blur-md px-3.5 py-2 text-xs shadow-xl ring-1 ring-slate-900/5">
+      <p className="font-bold text-slate-900">{entry.name}</p>
+      <p className="mt-0.5 text-slate-600"><strong className="text-indigo-600 font-extrabold">{Number(entry.value).toFixed(1)}%</strong> of tested options</p>
     </div>
   );
 }
@@ -104,7 +104,7 @@ export function HomeEvidenceCharts({ coverage = [] }) {
                         <Cell key={item.academicYear} fill={coverageColors[index % coverageColors.length]} />
                       ))}
                     </Pie>
-                    <Tooltip content={<CoverageTooltip />} />
+                    <Tooltip content={<CoverageTooltip />} wrapperStyle={{ pointerEvents: "none", zIndex: 50 }} position={{ y: -45 }} allowEscapeViewBox={{ x: true, y: true }} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
@@ -169,7 +169,7 @@ export function HomeEvidenceCharts({ coverage = [] }) {
                             <Cell key={segment.name} fill={accuracyColors[index]} />
                           ))}
                         </Pie>
-                        <Tooltip content={<AccuracyTooltip />} />
+                        <Tooltip content={<AccuracyTooltip />} wrapperStyle={{ pointerEvents: "none", zIndex: 50 }} position={{ y: -50 }} allowEscapeViewBox={{ x: true, y: true }} />
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">

@@ -82,23 +82,23 @@ function formatMoney(value) {
 
 function Fact({ label, value, tone = "normal" }) {
   const toneClass = {
-    normal: "text-ink",
-    good: "text-success",
-    warning: "text-warning",
-    danger: "text-danger"
+    normal: "text-slate-900",
+    good: "text-emerald-700",
+    warning: "text-amber-700",
+    danger: "text-rose-700"
   };
 
   return (
-    <div className="min-w-0 px-3 py-3">
-      <dt className="text-xs font-medium uppercase text-slate-500">{label}</dt>
-      <dd className={`mt-1 break-words text-base font-semibold ${toneClass[tone]}`}>{value}</dd>
+    <div className="min-w-0 rounded-xl border border-slate-200/90 bg-white p-4 shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md">
+      <dt className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</dt>
+      <dd className={`mt-1.5 break-words text-base font-extrabold ${toneClass[tone]}`}>{value}</dd>
     </div>
   );
 }
 
 function FactGrid({ children, columns = "sm:grid-cols-2 lg:grid-cols-4" }) {
   return (
-    <dl className={`mt-3 grid divide-y divide-line border-y border-line sm:divide-x sm:divide-y-0 ${columns}`}>
+    <dl className={`mt-4 grid gap-3.5 ${columns}`}>
       {children}
     </dl>
   );
@@ -456,13 +456,13 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
           </div>
         </header>
 
-        <nav className="mt-4 inline-grid min-h-11 grid-cols-2 overflow-hidden rounded border border-line bg-white" aria-label="College admission data route">
+        <nav className="mt-5 flex min-h-12 items-center gap-2 rounded-xl bg-slate-100/90 p-1.5 border border-slate-200/80 max-w-xs" aria-label="College admission data route">
           {visibleRoutes.map((route) => (
             <Link
               key={route}
               aria-current={admissionRoute === route ? "page" : undefined}
-              className={`focus-ring flex min-h-11 items-center justify-center border-r border-line px-4 text-sm font-semibold last:border-r-0 ${
-                admissionRoute === route ? "bg-action text-white" : "text-slate-700 hover:bg-panel"
+              className={`focus-ring flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-4 text-xs font-bold transition-all ${
+                admissionRoute === route ? "bg-indigo-600 text-white shadow-md" : "text-slate-600 hover:bg-white/80 hover:text-slate-900"
               }`}
               href={`/colleges/${college.slug}?route=${route}`}
             >

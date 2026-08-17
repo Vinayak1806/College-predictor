@@ -128,35 +128,40 @@ export default async function HomePage() {
             fill
             priority
             sizes="100vw"
-            className="h-full w-full max-w-none object-cover object-[62%_center]"
+            className="h-full w-full max-w-none object-cover object-[70%_center] brightness-[0.95] contrast-[1.05]"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0f172a]/95 via-[#0f172a]/85 to-[#0f172a]/55" />
-          <div className="relative mx-auto flex min-h-[min(700px,calc(100svh-64px))] w-full min-w-0 max-w-7xl items-center px-4 py-14 sm:px-5 md:py-18 lg:px-6">
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/50 to-slate-950/20" />
+          <div className="relative mx-auto flex min-h-[min(680px,calc(100svh-64px))] w-full min-w-0 max-w-7xl items-center px-4 py-14 sm:px-5 md:py-18 lg:px-6">
             <div className="enter-up min-w-0 max-w-3xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-indigo-400/40 bg-indigo-500/20 px-4 py-1.5 text-xs font-semibold text-indigo-200 backdrop-blur-md">
-                <Sparkles aria-hidden="true" className="text-amber-400" size={15} />
-                Structured Maharashtra CAP Data
+              <div className="inline-flex items-center gap-2.5 rounded-full border border-indigo-400/50 bg-indigo-600/90 px-4 py-1.5 text-xs font-bold text-white shadow-md backdrop-blur-md">
+                <Sparkles aria-hidden="true" className="text-amber-300 fill-amber-300" size={15} />
+                <span>Structured Maharashtra CAP Data</span>
               </div>
-              <h1 className="mt-5 max-w-4xl text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-6xl leading-[1.15]">
-                Find Maharashtra engineering colleges that fit your score.
+              <h1 className="mt-5 max-w-4xl text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-6xl leading-[1.12]">
+                Find Maharashtra Engineering Colleges That Fit Your Score.
               </h1>
-              <p className="mt-5 max-w-2xl text-base leading-7 text-slate-200 sm:text-lg">
+              <p className="mt-5 max-w-2xl text-base leading-7 text-slate-100 sm:text-lg">
                 Compare MHT-CET percentile or diploma percentage with eligible seat types, verified CAP cutoffs and current college data.
               </p>
 
-              <div className="mt-8 flex min-w-0 flex-col gap-3.5 sm:flex-row sm:flex-wrap">
-                <Link className="btn-primary focus-ring min-w-0 rounded-xl px-7 py-3 text-center text-sm font-bold leading-5 shadow-xl sm:flex-1" href="/fe-predictor">
+              <div className="mt-8 flex min-w-0 max-w-2xl flex-col gap-3.5 sm:flex-row">
+                <Link className="btn-primary focus-ring min-w-0 rounded-xl px-5 py-3 text-center text-sm font-bold leading-5 shadow-xl sm:flex-1 justify-center" href="/fe-predictor">
                   First-Year B.E./B.Tech Predictor <ArrowRight aria-hidden="true" size={18} />
                 </Link>
-                <Link className="focus-ring inline-flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-7 py-3 text-center text-sm font-semibold leading-5 text-white backdrop-blur-md transition-all hover:border-white hover:bg-white/20 sm:flex-1" href="/dse-predictor">
+                <Link className="focus-ring inline-flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-xl border border-gray-400/40 bg-gradient-to-r from-gray-500 to-gray-600 px-5 py-3 text-center text-sm font-bold leading-5 text-white shadow-xl transition-all hover:from-gray-600 hover:to-gray-400 active:scale-[0.98] sm:flex-1" href="/dse-predictor">
                   Direct Second-Year (DSE) Predictor <GraduationCap aria-hidden="true" size={18} />
                 </Link>
               </div>
 
-              <form action="/colleges" className="relative z-20 mt-8 grid min-w-0 max-w-2xl gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-0 sm:rounded-2xl sm:bg-white sm:p-2 sm:shadow-2xl">
+              <form action="/colleges" className="relative z-20 mt-4 grid min-w-0 max-w-2xl gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
                 <label className="sr-only" htmlFor="home-college-search">Search college name, code or city</label>
-                <CollegeAutocomplete id="home-college-search" name="q" className="flex min-h-12 min-w-0 items-center rounded-xl bg-white px-4 text-slate-900 shadow-md sm:rounded-none sm:shadow-none" placeholder="Search college name or institute code" />
-                <button className="focus-ring min-h-12 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-6 text-sm font-bold text-slate-950 shadow-md transition-all hover:from-amber-400 hover:to-amber-500 sm:shadow-none" type="submit">
+                <CollegeAutocomplete
+                  id="home-college-search"
+                  name="q"
+                  className="flex min-h-12 min-w-0 items-center rounded-xl border border-slate-200/90 bg-white px-4 text-slate-900 shadow-xl transition-all focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20"
+                  placeholder="Search college name or institute code"
+                />
+                <button className="focus-ring flex min-h-12 items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-7 text-sm font-bold text-slate-950 shadow-xl transition-all hover:from-amber-400 hover:to-amber-500 active:scale-[0.98]" type="submit">
                   Search colleges
                 </button>
               </form>

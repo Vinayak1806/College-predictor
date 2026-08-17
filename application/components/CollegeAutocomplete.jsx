@@ -111,8 +111,8 @@ export function CollegeAutocomplete({
   }
 
   return (
-    <div ref={containerRef} className={`relative min-w-0 ${className}`}>
-      <div className="flex min-w-0 items-center gap-3">
+    <div ref={containerRef} className={`relative min-w-0 flex-1 ${className}`}>
+      <div className="flex min-w-0 w-full items-center gap-3">
         {showIcon ? <Search aria-hidden="true" className="shrink-0 text-slate-400" size={20} /> : null}
         <input
           id={inputId}
@@ -122,7 +122,7 @@ export function CollegeAutocomplete({
           aria-expanded={open}
           aria-label="Search colleges"
           autoComplete="off"
-          className={`min-h-11 min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-ink outline-none placeholder:text-slate-400 ${inputClassName}`}
+          className={`min-h-11 min-w-0 w-full flex-1 border-0 bg-transparent p-0 text-sm text-slate-900 outline-none ring-0 placeholder:text-slate-400 focus:outline-none focus:ring-0 ${inputClassName}`}
           placeholder={placeholder}
           role="combobox"
           value={query}

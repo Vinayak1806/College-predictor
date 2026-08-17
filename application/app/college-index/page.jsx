@@ -228,28 +228,30 @@ export default async function CollegeIndexPage({ searchParams }) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, "\\u003c") }}
         />
-        <header className="max-w-4xl border-l-4 border-action pl-4">
-          <p className="text-xs font-semibold uppercase text-action">Historical CAP demand index</p>
-          <h1 className="mt-1 text-2xl font-semibold text-ink md:text-3xl">{pageTitle}</h1>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-            Compare Maharashtra colleges that have shown stronger student demand in previous {routeName} CAP cutoffs. First-Year and Direct Second-Year records are calculated separately. This is a historical cutoff research index, not an official government ranking, and it does not measure placements, teaching quality or campus life.
-          </p>
-        </header>
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <header className="max-w-3xl border-l-4 border-indigo-600 pl-4">
+            <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">Historical CAP demand index</p>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">{pageTitle}</h1>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Compare Maharashtra colleges that have shown stronger student demand in previous {routeName} CAP cutoffs. First-Year and Direct Second-Year records are calculated separately. This is a historical cutoff research index, not an official government ranking, and it does not measure placements, teaching quality or campus life.
+            </p>
+          </header>
 
-        <nav className="mt-5 inline-grid min-h-11 grid-cols-2 overflow-hidden rounded-lg border border-line bg-white" aria-label="Historical demand admission route">
-          {["FE", "DSE"].map((route) => (
-            <Link
-              key={route}
-              aria-current={admissionRoute === route ? "page" : undefined}
-              className={`focus-ring flex min-h-11 items-center justify-center border-r border-line px-5 text-sm font-semibold last:border-r-0 transition-colors ${
-                admissionRoute === route ? "bg-action text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
-              }`}
-              href={`/college-index?route=${route}`}
-            >
-              {route === "FE" ? "First-Year Colleges" : "Direct Second-Year Colleges"}
-            </Link>
-          ))}
-        </nav>
+          <nav className="flex min-h-14 shrink-0 items-center gap-2.5 rounded-2xl bg-white p-2 border border-slate-200/90 shadow-sm" aria-label="Historical demand admission route">
+            {["FE", "DSE"].map((route) => (
+              <Link
+                key={route}
+                aria-current={admissionRoute === route ? "page" : undefined}
+                className={`focus-ring flex min-h-12 items-center justify-center gap-2 rounded-xl px-6 text-sm sm:text-base font-bold transition-all ${
+                  admissionRoute === route ? "bg-indigo-600 text-white shadow-md" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                }`}
+                href={`/college-index?route=${route}`}
+              >
+                {route === "FE" ? "First-Year Colleges" : "Direct Second-Year Colleges"}
+              </Link>
+            ))}
+          </nav>
+        </div>
 
         <CompactMetricGrid
           className="mt-6 grid-cols-2 lg:grid-cols-4"

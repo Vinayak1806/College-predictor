@@ -188,65 +188,69 @@ export default async function CollegesPage({ searchParams }) {
         </header>
 
         <div className="mt-6 grid gap-3 lg:grid-cols-[340px_minmax(0,1fr)] lg:items-stretch">
-          <nav className="grid min-h-11 grid-cols-2 overflow-hidden rounded-lg border border-line bg-white" aria-label="Admission route">
+          <nav className="flex min-h-12 items-center gap-2 rounded-xl bg-slate-100/90 p-1.5 border border-slate-200/80" aria-label="Admission route">
             {["FE", "DSE"].map((route) => (
               <Link
                 key={route}
                 aria-current={admissionRoute === route ? "page" : undefined}
-                className={`focus-ring flex min-h-11 items-center justify-center gap-2 border-r border-line px-4 text-sm font-semibold last:border-r-0 transition-colors ${
-                  admissionRoute === route ? "bg-action text-white" : "text-slate-600 hover:bg-slate-50"
+                className={`focus-ring flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-4 text-xs font-bold transition-all ${
+                  admissionRoute === route ? "bg-indigo-600 text-white shadow-md" : "text-slate-600 hover:bg-white/80 hover:text-slate-900"
                 }`}
                 href={routeHref(route, search)}
               >
-                <GraduationCap aria-hidden="true" size={17} />
+                <GraduationCap aria-hidden="true" size={16} />
                 {route === "FE" ? "First Year (FE)" : "Direct Second Year (DSE)"}
               </Link>
             ))}
           </nav>
 
           <dl className="grid grid-cols-3 gap-2 sm:gap-3">
-            <div className="flex min-w-0 items-center justify-center gap-3 rounded-lg border border-line bg-white/90 px-2 py-3 shadow-sm sm:justify-start sm:px-4">
-              <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-md bg-indigo-50 text-indigo-600 sm:flex">
+            <div className="flex min-w-0 items-center justify-center gap-3 rounded-xl border border-slate-200/90 bg-white px-2 py-3 shadow-sm sm:justify-start sm:px-4">
+              <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 sm:flex">
                 <Building2 aria-hidden="true" size={17} />
               </span>
               <div className="min-w-0 text-center sm:text-left">
-                <dt className="text-lg font-bold leading-5 text-ink">{totalMatchingColleges}</dt>
+                <dt className="text-lg font-bold leading-5 text-slate-900">{totalMatchingColleges}</dt>
                 <dd className="mt-1 truncate text-[11px] font-medium text-slate-500 sm:text-xs">Institutes</dd>
               </div>
             </div>
-            <div className="flex min-w-0 items-center justify-center gap-3 rounded-lg border border-line bg-white/90 px-2 py-3 shadow-sm sm:justify-start sm:px-4">
-              <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-md bg-cyan-50 text-action sm:flex">
+            <div className="flex min-w-0 items-center justify-center gap-3 rounded-xl border border-slate-200/90 bg-white px-2 py-3 shadow-sm sm:justify-start sm:px-4">
+              <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-cyan-600 sm:flex">
                 <Layers3 aria-hidden="true" size={17} />
               </span>
               <div className="min-w-0 text-center sm:text-left">
-                <dt className="text-lg font-bold leading-5 text-ink">{routeBranchCount}</dt>
+                <dt className="text-lg font-bold leading-5 text-slate-900">{routeBranchCount}</dt>
                 <dd className="mt-1 truncate text-[11px] font-medium text-slate-500 sm:text-xs">Branch types</dd>
               </div>
             </div>
-            <div className="flex min-w-0 items-center justify-center gap-3 rounded-lg border border-line bg-white/90 px-2 py-3 shadow-sm sm:justify-start sm:px-4">
-              <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-md bg-emerald-50 text-emerald-700 sm:flex">
+            <div className="flex min-w-0 items-center justify-center gap-3 rounded-xl border border-slate-200/90 bg-white px-2 py-3 shadow-sm sm:justify-start sm:px-4">
+              <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 sm:flex">
                 <CalendarDays aria-hidden="true" size={17} />
               </span>
               <div className="min-w-0 text-center sm:text-left">
-                <dt className="text-lg font-bold leading-5 text-ink">{routeYears.length}</dt>
+                <dt className="text-lg font-bold leading-5 text-slate-900">{routeYears.length}</dt>
                 <dd className="mt-1 truncate text-[11px] font-medium text-slate-500 sm:text-xs">Data years</dd>
               </div>
             </div>
           </dl>
         </div>
 
-        <form className="surface-card relative z-20 mt-7 flex overflow-visible rounded-xl" action="/colleges">
+        <form className="relative z-20 mt-7 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]" action="/colleges">
           <input type="hidden" name="route" value={admissionRoute} />
           <label className="sr-only" htmlFor="college-search">Search colleges</label>
-          <CollegeAutocomplete
-            id="college-search"
-            name="q"
-            admissionRoute={admissionRoute}
-            defaultValue={search}
-            className="flex min-h-12 flex-1 items-center px-4"
-            placeholder="Example: COEP, Pune or institute code 16006"
-          />
-          <button className="btn-primary focus-ring rounded-l-none rounded-r-xl" type="submit">Search</button>
+          <div className="relative min-w-0">
+            <CollegeAutocomplete
+              id="college-search"
+              name="q"
+              admissionRoute={admissionRoute}
+              defaultValue={search}
+              className="flex min-h-12 w-full items-center rounded-xl border border-slate-200 bg-white px-4 text-slate-900 shadow-sm transition-all focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20"
+              placeholder="Example: COEP, Pune or institute code 16006"
+            />
+          </div>
+          <button className="focus-ring inline-flex min-h-12 items-center justify-center rounded-xl bg-indigo-600 px-7 text-sm font-bold text-white shadow-md transition-all hover:bg-indigo-700" type="submit">
+            Search
+          </button>
         </form>
 
         <div className="mt-8 flex flex-wrap items-end justify-between gap-3 border-b border-line pb-3">
@@ -275,7 +279,7 @@ export default async function CollegesPage({ searchParams }) {
               return (
                 <article key={college.id.toString()} className="group surface-card p-4 transition hover:border-[#9bcbd6]">
                   <div className="flex items-start justify-between gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-action"><Building2 aria-hidden="true" size={20} /></span>
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-action"><Building2 aria-hidden="true" size={20} /></span>
                     <span className="text-xs font-semibold text-slate-400">{college.instituteCode}</span>
                   </div>
                   <h3 className="mt-4 text-base font-semibold leading-6 text-ink">

@@ -138,7 +138,7 @@ textarea {
   font: inherit;
 }
 
-input,
+input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.border-0),
 select,
 textarea {
   background: #ffffff;
@@ -148,19 +148,27 @@ textarea {
   transition: border-color 220ms ease, box-shadow 220ms ease, background-color 220ms ease;
 }
 
-input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+input.bg-transparent,
+input.border-0 {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not(.border-0):not(.bg-transparent),
 select,
 textarea {
   min-height: 44px;
 }
 
-input:not([type="checkbox"]):not([type="radio"]):hover,
+input:not([type="checkbox"]):not([type="radio"]):not(.border-0):hover,
 select:hover,
 textarea:hover {
   border-color: #38bdf8;
 }
 
-input:not([type="checkbox"]):not([type="radio"]):focus,
+input:not([type="checkbox"]):not([type="radio"]):not(.border-0):focus,
 select:focus,
 textarea:focus {
   border-color: var(--indigo-primary);
