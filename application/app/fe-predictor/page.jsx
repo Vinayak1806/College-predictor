@@ -346,6 +346,7 @@ export default function FePredictorPage() {
   const [cityError, setCityError] = useState("");
   const [universityError, setUniversityError] = useState("");
   const [academicYears, setAcademicYears] = useState(fallbackAcademicYears);
+  const [yearRounds, setYearRounds] = useState({});
   const [publishedBranches, setPublishedBranches] = useState([]);
   const [instituteCount, setInstituteCount] = useState(null);
   const [results, setResults] = useState([]);
@@ -428,6 +429,7 @@ export default function FePredictorPage() {
       try {
         const data = await readJson("/api/cutoffs/options?route=FE");
         setAcademicYears(data.years?.length ? data.years : fallbackAcademicYears);
+        setYearRounds(data.yearRounds || {});
         setPublishedBranches(data.branches || []);
 
         const fallbackCities = normalizeCities((data.cities || []).map((name) => ({ id: `cutoff-${name}`, name })));
@@ -438,6 +440,7 @@ export default function FePredictorPage() {
         }
       } catch {
         setAcademicYears(fallbackAcademicYears);
+        setYearRounds({});
         setPublishedBranches([]);
       }
     }
@@ -642,12 +645,26 @@ export default function FePredictorPage() {
               {showValidation && !percentileValid ? <span className="text-xs font-normal text-danger">Enter a percentile between 0 and 100.</span> : null}
               </label>
 
-              <label className="grid min-w-0 gap-2 text-sm font-medium">
+               <label className="grid min-w-0 gap-2 text-sm font-medium">
               Academic year
               <select
                 className="focus-ring min-h-11 w-full min-w-0 max-w-full rounded border border-line px-3"
                 value={form.academicYear}
-                onChange={(event) => updateField("academicYear", event.target.value)}
+                onChange={(event) => {
+                  const newYear = event.target.value;
+                  setForm((currentForm) => {
+                    const allowedRounds = newYear ? (yearRounds[newYear] || []) : [];
+                    const capRound = currentForm.capRound;
+                    const nextCapRound = (newYear && capRound && !allowedRounds.includes(Number(capRound)))
+                      ? ""
+                      : capRound;
+                    return {
+                      ...currentForm,
+                      academicYear: newYear,
+                      capRound: nextCapRound
+                    };
+                  });
+                }}
               >
                 <option value="">All available years</option>
                 {academicYears.map((year) => <option key={year} value={year}>{year}</option>)}
@@ -662,10 +679,10 @@ export default function FePredictorPage() {
                 onChange={(event) => updateField("capRound", event.target.value)}
               >
                 <option value="">Latest available CAP round</option>
-                <option value="1">CAP Round 1</option>
-                <option value="2">CAP Round 2</option>
-                <option value="3">CAP Round 3</option>
-                <option value="4">CAP Round 4</option>
+                {(!form.academicYear || (yearRounds[form.academicYear]?.includes(1))) && <option value="1">CAP Round 1</option>}
+                {(!form.academicYear || (yearRounds[form.academicYear]?.includes(2))) && <option value="2">CAP Round 2</option>}
+                {(!form.academicYear || (yearRounds[form.academicYear]?.includes(3))) && <option value="3">CAP Round 3</option>}
+                {(!form.academicYear || (yearRounds[form.academicYear]?.includes(4))) && <option value="4">CAP Round 4</option>}
               </select>
               </label>
             </fieldset>

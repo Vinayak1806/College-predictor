@@ -65,10 +65,21 @@ export async function GET(request) {
       })
     ]);
 
+    const yearRoundsMap = {};
+    for (const dataset of datasets) {
+      if (!yearRoundsMap[dataset.academicYear]) {
+        yearRoundsMap[dataset.academicYear] = [];
+      }
+      if (!yearRoundsMap[dataset.academicYear].includes(dataset.capRound)) {
+        yearRoundsMap[dataset.academicYear].push(dataset.capRound);
+      }
+    }
+
     return NextResponse.json({
       years: [...new Set(datasets.map((dataset) => dataset.academicYear))],
       routes: [...new Set(datasets.map((dataset) => dataset.admissionRoute))],
       rounds: [...new Set(datasets.map((dataset) => dataset.capRound))].sort((left, right) => left - right),
+      yearRounds: yearRoundsMap,
       categories: [...new Set(seatTypes.map((seatType) => seatType.category))].sort(),
       seatTypes: seatTypes.map((seatType) => seatType.code),
       branches: branches.map((branch) => branch.displayName),

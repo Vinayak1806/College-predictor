@@ -308,7 +308,7 @@ export default function DsePredictorPage() {
   const predictorFormRef = useRef(null);
   const resultsTopRef = useRef(null);
   const [form, setForm] = useState(initialForm);
-  const [options, setOptions] = useState({ years: [], rounds: [], branches: [], cities: [], universities: [] });
+  const [options, setOptions] = useState({ years: [], rounds: [], branches: [], cities: [], universities: [], yearRounds: {} });
   const [optionsLoading, setOptionsLoading] = useState(true);
   const [instituteCount, setInstituteCount] = useState(null);
   const [zone, setZone] = useState("ALL");
@@ -351,7 +351,8 @@ export default function DsePredictorPage() {
           rounds: data.rounds || [],
           branches: data.branches || [],
           cities: data.cities || [],
-          universities: data.universities || []
+          universities: data.universities || [],
+          yearRounds: data.yearRounds || {}
         });
         setOptionsLoading(false);
       })
@@ -552,16 +553,41 @@ export default function DsePredictorPage() {
               <div className="grid grid-cols-2 gap-2">
                 <label className="grid min-w-0 gap-2 text-sm font-medium">
                   Cutoff year
-                  <select className="focus-ring min-h-11 min-w-0 rounded border border-line px-2" value={form.academicYear} onChange={(event) => update("academicYear", event.target.value)}>
+                  <select
+                    className="focus-ring min-h-11 min-w-0 rounded border border-line px-2"
+                    value={form.academicYear}
+                    onChange={(event) => {
+                      const newYear = event.target.value;
+                      setForm((currentForm) => {
+                        const allowedRounds = newYear ? (options.yearRounds[newYear] || []) : [];
+                        const capRound = currentForm.capRound;
+                        const nextCapRound = (newYear && capRound && !allowedRounds.includes(Number(capRound)))
+                          ? ""
+                          : capRound;
+                        return {
+                          ...currentForm,
+                          academicYear: newYear,
+                          capRound: nextCapRound
+                        };
+                      });
+                    }}
+                  >
                     <option value="">All years</option>
                     {options.years.map((year) => <option key={year}>{year}</option>)}
                   </select>
                 </label>
                 <label className="grid min-w-0 gap-2 text-sm font-medium">
                   CAP round
-                  <select className="focus-ring min-h-11 min-w-0 rounded border border-line px-2" value={form.capRound} onChange={(event) => update("capRound", event.target.value)}>
+                  <select
+                    className="focus-ring min-h-11 min-w-0 rounded border border-line px-2"
+                    value={form.capRound}
+                    onChange={(event) => update("capRound", event.target.value)}
+                  >
                     <option value="">Latest round</option>
-                    {options.rounds.map((round) => <option key={round} value={round}>Round {round}</option>)}
+                    {options.rounds
+                      .filter((round) => !form.academicYear || options.yearRounds[form.academicYear]?.includes(Number(round)))
+                      .map((round) => <option key={round} value={round}>Round {round}</option>)
+                    }
                   </select>
                 </label>
               </div>
