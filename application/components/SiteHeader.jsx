@@ -79,7 +79,7 @@ export function SiteHeader({ showStudentAccount = true }) {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white shadow-sm">
+    <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/80 backdrop-blur-md shadow-xs">
       <div className="h-[3px] bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500" />
       <div className="mx-auto flex min-h-[64px] max-w-7xl items-center justify-between gap-3 px-3 sm:px-5 lg:px-6">
         <Link href="/" className="focus-ring group flex min-w-0 items-center gap-3 rounded-lg" onClick={() => setMenuOpen(false)}>
@@ -90,17 +90,17 @@ export function SiteHeader({ showStudentAccount = true }) {
           </span>
         </Link>
 
-        <nav className="hidden shrink-0 items-center gap-1 xl:flex" aria-label="Main navigation">
+        <nav className="hidden shrink-0 items-center gap-1.5 xl:flex bg-slate-100/50 p-1 rounded-full border border-slate-200/60 shadow-3xs" aria-label="Main navigation">
           {links.map(([label, href]) => {
             const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
             return (
               <Link
                 key={href}
                 href={href}
-                className={`focus-ring whitespace-nowrap rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-200 ${
+                className={`focus-ring whitespace-nowrap rounded-full px-4 py-1.5 text-[13.5px] font-medium transition-all duration-300 hover:scale-[1.02] active:scale-98 ${
                   active
-                    ? "border border-indigo-200/80 bg-indigo-50 font-semibold text-indigo-700 shadow-2xs"
-                    : "text-slate-700 hover:bg-slate-100/80 hover:text-indigo-600"
+                    ? "bg-white text-indigo-600 font-semibold shadow-xs border border-slate-200/40"
+                    : "text-slate-600 hover:text-indigo-600"
                 }`}
               >
                 {label}
@@ -117,7 +117,7 @@ export function SiteHeader({ showStudentAccount = true }) {
                 aria-label={`Open account menu for ${user.name}`}
                 aria-expanded={accountOpen}
                 title={user.name}
-                className="focus-ring flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-slate-600 transition-colors hover:border-slate-200 hover:bg-slate-100 hover:text-indigo-600"
+                className="focus-ring flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-slate-600 transition-all duration-200 hover:border-slate-200 hover:bg-slate-100 hover:text-indigo-600 hover:scale-105 active:scale-95"
                 onClick={() => {
                   setMenuOpen(false);
                   setAccountOpen((current) => !current);
@@ -144,7 +144,7 @@ export function SiteHeader({ showStudentAccount = true }) {
                 href="/login"
                 aria-label="Student login"
                 title={isPending ? "Checking account" : "Student login"}
-                className="focus-ring flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-xs transition-colors hover:border-indigo-200 hover:bg-indigo-50/50 hover:text-indigo-600"
+                className="focus-ring flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all duration-200 hover:border-indigo-200 hover:bg-indigo-50/50 hover:text-indigo-600 hover:scale-105 active:scale-95"
               >
                 <CircleUserRound aria-hidden="true" size={19} />
               </Link>
@@ -183,13 +183,13 @@ export function SiteHeader({ showStudentAccount = true }) {
             href="/colleges"
             aria-label="Search colleges"
             title="Search colleges"
-            className="focus-ring hidden h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-xs transition-colors hover:border-indigo-200 hover:bg-indigo-50/50 hover:text-indigo-600 sm:flex xl:hidden"
+            className="focus-ring hidden h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all duration-200 hover:border-indigo-200 hover:bg-indigo-50/50 hover:text-indigo-600 hover:scale-105 active:scale-95 sm:flex xl:hidden"
           >
             <Search aria-hidden="true" size={18} />
           </Link>
           <button
             type="button"
-            className="focus-ring flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-xs transition-colors hover:border-indigo-200 hover:bg-indigo-50/50 xl:hidden"
+            className="focus-ring flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-2xs transition-all duration-200 hover:border-indigo-200 hover:bg-indigo-50/50 hover:scale-105 active:scale-95 xl:hidden"
             aria-label={menuOpen ? "Close navigation" : "Open navigation"}
             aria-expanded={menuOpen}
             onClick={() => {
@@ -203,22 +203,24 @@ export function SiteHeader({ showStudentAccount = true }) {
       </div>
 
       {menuOpen ? (
-        <div className="absolute inset-x-0 top-full flex h-[calc(100dvh-67px)] justify-end bg-slate-950/40 backdrop-blur-xs xl:hidden">
+        <div className="absolute inset-x-0 top-full flex h-[calc(100dvh-67px)] justify-end bg-slate-950/30 backdrop-blur-sm xl:hidden">
           <button className="absolute inset-0 cursor-default" type="button" aria-label="Close navigation" onClick={() => setMenuOpen(false)} />
-          <nav className="fade-in-scale relative h-full w-full max-w-sm overflow-y-auto border-l border-slate-200 bg-white p-5 shadow-2xl" aria-label="Mobile navigation">
+          <nav className="fade-in-scale relative h-full w-full max-w-sm overflow-y-auto border-l border-slate-200/80 bg-white/95 backdrop-blur-md p-5 shadow-2xl" aria-label="Mobile navigation">
             <div className="mb-5 border-b border-slate-100 pb-4">
               <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">Student navigation</p>
               <p className="mt-1 text-xs text-slate-500">Predict, research and prepare your CAP list.</p>
             </div>
-            <div className="grid gap-1">
+            <div className="grid gap-1.5">
             {links.map(([label, href]) => {
               const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
               return (
                 <Link
                   key={href}
                   href={href}
-                  className={`focus-ring flex min-h-12 items-center rounded-lg px-3 text-sm font-medium transition-colors ${
-                    active ? "bg-indigo-50 font-semibold text-indigo-700 border border-indigo-100" : "text-slate-700 hover:bg-slate-100"
+                  className={`focus-ring flex min-h-12 items-center rounded-xl px-4 text-sm font-medium transition-all duration-200 hover:translate-x-1 ${
+                    active
+                      ? "bg-indigo-50/80 font-semibold text-indigo-700 border border-indigo-100/50 shadow-3xs"
+                      : "text-slate-700 hover:bg-slate-100/80 hover:text-indigo-600"
                   }`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -229,13 +231,13 @@ export function SiteHeader({ showStudentAccount = true }) {
             </div>
             <Link
               href={pathname.startsWith("/dse-predictor") ? "/dse-predictor" : "/fe-predictor"}
-              className="btn-primary mt-6 flex w-full"
+              className="btn-primary mt-6 flex w-full justify-center rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-98"
               onClick={() => setMenuOpen(false)}
             >
               <BarChart3 aria-hidden="true" size={17} /> Predict colleges
             </Link>
           </nav>
-          </div>
+        </div>
       ) : null}
     </header>
   );

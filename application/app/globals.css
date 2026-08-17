@@ -42,8 +42,8 @@ html {
   scroll-behavior: smooth;
   max-width: 100%;
   overflow-x: clip;
-  scrollbar-color: #94a3b8 #f8fafc;
-  scrollbar-width: thin;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
 }
 
 body {
@@ -70,22 +70,7 @@ body {
 }
 
 html::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-html::-webkit-scrollbar-track {
-  background: #f8fafc;
-}
-
-html::-webkit-scrollbar-thumb {
-  border: 2px solid #f8fafc;
-  border-radius: 99px;
-  background: #cbd5e1;
-}
-
-html::-webkit-scrollbar-button {
-  display: none;
+  display: none; /* Safari and Chrome */
 }
 
 h1,

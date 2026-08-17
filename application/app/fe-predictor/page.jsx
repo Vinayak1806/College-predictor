@@ -225,7 +225,7 @@ function CompactMultiSelect({
   }, []);
 
   return (
-    <div ref={containerRef} className="relative grid min-w-0 w-full gap-2 text-sm">
+    <div ref={containerRef} className="relative grid min-w-0 w-full gap-2 text-sm h-fit">
       <label className="font-medium" htmlFor={inputId}>{label}</label>
       <div className="focus-within:ring-2 focus-within:ring-[#7db9ca] flex min-h-11 w-full min-w-0 max-w-full items-center gap-2 overflow-hidden rounded border border-line bg-white px-3">
         <input
@@ -743,46 +743,50 @@ export default function FePredictorPage() {
 
             <fieldset data-step="3" className={`${mobileStep === 3 ? "grid" : "hidden"} min-w-0 gap-4 md:grid md:border-t md:border-line md:pt-5 ${hasPredicted ? "" : "md:grid-cols-2"}`}>
               <legend className="sr-only">College preferences</legend>
-              <CompactMultiSelect
-              label="Preferred branches"
-              options={branchOptions}
-              selectedValues={form.branches}
-              emptyText="All branches"
-              onToggle={(value) => toggleListValue("branches", value)}
-              onClear={() => updateField("branches", [])}
-              searchPlaceholder="Type branch name"
-              />
+              <div className="flex flex-col gap-4">
+                <CompactMultiSelect
+                  label="Preferred branches"
+                  options={branchOptions}
+                  selectedValues={form.branches}
+                  emptyText="All branches"
+                  onToggle={(value) => toggleListValue("branches", value)}
+                  onClear={() => updateField("branches", [])}
+                  searchPlaceholder="Type branch name"
+                />
 
-              <CompactMultiSelect
-              label={`Preferred districts / cities${citiesLoading ? "" : ` (${cities.length})`}`}
-              options={cities.map((city) => ({ label: city.name, value: city.name }))}
-              selectedValues={form.cities}
-              emptyText="All Maharashtra"
-              onToggle={(value) => toggleListValue("cities", value)}
-              onClear={() => updateField("cities", [])}
-              loading={citiesLoading}
-              searchPlaceholder="Type district or city name"
-              noOptionsText={cityError && !cities.length ? cityError : "No matching district or city found."}
-              />
+                <label className="flex min-h-11 items-center gap-2 rounded border border-line px-3 text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    checked={form.autonomousOnly}
+                    onChange={(event) => updateField("autonomousOnly", event.target.checked)}
+                  />
+                  Autonomous institutes only
+                </label>
+              </div>
 
-              <CompactMultiSelect
-              label="Institute ownership"
-              options={collegeTypeOptions}
-              selectedValues={form.collegeTypes}
-              emptyText="All institute types"
-              onToggle={(value) => toggleListValue("collegeTypes", value)}
-              onClear={() => updateField("collegeTypes", [])}
-              searchPlaceholder="Choose institute type"
-              />
+              <div className="flex flex-col gap-4">
+                <CompactMultiSelect
+                  label={`Preferred districts / cities${citiesLoading ? "" : ` (${cities.length})`}`}
+                  options={cities.map((city) => ({ label: city.name, value: city.name }))}
+                  selectedValues={form.cities}
+                  emptyText="All Maharashtra"
+                  onToggle={(value) => toggleListValue("cities", value)}
+                  onClear={() => updateField("cities", [])}
+                  loading={citiesLoading}
+                  searchPlaceholder="Type district or city name"
+                  noOptionsText={cityError && !cities.length ? cityError : "No matching district or city found."}
+                />
 
-              <label className="flex min-h-11 items-center gap-2 rounded border border-line px-3 text-sm font-medium">
-              <input
-                type="checkbox"
-                checked={form.autonomousOnly}
-                onChange={(event) => updateField("autonomousOnly", event.target.checked)}
-              />
-              Autonomous institutes only
-              </label>
+                <CompactMultiSelect
+                  label="Institute ownership"
+                  options={collegeTypeOptions}
+                  selectedValues={form.collegeTypes}
+                  emptyText="All institute types"
+                  onToggle={(value) => toggleListValue("collegeTypes", value)}
+                  onClear={() => updateField("collegeTypes", [])}
+                  searchPlaceholder="Choose institute type"
+                />
+              </div>
             </fieldset>
 
             <div className="grid grid-cols-2 gap-2 md:hidden">
