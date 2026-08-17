@@ -88,12 +88,13 @@ async function createPrediction(request) {
   const studentScore = input.diplomaPercentage;
 
   const rows = await findCutoffsInBatches({
+    maxRows: 15000,
     where: {
       needsReview: false,
       closingScore: {
         not: null,
-        gte: Math.max(0, studentScore - 25),
-        lte: Math.min(100, studentScore + 15)
+        gte: Math.max(0, studentScore - 15),
+        lte: Math.min(100, studentScore + 10)
       },
       seatType: { OR: seatFilters },
       dataset: {
@@ -121,14 +122,24 @@ async function createPrediction(request) {
       collegeBranch: {
         include: {
           college: {
-            include: {
-              city: true,
-              university: true,
-              profile: true,
-              fees: { orderBy: { academicYear: "desc" }, take: 1 }
+            select: {
+              id: true,
+              instituteCode: true,
+              name: true,
+              slug: true,
+              collegeType: true,
+              autonomous: true,
+              cityId: true,
+              universityId: true
             }
           },
-          branch: true
+          branch: {
+            select: {
+              id: true,
+              branchCode: true,
+              displayName: true
+            }
+          }
         }
       }
     }
@@ -171,27 +182,26 @@ async function createPrediction(request) {
     const college = latestRow.collegeBranch.college;
     const branch = latestRow.collegeBranch.branch;
     const matrix = matrixByYearAndBranch.get(`${analysis.latest.year}-${branch.branchCode}`);
-    const profile = college.profile;
-    const latestFee = college.fees[0];
-    const collegeType = normalizeOwnership(matrix?.collegeType || profile?.ownershipType || college.collegeType);
+    const collegeType = normalizeOwnership(matrix?.collegeType || college.collegeType);
 
     const result = {
       admissionRoute: "DSE",
       scoreLabel: "diploma percentage",
+      collegeId: college.id,
       collegeSlug: college.slug,
       instituteCode: college.instituteCode,
       college: college.name,
       branchCode: branch.branchCode,
       branch: branch.displayName,
-      city: college.city?.name,
-      university: college.university?.name || null,
+      city: null,
+      university: null,
       universityEligibility: "STATE",
       collegeType,
       autonomous: matrix?.autonomous || college.autonomous,
-      preferenceBand: profile?.preferenceBand || null,
+      preferenceBand: null,
       historicalDemandScore: analysis.benchmarkCutoff,
-      latestFee: latestFee?.totalApprovedFee || profile?.totalApprovedFee || null,
-      latestFeeYear: latestFee?.academicYear || profile?.feeYear || null,
+      latestFee: null,
+      latestFeeYear: null,
       capSeats: matrix?.capSeats || null,
       lateralEntrySeats: matrix?.lateralEntrySeats || null,
       vacantSeats: matrix?.vacantSeats || null,
@@ -242,9 +252,42 @@ async function createPrediction(request) {
   const start = (input.page - 1) * input.pageSize;
   const visibleResults = zoneResults.slice(start, start + input.pageSize);
 
+  const visibleCollegeIds = [...new Set(visibleResults.map((r) => r.collegeId))].filter(Boolean);
+  const collegesDetails = visibleCollegeIds.length
+    ? await prisma.college.findMany({
+        where: { id: { in: visibleCollegeIds } },
+        include: {
+          city: true,
+          university: true,
+          profile: true,
+          fees: { orderBy: { academicYear: "desc" }, take: 1 }
+        }
+      })
+    : [];
+
+  const collegeDetailsMap = new Map(collegesDetails.map((c) => [c.id.toString(), c]));
+
+  const enrichedVisibleResults = visibleResults.map((result) => {
+    if (!result.collegeId) return result;
+    const collegeDetail = collegeDetailsMap.get(result.collegeId.toString());
+    const profile = collegeDetail?.profile;
+    const latestFee = collegeDetail?.fees?.[0];
+
+    const { collegeId, ...cleanResult } = result;
+
+    return {
+      ...cleanResult,
+      city: collegeDetail?.city?.name || null,
+      university: collegeDetail?.university?.name || null,
+      preferenceBand: profile?.preferenceBand || null,
+      latestFee: latestFee?.totalApprovedFee || profile?.totalApprovedFee || null,
+      latestFeeYear: latestFee?.academicYear || profile?.feeYear || null
+    };
+  });
+
   return NextResponse.json({
     seatTypes: [...new Set(filteredResults.flatMap((result) => result.eligibleSeatTypes))].sort(),
-    results: visibleResults,
+    results: enrichedVisibleResults,
     pagination: {
       page: input.page,
       pageSize: input.pageSize,

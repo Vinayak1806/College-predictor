@@ -603,6 +603,7 @@ export default function FePredictorPage() {
           </div>
           <CompactMetricGrid
             className="mt-4 grid-cols-3"
+            vertical={hasPredicted}
             items={[
               { label: "FE cutoffs", value: "103k+", icon: BarChart3, tone: "indigo" },
               { label: "Data years", value: "3", icon: CalendarDays, tone: "success" },
@@ -878,24 +879,24 @@ export default function FePredictorPage() {
                   {hasPredicted ? "Your college-branch options" : "Ready for your profile"}
                 </h2>
                 {hasPredicted ? (
-                  <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2 xl:grid-cols-4">
-                    <div>
-                      <dt className="text-xs text-slate-500">Percentile</dt>
-                      <dd className="mt-0.5 font-semibold text-ink">{form.percentile}</dd>
+                  <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="rounded-lg border border-line bg-panel p-3">
+                      <dt className="text-xs font-medium text-slate-500">Percentile</dt>
+                      <dd className="mt-1 font-semibold text-ink">{form.percentile}</dd>
                     </div>
-                    <div>
-                      <dt className="text-xs text-slate-500">Category</dt>
-                      <dd className="mt-0.5 font-semibold text-ink">{form.category}</dd>
+                    <div className="rounded-lg border border-line bg-panel p-3">
+                      <dt className="text-xs font-medium text-slate-500">Category</dt>
+                      <dd className="mt-1 font-semibold text-ink">{form.category}</dd>
                     </div>
-                    <div className="min-w-0">
-                      <dt className="text-xs text-slate-500">Branch preference</dt>
-                      <dd className="mt-0.5 break-words font-semibold text-ink">
+                    <div className="min-w-0 rounded-lg border border-line bg-panel p-3">
+                      <dt className="text-xs font-medium text-slate-500">Branch preference</dt>
+                      <dd className="mt-1 break-words font-semibold text-ink">
                         {selectedSummary(form.branches, branchOptions, "All branches")}
                       </dd>
                     </div>
-                    <div className="min-w-0">
-                      <dt className="text-xs text-slate-500">Location</dt>
-                      <dd className="mt-0.5 break-words font-semibold text-ink">
+                    <div className="min-w-0 rounded-lg border border-line bg-panel p-3">
+                      <dt className="text-xs font-medium text-slate-500">Location</dt>
+                      <dd className="mt-1 break-words font-semibold text-ink">
                         {form.cities.length ? form.cities.join(", ") : "All Maharashtra"}
                       </dd>
                     </div>

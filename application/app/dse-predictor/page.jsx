@@ -472,6 +472,7 @@ export default function DsePredictorPage() {
 
           <CompactMetricGrid
             className="mt-4 grid-cols-3"
+            vertical={hasPredicted}
             items={[
               { label: "DSE cutoffs", value: "45k+", icon: BarChart3, tone: "indigo" },
               { label: "Data years", value: options.years.length || 2, icon: CalendarDays, tone: "success" },
@@ -739,26 +740,26 @@ export default function DsePredictorPage() {
                 <p className="text-xs font-semibold uppercase text-action">Prediction workspace</p>
                 <h2 className="mt-1 text-xl font-semibold">{hasPredicted ? "Your college-branch options" : "Ready for your profile"}</h2>
                 {hasPredicted ? (
-                  <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2 xl:grid-cols-5">
-                    <div>
-                      <dt className="text-xs text-slate-500">Diploma percentage</dt>
-                      <dd className="mt-0.5 font-semibold">{form.diplomaPercentage}%</dd>
+                  <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-5">
+                    <div className="rounded-lg border border-line bg-panel p-3">
+                      <dt className="text-xs font-medium text-slate-500">Diploma percentage</dt>
+                      <dd className="mt-1 font-semibold text-ink">{form.diplomaPercentage}%</dd>
                     </div>
-                    <div>
-                      <dt className="text-xs text-slate-500">Category</dt>
-                      <dd className="mt-0.5 font-semibold">{form.category}</dd>
+                    <div className="rounded-lg border border-line bg-panel p-3">
+                      <dt className="text-xs font-medium text-slate-500">Category</dt>
+                      <dd className="mt-1 font-semibold text-ink">{form.category}</dd>
                     </div>
-                    <div className="min-w-0">
-                      <dt className="text-xs text-slate-500">Degree branch preference</dt>
-                      <dd className="mt-0.5 break-words font-semibold">{selectedSummary(form.branches, branchOptions, "All branches")}</dd>
+                    <div className="min-w-0 rounded-lg border border-line bg-panel p-3">
+                      <dt className="text-xs font-medium text-slate-500">Degree branch preference</dt>
+                      <dd className="mt-1 break-words font-semibold text-ink">{selectedSummary(form.branches, branchOptions, "All branches")}</dd>
                     </div>
-                    <div className="min-w-0">
-                      <dt className="text-xs text-slate-500">Location</dt>
-                      <dd className="mt-0.5 break-words font-semibold">{form.cities.length ? form.cities.join(", ") : "All Maharashtra"}</dd>
+                    <div className="min-w-0 rounded-lg border border-line bg-panel p-3">
+                      <dt className="text-xs font-medium text-slate-500">Location</dt>
+                      <dd className="mt-1 break-words font-semibold text-ink">{form.cities.length ? form.cities.join(", ") : "All Maharashtra"}</dd>
                     </div>
-                    <div className="min-w-0">
-                      <dt className="text-xs text-slate-500">University</dt>
-                      <dd className="mt-0.5 break-words font-semibold">{selectedSummary(form.universities, universityOptions, "All universities")}</dd>
+                    <div className="min-w-0 rounded-lg border border-line bg-panel p-3">
+                      <dt className="text-xs font-medium text-slate-500">University</dt>
+                      <dd className="mt-1 break-words font-semibold text-ink">{selectedSummary(form.universities, universityOptions, "All universities")}</dd>
                     </div>
                   </dl>
                 ) : (

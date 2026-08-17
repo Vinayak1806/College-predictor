@@ -94,12 +94,13 @@ async function createPrediction(request) {
   const studentScore = input.percentile;
 
   const rows = await findCutoffsInBatches({
+    maxRows: 15000,
     where: {
       needsReview: false,
       closingScore: {
         not: null,
-        gte: Math.max(0, studentScore - 25),
-        lte: Math.min(100, studentScore + 15)
+        gte: Math.max(0, studentScore - 15),
+        lte: Math.min(100, studentScore + 10)
       },
       seatType: { code: { in: querySeatTypes } },
       dataset: {
@@ -124,23 +125,40 @@ async function createPrediction(request) {
       collegeBranch: {
         include: {
           college: {
-            include: {
-              city: true,
-              university: true,
-              profile: true,
-              fees: { orderBy: { academicYear: "desc" }, take: 1 }
+            select: {
+              id: true,
+              instituteCode: true,
+              name: true,
+              slug: true,
+              collegeType: true,
+              autonomous: true,
+              cityId: true,
+              universityId: true,
+              profile: {
+                select: {
+                  fePreferenceProxy: true
+                }
+              }
             }
           },
-          branch: true
+          branch: {
+            select: {
+              id: true,
+              branchCode: true,
+              displayName: true
+            }
+          }
         }
       }
     }
   });
 
-  // Home/Other University eligibility depends on each result college, so it is
-  // checked after the college's university is available from the database.
+  const universitiesList = await prisma.university.findMany();
+  const universityNameById = new Map(universitiesList.map((u) => [u.id.toString(), u.name]));
+
   const eligibleRows = rows.filter((row) => {
-    const collegeUniversity = row.collegeBranch.college.university?.name;
+    const universityId = row.collegeBranch.college.universityId;
+    const collegeUniversity = universityId ? universityNameById.get(universityId.toString()) : null;
     return cutoffIsEligibleForCollege(
       input,
       collegeUniversity,
@@ -186,27 +204,30 @@ async function createPrediction(request) {
     const branch = latestRow.collegeBranch.branch;
     const matrix = seatMatrixByYearAndBranch.get(`${analysis.latest.year}-${branch.branchCode}`);
     const profile = college.profile;
-    const latestFee = college.fees[0];
     const collegeType = normalizeOwnership(matrix?.collegeType || profile?.ownershipType || college.collegeType);
+
+    const universityId = college.universityId;
+    const collegeUniversity = universityId ? universityNameById.get(universityId.toString()) : null;
 
     const result = {
       admissionRoute: "FE",
+      collegeId: college.id,
       collegeSlug: college.slug,
       instituteCode: college.instituteCode,
       college: college.name,
       branchCode: branch.branchCode,
       branch: branch.displayName,
-      city: college.city?.name,
-      university: college.university?.name || null,
-      universityEligibility: universityEligibilityForCollege(input.homeUniversity, college.university?.name),
+      city: null,
+      university: collegeUniversity || null,
+      universityEligibility: universityEligibilityForCollege(input.homeUniversity, collegeUniversity),
       collegeType,
       autonomous: matrix?.autonomous || college.autonomous,
-      preferenceBand: profile?.preferenceBand || null,
+      preferenceBand: null,
       historicalDemandScore: profile?.fePreferenceProxy
         ? Number(profile.fePreferenceProxy)
         : null,
-      latestFee: latestFee?.totalApprovedFee || profile?.totalApprovedFee || null,
-      latestFeeYear: latestFee?.academicYear || profile?.feeYear || null,
+      latestFee: null,
+      latestFeeYear: null,
       sanctionedIntake: matrix?.sanctionedIntake || null,
       capSeats: matrix?.capSeats || null,
       ewsSeats: matrix?.ewsSeats || null,
@@ -259,9 +280,42 @@ async function createPrediction(request) {
   const totalResults = zoneResults.length;
   const seatTypes = [...new Set(filteredResults.flatMap((result) => result.eligibleSeatTypes))].sort();
 
+  const visibleCollegeIds = [...new Set(visibleResults.map((r) => r.collegeId))].filter(Boolean);
+  const collegesDetails = visibleCollegeIds.length
+    ? await prisma.college.findMany({
+        where: { id: { in: visibleCollegeIds } },
+        include: {
+          city: true,
+          university: true,
+          profile: true,
+          fees: { orderBy: { academicYear: "desc" }, take: 1 }
+        }
+      })
+    : [];
+
+  const collegeDetailsMap = new Map(collegesDetails.map((c) => [c.id.toString(), c]));
+
+  const enrichedVisibleResults = visibleResults.map((result) => {
+    if (!result.collegeId) return result;
+    const collegeDetail = collegeDetailsMap.get(result.collegeId.toString());
+    const profile = collegeDetail?.profile;
+    const latestFee = collegeDetail?.fees?.[0];
+
+    const { collegeId, ...cleanResult } = result;
+
+    return {
+      ...cleanResult,
+      city: collegeDetail?.city?.name || null,
+      university: collegeDetail?.university?.name || result.university,
+      preferenceBand: profile?.preferenceBand || null,
+      latestFee: latestFee?.totalApprovedFee || profile?.totalApprovedFee || null,
+      latestFeeYear: latestFee?.academicYear || profile?.feeYear || null
+    };
+  });
+
   return NextResponse.json({
     seatTypes,
-    results: visibleResults,
+    results: enrichedVisibleResults,
     pagination: {
       page: input.page,
       pageSize: input.pageSize,
