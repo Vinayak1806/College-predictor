@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import Link from "next/link";
 import { AlertTriangle, Mail, RotateCcw } from "lucide-react";
 import { useEffect } from "react";
@@ -7,6 +8,7 @@ import { SUPPORT_EMAIL } from "../lib/site";
 
 export default function ErrorPage({ error, reset }) {
   useEffect(() => {
+    Sentry.captureException(error);
     console.error("Page rendering failed", error);
   }, [error]);
 

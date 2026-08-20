@@ -9,7 +9,6 @@ const required = [
   "GOOGLE_CLIENT_ID",
   "GOOGLE_CLIENT_SECRET",
   "NEXT_PUBLIC_SUPPORT_EMAIL",
-  "ADMIN_IMPORTS_ROOT",
   "ALLOW_SEARCH_INDEXING",
   "RELEASE_ID"
 ];
@@ -17,6 +16,13 @@ const required = [
 const failures = [];
 const warnings = [];
 const value = (name) => String(process.env[name] || "").trim();
+
+// ADMIN_IMPORTS_ROOT is required only when Supabase Storage is NOT configured.
+const hasSupabase = Boolean(value("SUPABASE_URL") && value("SUPABASE_SERVICE_ROLE_KEY"));
+if (!hasSupabase) {
+  required.push("ADMIN_IMPORTS_ROOT");
+}
+
 const missing = required.filter((name) => !value(name));
 
 if (missing.length) {
@@ -96,6 +102,32 @@ if (!value("PYTHON_EXECUTABLE")) {
   warnings.push("PYTHON_EXECUTABLE is not set; the server must provide python3 or python on PATH.");
 }
 
+// Supabase Storage validation
+if (value("SUPABASE_URL") || value("SUPABASE_SERVICE_ROLE_KEY")) {
+  if (!value("SUPABASE_URL")) failures.push("SUPABASE_SERVICE_ROLE_KEY is set but SUPABASE_URL is missing.");
+  if (!value("SUPABASE_SERVICE_ROLE_KEY")) failures.push("SUPABASE_URL is set but SUPABASE_SERVICE_ROLE_KEY is missing.");
+  if (value("SUPABASE_URL")) {
+    const supabaseUrl = parseUrl("SUPABASE_URL");
+    if (supabaseUrl && supabaseUrl.protocol !== "https:") {
+      failures.push("SUPABASE_URL must use HTTPS.");
+    }
+  }
+}
+
+if (hasSupabase) {
+  warnings.push("Supabase Storage is configured — PDF uploads will be stored in Supabase, not on disk.");
+} else if (!value("ADMIN_IMPORTS_ROOT")) {
+  warnings.push("Neither SUPABASE_URL nor ADMIN_IMPORTS_ROOT is configured. PDF uploads will fail in production.");
+}
+
+// Sentry validation
+if (value("SENTRY_DSN") && !/^https:\/\/[a-f0-9]+@[^/]+\/\d+$/i.test(value("SENTRY_DSN"))) {
+  warnings.push("SENTRY_DSN does not match the expected Sentry DSN format (https://<key>@<host>/<id>).");
+}
+if (!value("SENTRY_DSN") && !value("NEXT_PUBLIC_SENTRY_DSN")) {
+  warnings.push("Sentry is not configured. Error monitoring will be disabled.");
+}
+
 if (warnings.length) {
   console.warn("Deployment warnings:");
   for (const warning of warnings) console.warn(`- ${warning}`);
@@ -107,3 +139,4 @@ if (failures.length) {
 }
 
 console.log(`Production configuration is ready for ${siteUrl.origin}.`);
+

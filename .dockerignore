@@ -19,3 +19,4 @@ documentation
 tmp
 *.xlsx
 *.dump
+.sentryclirc

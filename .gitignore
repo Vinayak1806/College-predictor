@@ -18,6 +18,7 @@ application/data/admin-imports/
 application/uploads/
 *.pem
 *.key
+.sentryclirc
 application/test-results/
 application/playwright-report/
 /*.xlsx

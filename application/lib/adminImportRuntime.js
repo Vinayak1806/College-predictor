@@ -1,6 +1,7 @@
 import { execFile } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
+import fs from "node:fs/promises";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
@@ -12,6 +13,28 @@ const processorPath = path.join(projectRoot, "data-pipeline", "process_admin_upl
 export const adminImportsRoot = process.env.ADMIN_IMPORTS_ROOT
   ? path.resolve(process.env.ADMIN_IMPORTS_ROOT)
   : path.join(projectRoot, "data", "admin-imports");
+
+/**
+ * Create a temporary directory for the Python extractor to work in.
+ * When using Supabase storage, the PDF is downloaded to this temp dir,
+ * processed, then the temp dir is cleaned up.
+ * @returns {Promise<string>} Absolute path to the temp directory
+ */
+export async function createTempProcessingDir() {
+  return fs.mkdtemp(path.join(os.tmpdir(), "admin-import-processing-"));
+}
+
+/**
+ * Remove a temporary processing directory and all its contents.
+ * @param {string} tempDir Absolute path to the temp directory
+ */
+export async function cleanupTempDir(tempDir) {
+  try {
+    await fs.rm(tempDir, { recursive: true, force: true });
+  } catch {
+    // Best-effort cleanup — don't fail the import if temp cleanup fails
+  }
+}
 
 export async function runAdminImportProcessor(args) {
   const configured = process.env.PYTHON_EXECUTABLE;
@@ -55,3 +78,4 @@ export async function runAdminImportProcessor(args) {
     `A Python runtime with the data-pipeline requirements could not be started. Configure PYTHON_EXECUTABLE. ${unavailableRuntimeError?.message || ""}`.trim()
   );
 }
+

@@ -11,7 +11,17 @@ import {
   validateStagedRecords
 } from "./adminImportValidation.js";
 import { publishCutoffs, publishSeatMatrices } from "./adminImportPublishing.js";
-import { adminImportsRoot, runAdminImportProcessor } from "./adminImportRuntime.js";
+import {
+  adminImportsRoot,
+  createTempProcessingDir,
+  cleanupTempDir,
+  runAdminImportProcessor
+} from "./adminImportRuntime.js";
+import {
+  uploadFile,
+  downloadToTempFile,
+  getStorageType
+} from "./supabaseStorage.js";
 
 const MAX_FILE_SIZE = 30 * 1024 * 1024;
 
@@ -106,16 +116,30 @@ export function validatePdfUpload(file) {
 }
 
 async function processAdminImport(adminImport) {
-  const importDir = path.dirname(adminImport.storedPath);
+  // When using Supabase storage, storedPath is a relative key (e.g. "<uuid>/source.pdf").
+  // The Python extractor needs local files, so we download to a temp dir first.
+  const useSupabase = getStorageType() === "supabase";
+  let localPdfPath = adminImport.storedPath;
+  let tempDir = null;
+
   try {
     await prisma.adminImport.update({
       where: { id: adminImport.id },
       data: { status: "PROCESSING", errorMessage: null }
     });
 
+    if (useSupabase) {
+      localPdfPath = await downloadToTempFile(adminImport.storedPath);
+      tempDir = path.dirname(localPdfPath);
+    }
+
+    // Use a temp dir for extractor output when on Supabase, otherwise use
+    // the local import directory alongside the stored PDF.
+    const importDir = tempDir || path.dirname(localPdfPath);
+
     const args = [
       "--document-type", adminImport.documentType,
-      "--input", adminImport.storedPath,
+      "--input", localPdfPath,
       "--output-dir", importDir,
       "--original-filename", adminImport.originalFilename,
       "--route", adminImport.admissionRoute,
@@ -203,6 +227,9 @@ async function processAdminImport(adminImport) {
       }
     });
     throw error;
+  } finally {
+    // Clean up temp files when using Supabase storage
+    if (tempDir) await cleanupTempDir(tempDir);
   }
 }
 
@@ -223,10 +250,12 @@ export async function createAndProcessImport({ file, metadata }) {
   }
 
   const uploadKey = crypto.randomUUID();
-  const importDir = path.join(adminImportsRoot, uploadKey);
-  const storedPath = path.join(importDir, "source.pdf");
-  await fs.mkdir(importDir, { recursive: true });
-  await fs.writeFile(storedPath, bytes);
+  const relativePath = `${uploadKey}/source.pdf`;
+
+  // Upload to Supabase Storage or local filesystem
+  const result = await uploadFile(relativePath, bytes, "application/pdf");
+  // Store a relative path for Supabase, absolute path for local
+  const storedPath = result.backend === "supabase" ? relativePath : result.path;
 
   const adminImport = await prisma.adminImport.create({
     data: {
@@ -258,7 +287,11 @@ export async function reprocessAdminImport(id) {
     );
   }
 
-  await fs.access(adminImport.storedPath);
+  // For Supabase storage, existence is verified during processAdminImport
+  // when it downloads the file. For local storage, verify the file exists.
+  if (getStorageType() === "local") {
+    await fs.access(adminImport.storedPath);
+  }
   return processAdminImport(adminImport);
 }
 
