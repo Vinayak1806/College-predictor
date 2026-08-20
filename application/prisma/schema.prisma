@@ -37,13 +37,13 @@ model College {
   autonomous      Boolean               @default(false)
   minorityType    String?               @map("minority_type")
   officialWebsite String?               @map("official_website")
-  city            City?                 @relation(fields: [cityId], references: [id])
-  university      University?           @relation(fields: [universityId], references: [id])
   collegeBranches CollegeBranch[]
-  profile         CollegeProfile?
   fees            CollegeFee[]
+  profile         CollegeProfile?
   rankings        CollegeRanking[]
   routeArchives   CollegeRouteArchive[]
+  city            City?                 @relation(fields: [cityId], references: [id])
+  university      University?           @relation(fields: [universityId], references: [id])
 
   @@index([cityId])
   @@map("colleges")
@@ -64,7 +64,7 @@ model CollegeRanking {
   sourceFile    String?  @map("source_file")
   college       College  @relation(fields: [instituteCode], references: [instituteCode])
 
-  @@unique([instituteCode, rankingSystem, rankingYear, category])
+  @@unique([instituteCode, rankingSystem, rankingYear, category], map: "college_rankings_institute_code_ranking_system_ranking_year_cat")
   @@index([rankingSystem, rankingYear, category, rank])
   @@map("college_rankings")
 }
@@ -140,8 +140,8 @@ model CollegeBranch {
   branchId     BigInt      @map("branch_id")
   academicYear String      @map("academic_year")
   intake       Int?
-  college      College     @relation(fields: [collegeId], references: [id])
   branch       Branch      @relation(fields: [branchId], references: [id])
+  college      College     @relation(fields: [collegeId], references: [id])
   cutoffs      Cutoff[]
   shortlists   Shortlist[]
 
@@ -172,11 +172,11 @@ model CutoffDataset {
   sourceUrl         String?   @map("source_url")
   fileHash          String?   @map("file_hash")
   status            String
+  importedAt        DateTime  @default(now()) @map("imported_at")
+  verifiedAt        DateTime? @map("verified_at")
   predictionEnabled Boolean   @default(true) @map("prediction_enabled")
   historyEnabled    Boolean   @default(true) @map("history_enabled")
   archivedAt        DateTime? @map("archived_at")
-  importedAt        DateTime  @default(now()) @map("imported_at")
-  verifiedAt        DateTime? @map("verified_at")
   cutoffs           Cutoff[]
 
   @@index([admissionRoute, academicYear, capRound, quota, status])
@@ -202,7 +202,6 @@ model Cutoff {
   collegeBranchId BigInt        @map("college_branch_id")
   seatTypeId      BigInt        @map("seat_type_id")
   stage           String?
-  section         String        @default("STANDARD")
   openingRank     Int?          @map("opening_rank")
   closingRank     Int?          @map("closing_rank")
   openingScore    Decimal?      @map("opening_score") @db.Decimal(10, 7)
@@ -211,8 +210,9 @@ model Cutoff {
   verified        Boolean       @default(false)
   needsReview     Boolean       @default(true) @map("needs_review")
   reviewReason    String?       @map("review_reason")
-  dataset         CutoffDataset @relation(fields: [datasetId], references: [id])
+  section         String        @default("STANDARD")
   collegeBranch   CollegeBranch @relation(fields: [collegeBranchId], references: [id])
+  dataset         CutoffDataset @relation(fields: [datasetId], references: [id])
   seatType        SeatType      @relation(fields: [seatTypeId], references: [id])
 
   @@unique([datasetId, collegeBranchId, seatTypeId, stage, section])
@@ -243,16 +243,16 @@ model SeatMatrix {
   ewsSeats          Int?    @map("ews_seats")
   tfwsChoiceCode    String? @map("tfws_choice_code")
   tfwsSeats         Int?    @map("tfws_seats")
-  vacantSeats       Int?    @map("vacant_seats")
-  lateralEntrySeats Int?    @map("lateral_entry_seats")
-  pwdSeats          Int?    @map("pwd_seats")
-  defenceSeats      Int?    @map("defence_seats")
-  categorySeats     Json?   @map("category_seats")
   sourceFile        String  @map("source_file")
   sourcePage        Int     @map("source_page")
   verified          Boolean @default(false)
   needsReview       Boolean @default(false) @map("needs_review")
   reviewReason      String? @map("review_reason")
+  vacantSeats       Int?    @map("vacant_seats")
+  lateralEntrySeats Int?    @map("lateral_entry_seats")
+  pwdSeats          Int?    @map("pwd_seats")
+  defenceSeats      Int?    @map("defence_seats")
+  categorySeats     Json?   @map("category_seats")
 
   @@unique([academicYear, admissionRoute, branchCode])
   @@index([academicYear, branchCode])
@@ -263,20 +263,20 @@ model SeatMatrix {
 
 model User {
   id                Int                 @id @default(autoincrement())
-  name              String
   email             String              @unique
-  emailVerified     Boolean             @default(false) @map("email_verified")
-  image             String?
   role              String              @default("STUDENT")
   createdAt         DateTime            @default(now()) @map("created_at")
+  name              String
+  emailVerified     Boolean             @default(false) @map("email_verified")
+  image             String?
   updatedAt         DateTime            @default(now()) @updatedAt @map("updated_at")
-  sessions          Session[]
-  accounts          Account[]
-  shortlists        Shortlist[]
+  predictionHistory PredictionHistory[]
   preferenceLists   PreferenceList[]
   savedComparisons  SavedComparison[]
+  shortlists        Shortlist[]
   studentProfiles   StudentProfile[]
-  predictionHistory PredictionHistory[]
+  accounts          Account[]
+  sessions          Session[]
 
   @@map("users")
 }
@@ -357,8 +357,8 @@ model Shortlist {
   userId          Int           @map("user_id")
   collegeBranchId BigInt        @map("college_branch_id")
   createdAt       DateTime      @default(now()) @map("created_at")
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   collegeBranch   CollegeBranch @relation(fields: [collegeBranchId], references: [id])
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, collegeBranchId])
   @@index([userId, createdAt])
