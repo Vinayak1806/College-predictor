@@ -41,7 +41,7 @@ export async function POST(request) {
     }
 
     const pdf = await createPreferenceListPdf(validation.data.items);
-    return new Response(pdf, {
+    return new NextResponse(pdf, {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": "attachment; filename=cap-predictor-preference-list.pdf",

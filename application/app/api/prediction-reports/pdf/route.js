@@ -37,7 +37,7 @@ export async function POST(request) {
     studentName: student.session.user.name,
     studentEmail: student.session.user.email
   });
-  return new Response(pdf, {
+  return new NextResponse(pdf, {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename=cap-predictor-${parsed.data.route.toLowerCase()}-prediction.pdf`,

@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { buildCollegeCatalog } from "../../lib/aiDiscovery";
 import { prisma } from "../../lib/prisma";
 import { currentCollegeWhere } from "../../lib/publishedData";
@@ -34,7 +35,7 @@ export async function GET() {
   });
   const content = buildCollegeCatalog({ siteUrl: getSiteUrl(), colleges });
 
-  return new Response(content, {
+  return new NextResponse(content, {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
       "Cache-Control": "no-store"
