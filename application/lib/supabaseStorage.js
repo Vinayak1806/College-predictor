@@ -33,7 +33,11 @@ async function supabaseRequest(method, bucketPath, body, contentType) {
   };
   if (contentType) headers["Content-Type"] = contentType;
 
-  const response = await fetch(url, { method, headers, body: body || undefined });
+  const requestBody = body
+    ? (Buffer.isBuffer(body) ? new Blob([body], { type: contentType || "application/octet-stream" }) : body)
+    : undefined;
+
+  const response = await fetch(url, { method, headers, body: requestBody });
   if (!response.ok) {
     const text = await response.text().catch(() => "");
     throw new Error(`Supabase Storage ${method} ${bucketPath} failed (${response.status}): ${text}`);
