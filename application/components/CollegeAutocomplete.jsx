@@ -111,7 +111,7 @@ export function CollegeAutocomplete({
   }
 
   return (
-    <div ref={containerRef} className={`relative min-w-0 flex-1 ${className}`}>
+    <div ref={containerRef} className={`relative z-40 min-w-0 flex-1 ${className}`}>
       <div className="flex min-w-0 w-full items-center gap-3">
         {showIcon ? <Search aria-hidden="true" className="shrink-0 text-slate-400" size={20} /> : null}
         <input
@@ -140,21 +140,21 @@ export function CollegeAutocomplete({
       </div>
 
       {open ? (
-        <div id={listId} className="menu-enter absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-lg border border-line bg-white shadow-raised" role="listbox">
+        <div id={listId} className="menu-enter absolute left-0 right-0 top-full z-[100] mt-2 max-h-80 overflow-y-auto rounded-lg border border-line bg-white shadow-2xl divide-y divide-line" role="listbox">
           {loading ? <p className="px-4 py-3 text-sm text-slate-500">Searching colleges...</p> : null}
           {!loading && suggestions.map((college, index) => (
             <button
               key={college.slug}
               aria-selected={activeIndex === index}
-              className={`grid min-h-14 w-full gap-1 border-t border-line px-4 py-2.5 text-left first:border-t-0 ${
-                activeIndex === index ? "bg-cyan-50" : "hover:bg-panel"
+              className={`flex w-full flex-col gap-1 px-4 py-3 text-left transition-colors ${
+                activeIndex === index ? "bg-cyan-50 text-action" : "hover:bg-panel text-ink"
               }`}
               role="option"
               type="button"
               onMouseEnter={() => setActiveIndex(index)}
               onClick={() => chooseCollege(college)}
             >
-              <span className="text-sm font-semibold leading-5 text-ink">{college.name}</span>
+              <span className="text-sm font-semibold leading-snug break-words">{college.name}</span>
               <span className="text-xs text-slate-500">
                 {[college.instituteCode, college.city?.name].filter(Boolean).join(" | ")}
               </span>

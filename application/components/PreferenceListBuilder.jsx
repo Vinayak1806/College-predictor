@@ -243,14 +243,14 @@ export function PreferenceListBuilder() {
 
   return (
     <div className="preference-list-page">
-      <section className="surface-card overflow-visible">
+      <section className="surface-card relative z-30 overflow-visible">
         <div className="preference-builder-controls grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-[190px_minmax(260px,1.35fr)_minmax(210px,0.9fr)_170px_96px] lg:items-end md:p-5">
           <div className="sm:col-span-2 lg:col-span-1 lg:self-center">
             <p className="text-xs font-semibold uppercase text-action">Add a choice</p>
             <h2 className="mt-1 font-semibold text-ink">College and branch</h2>
             <p className="mt-1 text-xs leading-5 text-slate-500">Search, select and add.</p>
           </div>
-          <div className="grid gap-2 sm:col-span-2 lg:col-span-1">
+          <div className="grid gap-2 sm:col-span-2 lg:col-span-1 relative z-30">
             <label className="text-sm font-medium text-ink">College</label>
             <CollegeAutocomplete
               className="focus-within:ring-2 focus-within:ring-[#7db9ca] rounded border border-line px-3"
