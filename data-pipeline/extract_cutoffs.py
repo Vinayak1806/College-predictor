@@ -190,12 +190,27 @@ def make_record(
     }
 
 
+def is_seat_header(line: str) -> list[str] | None:
+    tokens = line.split()
+    if not tokens:
+        return None
+    normalized = []
+    for token in tokens:
+        code = normalize_seat_type(token)
+        if decode_seat_type(code) is None:
+            return None
+        normalized.append(code)
+    return normalized
+
+
 def parse_page(text: str, page_number: int, args: argparse.Namespace) -> list[dict[str, str]]:
     raw_lines = [line.strip() for line in text.splitlines()]
     lines = [line for line in raw_lines if not is_noise(line)]
     ctx = Context()
     records: list[dict[str, str]] = []
     seat_types: list[str] = []
+    current_ranks: list[str] = []
+    current_stage: str = "Stage-I"
     index = 0
 
     while index < len(lines):
@@ -208,6 +223,8 @@ def parse_page(text: str, page_number: int, args: argparse.Namespace) -> list[di
             ctx.branch_code = ""
             ctx.branch_name = ""
             ctx.section = ""
+            seat_types = []
+            current_ranks = []
             index += 1
             continue
 
@@ -217,6 +234,7 @@ def parse_page(text: str, page_number: int, args: argparse.Namespace) -> list[di
             ctx.branch_name = branch_match.group("name").strip()
             ctx.section = ""
             seat_types = []
+            current_ranks = []
             index += 1
             continue
 
@@ -228,12 +246,66 @@ def parse_page(text: str, page_number: int, args: argparse.Namespace) -> list[di
         if line in SECTION_TYPES:
             ctx.section = SECTION_TYPES[line]
             seat_types = []
+            current_ranks = []
             index += 1
             continue
 
         if line.startswith("Stage "):
             seat_types, index = collect_stage_header(lines, index)
+            current_ranks = []
             continue
+
+        seat_header = is_seat_header(line)
+        if seat_header:
+            seat_types = seat_header
+            current_ranks = []
+            index += 1
+            continue
+
+        if seat_types:
+            stage_match = STAGE_RE.match(line)
+            ranks = RANK_RE.findall(line)
+            scores = SCORE_RE.findall(line)
+
+            if stage_match and not ranks and not scores:
+                current_stage = stage_match.group("stage")
+                index += 1
+                continue
+
+            if ranks and len(ranks) == len(seat_types) and not scores:
+                current_ranks = ranks
+                index += 1
+                continue
+
+            if scores and len(scores) == len(seat_types) and current_ranks:
+                stage = current_stage or "Stage-I"
+                needs_review = len(current_ranks) != len(seat_types) or len(scores) != len(current_ranks)
+                reasons: list[str] = []
+                if len(current_ranks) != len(seat_types):
+                    reasons.append("COLUMN_ALIGNMENT_UNCERTAIN")
+                if len(scores) != len(current_ranks):
+                    reasons.append("RANK_SCORE_COUNT_MISMATCH")
+
+                for position, rank in enumerate(current_ranks):
+                    seat_type = seat_types[position] if position < len(seat_types) else ""
+                    score = scores[position] if position < len(scores) else ""
+                    records.append(
+                        make_record(
+                            ctx=ctx,
+                            seat_type=seat_type,
+                            stage=stage,
+                            rank=rank,
+                            score=score,
+                            args=args,
+                            page_number=page_number,
+                            needs_review=needs_review,
+                            reasons=reasons.copy(),
+                        )
+                    )
+                seat_types = []
+                current_ranks = []
+                index += 1
+                continue
 
         stage_match = STAGE_RE.match(line)
         if stage_match and seat_types:
@@ -596,7 +668,11 @@ def main() -> None:
         for page_number, page in enumerate(pdf.pages[:pages_to_process], start=1):
             text = page.extract_text() or ""
             if args.route == "DSE":
-                rows.extend(parse_dse_page(page.extract_words() or [], page_number, args))
+                extracted = parse_dse_page(page.extract_words() or [], page_number, args)
+                if not extracted:
+                    table_rows = parse_fe_table_page(page, page_number, args)
+                    extracted = table_rows or parse_page(text, page_number, args)
+                rows.extend(extracted)
             else:
                 table_rows = parse_fe_table_page(page, page_number, args)
                 rows.extend(table_rows or parse_page(text, page_number, args))

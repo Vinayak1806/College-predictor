@@ -277,12 +277,21 @@ export async function createAndProcessImport({ file, metadata }) {
   return processAdminImport(adminImport);
 }
 
-export async function reprocessAdminImport(id) {
+export async function reprocessAdminImport(id, options = {}) {
   const adminImport = await prisma.adminImport.findUnique({ where: { id: BigInt(id) } });
   if (!adminImport) throw Object.assign(new Error("Import not found."), { status: 404 });
-  if (["PROCESSING", "PUBLISHED", "ROLLED_BACK"].includes(adminImport.status)) {
+  if (["PUBLISHED", "ROLLED_BACK"].includes(adminImport.status)) {
     throw Object.assign(
-      new Error("Only an unpublished import that is not already processing can be reprocessed."),
+      new Error("Only an unpublished import can be reprocessed."),
+      { status: 409 }
+    );
+  }
+  const isStalledProcessing = adminImport.status === "PROCESSING" &&
+    (Date.now() - new Date(adminImport.createdAt).getTime() > 10 * 60 * 1000);
+
+  if (adminImport.status === "PROCESSING" && !options?.force && !isStalledProcessing) {
+    throw Object.assign(
+      new Error("This import is currently being processed. Wait for completion or pass force to reprocess."),
       { status: 409 }
     );
   }
