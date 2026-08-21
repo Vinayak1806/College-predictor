@@ -14,7 +14,8 @@ import {
   Save,
   Send,
   ShieldCheck,
-  Upload
+  Upload,
+  X
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -287,7 +288,13 @@ export function AdminImportCentre() {
       ...options,
       headers: { ...(options.headers || {}) }
     });
-    const data = await response.json();
+    const text = await response.text();
+    let data;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      throw new Error(`The server returned an unparseable response (HTTP ${response.status}).`);
+    }
     if (!response.ok) throw new Error(data.error || "The admin request failed.");
     return data;
   }
@@ -638,9 +645,19 @@ export function AdminImportCentre() {
       </div>
 
       {error ? (
-        <div className="flex items-start gap-3 border-b border-danger bg-red-50 px-4 py-3 text-sm text-danger" role="alert">
-          <AlertCircle aria-hidden="true" className="mt-0.5 shrink-0" size={18} />
-          <p>{error}</p>
+        <div className="flex items-center justify-between gap-3 border-b border-danger bg-red-50 px-4 py-3 text-sm text-danger" role="alert">
+          <div className="flex items-start gap-3 min-w-0">
+            <AlertCircle aria-hidden="true" className="mt-0.5 shrink-0" size={18} />
+            <p className="break-words">{error}</p>
+          </div>
+          <button
+            type="button"
+            className="focus-ring shrink-0 rounded p-1 hover:bg-red-100"
+            aria-label="Dismiss message"
+            onClick={() => setError("")}
+          >
+            <X aria-hidden="true" size={16} />
+          </button>
         </div>
       ) : null}
 
