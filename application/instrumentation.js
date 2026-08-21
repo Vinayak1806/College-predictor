@@ -1,7 +1,5 @@
-/**
- * Next.js instrumentation hook — loads Sentry on server startup.
- * See: https://nextjs.org/docs/app/building-your-application/optimizing/instrumentation
- */
+import * as Sentry from "@sentry/nextjs";
+
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     await import("./sentry.server.config.js");
@@ -12,11 +10,4 @@ export async function register() {
   }
 }
 
-export const onRequestError = (...args) => {
-  // Dynamic import to avoid bundling Sentry in environments where it's not configured
-  import("@sentry/nextjs").then((Sentry) => {
-    Sentry.captureRequestError?.(...args);
-  }).catch(() => {
-    // Sentry not available — silently ignore
-  });
-};
+export const onRequestError = Sentry.captureRequestError;
