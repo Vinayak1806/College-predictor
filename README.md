@@ -1,199 +1,138 @@
-# Maharashtra FE & DSE College Predictor — What this site provides
+# 🎓 Admission Compass — Maharashtra FE & DSE College Predictor
 
-This site helps students and counsellors find Maharashtra engineering colleges
-that match a given MHT‑CET percentile or diploma percentage. It compares your
-profile against verified CAP cutoff records and presents clear, explainable
-results to support admission preference-building.
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev/)
+[![Prisma](https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma)](https://www.prisma.io/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38BDF8?logo=tailwindcss)](https://tailwindcss.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Badges: [build] [docs] [license]
-
-## What the website gives students
-
-- Predictor (First‑Year / DSE): estimate admission zones (Safe / Target /
-	Ambitious) for colleges and branches based on historical CAP cutoffs.
-- College research pages: exact cutoff history, seat-type availability, fees
-	and administrative notes for each institute.
-- Preference builder: build, reorder and export a CAP preference list.
-- Compare colleges: side‑by‑side branch and cutoff comparison across years.
-- Save & export: save a profile or preference list for later, export to CSV.
-- Transparency: every shown cutoff links back to the original CAP PDF and
-	round so you can verify sources.
-
-## How to use (for students)
-
-1. Open the site and choose the predictor (First‑Year or DSE).
-2. Enter your score (MHT‑CET percentile or diploma percentage) and category.
-3. Select branches, cities and preference constraints (home/other university).
-4. Review the ranked college suggestions and the supporting historical evidence.
-5. Save or export your preference list for CAP submission.
-
-Tips
-- Use the comparison tool to check colleges where you have both Safe and
-	Ambitious chances — this helps balance ambition and safety when ordering
-	preferences.
-- Check the "source" link on any result to view the official CAP PDF used.
-
-## What results mean
-
-- Safe / Target / Ambitious: historical zones derived from past allotment
-	densities. They are informative signals, not guarantees.
-- Confidence: a score reflecting how stable the historical cutoffs are for
-	that branch (more years and consistent cutoffs increase confidence).
-- Seat types & eligibility: the predictor applies actual seat-code rules for
-	category, gender and home‑university where relevant.
-
-## Data & transparency
-
-All cutoff and seat-matrix values are sourced from official CAP PDFs. The
-data pipeline extracts, validates and stores only structured records that have
-been reviewed by an administrator — the live predictor only uses published
-verified records. See the import handbook for the full process:
-[documentation/import-process.md](documentation/import-process.md).
-
-## Privacy & safety for students
-
-- The site does not publish personal profiles. Saved profiles and preference
-	lists remain private to the account that saved them.
-- The application only stores the score and non-sensitive preference data
-	required to run predictions unless you explicitly upload documents.
-- If your institution requires additional privacy controls, check the
-	deployment and admin documentation for data retention settings.
-
-## Accessibility & support
-
-- Designed to work on mobile and desktop with focus-ring and keyboard
-	navigable controls. Report accessibility issues via the issue tracker.
-
-## Try it locally (quick user preview)
-
-To run a local preview (developer tools are not required for a quick check):
-
-```bash
-cd application
-pnpm install
-pnpm dev
-# open http://127.0.0.1:3000
-```
-
-If you prefer not to run locally, ask the project maintainers for a demo
-instance or temporary seed data that shows published cutoffs.
-
-## For developers
-
-This README focuses on the product and what it gives users. Developer and
-deployment details live in the handbook:
-
-- Developer handbook: [documentation/project-guide/README.md](documentation/project-guide/README.md)
-- Deployment: [application/DEPLOYMENT.md](application/DEPLOYMENT.md)
-
-If you'd like, I can add a short `CONTRIBUTING.md` and a one-page
-`DEVELOPER_QUICKSTART.md` that extracts the most important development
-commands from the handbook.
-
-## Feedback and contributions
-
-Feature requests, data-clarity questions and small fixes are welcome. Open an
-issue describing the expected behavior and a short reproducible example where
-possible.
+A data-first web application for exploring official MHT-CET (First-Year) and Direct Second-Year (DSE) CAP cutoffs, calculating admission probabilities, comparing engineering colleges side-by-side, and generating validated CAP preference lists.
 
 ---
 
-This README is intentionally user-facing. Internal implementation details,
-administrative scripts and CI configuration are documented in the project
-handbook linked above.
-# Maharashtra FE & DSE College Predictor
+## 🌟 Key Features & Capabilities
 
-Lightweight, data-first web app for exploring Maharashtra CAP cutoff records
-and predicting admission chances for First-Year (FE) and Direct Second-Year
-(DSE) engineering admissions.
+- **Dual Admission Predictors**:
+  - **First-Year Engineering (FE)**: MHT-CET Percentile-based predictions across Home University (HU), Other Than Home University (OHU), and State-Level (SL) quotas.
+  - **Direct Second-Year Engineering (DSE)**: Diploma Percentage-based predictions applying state-level seat allocation rules.
+- **Explainable Admission Zones**: Categorizes admission chances into **Safe**, **Target**, **Ambitious**, and **Highly Ambitious** backed by historical cutoff margins and multi-year volatility metrics.
+- **Verified Official Data**: Cutoffs and seat matrices are extracted automatically from official Maharashtra CET Cell CAP PDFs and published via a 2-step administrative validation pipeline.
+- **Side-by-Side College Comparison**: Compare up to 3 choices simultaneously with Historical Demand Index scores, autonomy status, cutoff trends, and approved fee structures.
+- **CAP Preference List Builder**: Reorder, risk-evaluate, and export personalized CAP option lists into downloadable PDFs.
+- **College Catalog & Detail Pages**: Comprehensive institute pages displaying cutoff history, seat-matrix distribution, official website links, and FRA-approved fee breakdowns.
 
-Key ideas: extract official PDFs into a validated relational dataset, expose
-that data via Next.js APIs, and provide a clear, explainable predictor UI.
+---
 
-## Quick links
+## 🏗️ Architecture & How It Works
 
-- Full project handbook: [documentation/project-guide/README.md](documentation/project-guide/README.md)
-- Import workflow: [documentation/import-process.md](documentation/import-process.md)
-- Deployment notes: [application/DEPLOYMENT.md](application/DEPLOYMENT.md)
+```
+┌───────────────────────────┐      ┌─────────────────────────────┐      ┌───────────────────────────┐
+│     Official CAP PDFs     │      │   Extraction & Validation   │      │   PostgreSQL & Prisma     │
+│ (Cutoffs & Seat Matrices) │ ───► │ (Python pdfplumber Engine)  │ ───► │ (Structured Relational DB)│
+└───────────────────────────┘      └─────────────────────────────┘      └───────────────────────────┘
+                                                                                      │
+                                                                                      ▼
+┌───────────────────────────┐      ┌─────────────────────────────┐      ┌───────────────────────────┐
+│  CAP Option List / PDFs   │ ◄─── │ Next.js 15 App Router API   │ ◄─── │ Predictor Algorithm Engine│
+│   (Server-Generated)      │      │  (Caching & Search Routes)  │      │(Margin & Volatility Rules)│
+└───────────────────────────┘      └─────────────────────────────┘      └───────────────────────────┘
+```
 
-## Features
+### 1. PDF Extraction & Administrative Quality Control
+- Official CAP allotment PDFs and Seat-Matrix PDFs are processed via an extraction pipeline (`pdfplumber` + `pandas`).
+- Staged records undergo automated validation (verifying 5-digit institute codes, seat-type aliases, and percentile ranges).
+- Admin Quality Centre flags unknown institute codes or duplicate rows for manual review before data goes live.
 
-- Official-data first: PDF extraction pipeline with validation and staging.
-- Two predictors: First-Year (FE) and Direct Second-Year (DSE) admission flows.
-- Transparent results: every prediction links back to source year, round and PDF.
-- Admin UI: upload, review and publish official cutoff/seat-matrix PDFs.
-- Tests: unit, integration and optional end-to-end browser tests.
+### 2. Prediction Algorithm & Zone Categorization
+The prediction engine evaluates candidate scores against historical closing percentile/score cutoffs:
+- 🟢 **Safe**: Candidate percentile exceeds historical cutoff by $+2.00$ points or more.
+- 🔵 **Target**: Candidate percentile is within $[-1.50, +2.00]$ points of historical cutoff.
+- 🟠 **Ambitious**: Candidate percentile is within $[-5.00, -1.50)$ points below historical cutoff.
+- 🔴 **Highly Ambitious**: Candidate percentile is more than $5.00$ points below cutoff.
 
-## Tech stack
+### 3. Seat Matrix & Quota Resolution Engine
+- Automatically resolves Home University (HU) vs. Other Than Home University (OHU) seats based on candidate's home university.
+- Applies Category & Gender eligibility rules for seat codes (e.g., `GOPENH`, `LOPENH`, `GSEBCO`, `EWS`, `TFWS`, `DEFENCE`, `PWD`).
 
-- Frontend: Next.js (App Router), React, Tailwind CSS
-- Backend: Next.js API routes, Prisma ORM, PostgreSQL
-- Data pipeline: Python scripts for PDF extraction and normalization
+---
 
-## Requirements
+## 🛠️ Technology Stack
 
-- Node.js 20+
-- pnpm (via Corepack) or npm
-- Python 3.11+ for the `data-pipeline`
-- PostgreSQL 16+
+| Layer | Technologies Used |
+| :--- | :--- |
+| **Frontend UI** | Next.js 15 (App Router), React 19, Vanilla CSS & Tailwind CSS, Lucide Icons |
+| **Backend & APIs** | Next.js Server Components, API Route Handlers, Node.js |
+| **Database & ORM** | PostgreSQL, Prisma ORM |
+| **Data Extraction** | Python 3.11, `pdfplumber`, `pandas` |
+| **PDF Generation** | Server-side PDF generation (`pdfkit`) |
+| **Testing** | Node native test runner (`node --test`), Playwright (E2E) |
 
-Quick setup (Windows / PowerShell):
+---
 
-```powershell
-corepack enable
-corepack prepare pnpm@latest --activate
+## 🚀 Getting Started (Local Development)
+
+### Prerequisites
+- Node.js `20.x` or higher
+- `pnpm` (`corepack enable` or `npm i -g pnpm`)
+- PostgreSQL database instance
+
+### 1. Setup Environment
+Clone the repository and install dependencies:
+```bash
 cd application
 pnpm install
+```
+
+Configure your local environment variables in `application/.env`:
+```env
+# Database Connection (PostgreSQL)
+DATABASE_URL="postgresql://user:password@localhost:5432/college_predictor?sslmode=disable"
+
+# Application Settings
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
+
+### 2. Database Initialization
+```bash
+# Generate Prisma Client
 pnpm prisma generate
+
+# Apply Database Schema Migrations
+pnpm prisma db push
+```
+
+### 3. Start Development Server
+```bash
 pnpm dev
 ```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-If Python is not available as `python`, set the executable in `application/.env`:
+---
 
-```env
-PYTHON_EXECUTABLE="C:\path\to\python.exe"
-```
+## 🧪 Running Tests & Validation
 
-## Data pipeline
+```bash
+# Run unit and integration tests (94+ passing tests)
+pnpm test
 
-Extracted PDFs and normalized CSVs live under `data/` during processing. The
-`data-pipeline/` folder contains extraction scripts and a `requirements.txt`
-listing Python dependencies. Administrators upload PDFs from the `/admin`
-interface; files are staged, validated, and must be explicitly published.
+# Run end-to-end browser flows
+pnpm test:e2e
 
-See [documentation/import-process.md](documentation/import-process.md) for details.
-
-## Tests & checks
-
-From `application/` run:
-
-```powershell
-pnpm test       # unit + integration
-pnpm test:e2e   # browser end-to-end (data-dependent)
+# Run production build check
 pnpm build
 ```
 
-Note: E2E tests depend on published cutoff records. CI configuration avoids
-breaking runs by skipping data-dependent cases unless a test database is
-prepared with published fixtures.
+---
 
-## Deployment
+## 🛡️ Privacy, Security & Data Safety
 
-The repository includes a Dockerfile that can run the Next.js frontend and the
-Python extraction pipeline together. Use a managed PostgreSQL database and
-mount persistent storage for uploaded PDFs. See
-[application/DEPLOYMENT.md](application/DEPLOYMENT.md) and
-[application/STAGING_CHECKLIST.md](application/STAGING_CHECKLIST.md).
+- **Data Privacy**: No personal student records or sensitive marks sheets are stored publicly. User preferences and saved option lists remain strictly private to local browser storage or authenticated student accounts.
+- **Official Data Disclaimers**: All cutoff values link back to official CAP PDF source pages. Approved fees are compiled from official FRA publications; users should cross-check on official college websites before final admission.
+- **Security Best Practices**: Secrets, database credentials, and session keys are strictly isolated in `.env` configuration and kept out of public repositories.
 
-## Contributing
+---
 
-Contributions are welcome. Start by reading the project handbook:
-[documentation/project-guide/README.md](documentation/project-guide/README.md).
-Open an issue for design or data questions, and create a pull request for code
-changes. Keep commits small and add tests for new behavior.
+## 📄 License
 
-## License & contact
-
-See `LICENSE` at the repository root. For questions about data sources or
-deployment, contact the repository maintainers listed in the handbook.
+This project is licensed under the MIT License. See `LICENSE` for details.
 
