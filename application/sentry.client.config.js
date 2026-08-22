@@ -18,5 +18,24 @@ Sentry.init({
   release: process.env.NEXT_PUBLIC_RELEASE_ID || undefined,
 
   // Don't send errors in development
-  enabled: process.env.NODE_ENV === "production"
+  enabled: process.env.NODE_ENV === "production",
+
+  // Ignore benign client-aborted streams and connection resets
+  ignoreErrors: [
+    "transformAlgorithm is not a function",
+    "The operation was aborted",
+    "AbortError",
+    "ResizeObserver loop completed with undelivered notifications."
+  ],
+
+  beforeSend(event, hint) {
+    const error = hint?.originalException;
+    if (error && typeof error === "object") {
+      const message = String(error.message || "");
+      if (message.includes("transformAlgorithm") || error.name === "AbortError") {
+        return null;
+      }
+    }
+    return event;
+  }
 });

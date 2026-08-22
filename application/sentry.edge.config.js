@@ -10,5 +10,11 @@ Sentry.init({
   release: process.env.RELEASE_ID || undefined,
 
   // Don't send errors in development
-  enabled: process.env.NODE_ENV === "production"
+  enabled: process.env.NODE_ENV === "production",
+
+  ignoreErrors: [
+    "transformAlgorithm is not a function",
+    "The operation was aborted",
+    "AbortError"
+  ]
 });
