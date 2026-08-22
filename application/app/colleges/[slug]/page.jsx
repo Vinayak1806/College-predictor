@@ -1,6 +1,18 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
+import {
+  AlertTriangle,
+  Building2,
+  CalendarDays,
+  CheckCircle2,
+  ExternalLink,
+  Landmark,
+  MapPin,
+  Navigation,
+  Receipt,
+  ShieldCheck
+} from "lucide-react";
 import { CollegeBranchExplorer } from "../../../components/CollegeBranchExplorer";
 import { SiteHeader } from "../../../components/SiteHeader";
 import { SharePageButton } from "../../../components/SharePageButton";
@@ -330,6 +342,9 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
   const rawOwnership = profile?.ownershipType || seatMatrices[0]?.collegeType || college.collegeType;
   const ownership = normalizeOwnership(rawOwnership);
   const minorityStatus = findMinorityStatus(profile?.minorityStatus, college.minorityType, rawOwnership);
+  const locationAddress = profile?.address || (college.city?.name ? `${college.name}, ${college.city.name}, Maharashtra` : `${college.name}, Maharashtra`);
+  const locationRegion = profile?.region || college.city?.name || "Maharashtra";
+  const locationUniversity = college.university?.name || profile?.university || null;
   const totalIntake = profile?.totalIntake ?? calculateLatestTotalIntake(seatMatrices);
   const latestFee = fees[0] || null;
   const approvedFee = latestFee?.totalApprovedFee ?? profile?.totalApprovedFee ?? null;
@@ -540,68 +555,201 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
           initialSeatType={seatTypeCode}
         />
 
-        <section className="mt-8 grid gap-6 lg:grid-cols-2">
-          <article>
-            <h2 className="text-lg font-semibold text-ink">About the college</h2>
-            <FactGrid columns="sm:grid-cols-2">
-              {hasValue(profile?.address) ? <Fact label="Address" value={profile.address} /> : null}
-              {hasValue(minorityStatus) ? <Fact label="Minority status" value={minorityStatus} /> : null}
-              {hasValue(profile?.region) ? <Fact label="Region" value={profile.region} /> : null}
-              {availableYears.length ? (
-                <Fact label="Official cutoff coverage" value={`${availableYears.join(", ")} | ${cutoffs.length} records`} />
-              ) : null}
-            </FactGrid>
+        <section className="mt-10 grid gap-6 lg:grid-cols-2">
+          {/* ABOUT THE COLLEGE CARD */}
+          <article className="surface-card relative overflow-hidden rounded-2xl border border-line p-6 shadow-sm flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-3 border-b border-line pb-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-50 text-action">
+                  <Building2 aria-hidden="true" size={20} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-ink">About the College</h2>
+                  <p className="text-xs text-slate-500">Verified institute location and affiliation details</p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-xl border border-line bg-slate-50/50 p-4 sm:col-span-2">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    <MapPin className="text-action shrink-0" size={15} />
+                    <span>Campus Address</span>
+                  </div>
+                  <p className="mt-1.5 text-sm font-semibold text-ink leading-snug">{locationAddress}</p>
+                </div>
+
+                <div className="rounded-xl border border-line bg-slate-50/50 p-4">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    <Navigation className="text-indigo-600 shrink-0" size={15} />
+                    <span>City / District</span>
+                  </div>
+                  <p className="mt-1 text-sm font-bold text-ink">{locationRegion}</p>
+                </div>
+
+                {locationUniversity ? (
+                  <div className="rounded-xl border border-line bg-slate-50/50 p-4">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <Landmark className="text-amber-600 shrink-0" size={15} />
+                      <span>Affiliated University</span>
+                    </div>
+                    <p className="mt-1 text-sm font-bold text-ink truncate" title={locationUniversity}>{locationUniversity}</p>
+                  </div>
+                ) : null}
+
+                {hasValue(minorityStatus) ? (
+                  <div className="rounded-xl border border-line bg-slate-50/50 p-4">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <ShieldCheck className="text-emerald-600 shrink-0" size={15} />
+                      <span>Minority Status</span>
+                    </div>
+                    <p className="mt-1 text-sm font-bold text-ink">{minorityStatus}</p>
+                  </div>
+                ) : null}
+
+                {availableYears.length ? (
+                  <div className="rounded-xl border border-line bg-slate-50/50 p-4 sm:col-span-2">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <CalendarDays className="text-cyan-600 shrink-0" size={15} />
+                      <span>Official Cutoff Coverage</span>
+                    </div>
+                    <p className="mt-1 text-sm font-bold text-ink">
+                      {availableYears.join(", ")} <span className="text-xs font-normal text-slate-500">({cutoffs.length} verified records)</span>
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+            </div>
           </article>
 
-          {fees.length ? (
-            <aside>
-              <h2 className="text-lg font-semibold text-ink">Approved fee history</h2>
-              <div className="mt-3 divide-y divide-line border-y border-line">
-                {fees.map((fee) => (
-                  <article key={`${fee.academicYear}-${fee.fraInstituteId}`} className="py-3 text-sm">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <p className="font-semibold text-ink">{fee.academicYear}</p>
-                      <p className="font-semibold text-action">{formatMoney(fee.totalApprovedFee)}</p>
-                    </div>
-                    {(hasValue(fee.tuitionFee) || hasValue(fee.developmentFee)) ? (
-                      <p className="mt-2 text-slate-600">
-                        {hasValue(fee.tuitionFee) ? `Tuition: ${formatMoney(fee.tuitionFee)}` : ""}
-                        {hasValue(fee.tuitionFee) && hasValue(fee.developmentFee) ? " | " : ""}
-                        {hasValue(fee.developmentFee) ? `Development: ${formatMoney(fee.developmentFee)}` : ""}
-                      </p>
-                    ) : null}
-                    {hasValue(fee.approvalStatus) ? <p className="mt-1 text-xs text-slate-500">{fee.approvalStatus}</p> : null}
-                  </article>
-                ))}
+          {/* APPROVED FEE HISTORY CARD */}
+          <aside className="surface-card relative flex flex-col justify-between overflow-hidden rounded-2xl border border-line p-6 shadow-sm">
+            <div>
+              <div className="flex items-center justify-between border-b border-line pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+                    <Receipt aria-hidden="true" size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-ink">Approved Fee History</h2>
+                    <p className="text-xs text-slate-500">Official FRA tuition & development breakdown</p>
+                  </div>
+                </div>
+                <span className="rounded-full bg-emerald-100/80 px-2.5 py-1 text-[11px] font-bold text-emerald-800 border border-emerald-200">
+                  FRA Approved
+                </span>
               </div>
-            </aside>
-          ) : null}
+
+              {fees.length ? (
+                <div className="mt-5 grid gap-3">
+                  {fees.map((fee) => (
+                    <div
+                      key={`${fee.academicYear}-${fee.fraInstituteId}`}
+                      className="rounded-xl border border-line bg-slate-50/50 p-4 transition-all hover:border-action/30 hover:bg-white"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-slate-700 border border-line shadow-2xs">
+                          <CalendarDays size={13} className="text-slate-400" />
+                          Academic Year {fee.academicYear}
+                        </span>
+                        <span className="text-base font-extrabold text-action">
+                          {formatMoney(fee.totalApprovedFee)}
+                        </span>
+                      </div>
+
+                      {(hasValue(fee.tuitionFee) || hasValue(fee.developmentFee)) ? (
+                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                          {hasValue(fee.tuitionFee) ? (
+                            <div className="rounded-lg bg-slate-100/80 p-2 text-slate-700">
+                              <span className="block text-[10px] uppercase font-semibold text-slate-500">Tuition Fee</span>
+                              <span className="font-bold text-slate-900">{formatMoney(fee.tuitionFee)}</span>
+                            </div>
+                          ) : null}
+                          {hasValue(fee.developmentFee) ? (
+                            <div className="rounded-lg bg-slate-100/80 p-2 text-slate-700">
+                              <span className="block text-[10px] uppercase font-semibold text-slate-500">Development Fee</span>
+                              <span className="font-bold text-slate-900">{formatMoney(fee.developmentFee)}</span>
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
+
+                      {hasValue(fee.approvalStatus) ? (
+                        <div className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700">
+                          <CheckCircle2 size={13} />
+                          <span>{fee.approvalStatus}</span>
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-4 text-sm text-slate-500">No official fee structure records found for this college.</p>
+              )}
+            </div>
+
+            {/* MANDATORY FEE REVISION DISCLAIMER */}
+            <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 text-xs text-amber-900 flex items-start gap-2.5">
+              <AlertTriangle className="mt-0.5 shrink-0 text-amber-600" size={16} />
+              <div className="leading-snug">
+                <strong className="font-semibold block text-amber-950">Notice on fee updates:</strong>
+                Fees are subject to periodic revision by the Fee Regulating Authority (FRA) and the college. Information here is compiled from official FRA publications; please cross-check the official college website or FRA portal before final admission.
+              </div>
+            </div>
+          </aside>
         </section>
 
         {(profile?.sourceUrl || fees[0]?.sourceUrl || officialRanking?.sourceUrl || missingData.length) ? (
-          <section className="mt-8 border-t border-line pt-5 text-sm">
-            <h2 className="font-semibold text-ink">Sources and data availability</h2>
+          <section className="mt-8 surface-card rounded-2xl border border-line p-6 shadow-sm">
+            <div className="flex items-center gap-2.5 border-b border-line pb-3">
+              <ExternalLink className="text-action shrink-0" size={18} />
+              <h2 className="text-base font-bold text-ink">Sources & Official Data Availability</h2>
+            </div>
+
             {missingData.length ? (
-              <ul className="mt-2 grid gap-1 text-slate-600">
-                {missingData.map((message) => (
-                  <li key={message}>{message}</li>
-                ))}
-              </ul>
+              <div className="mt-3.5 rounded-xl border border-amber-200 bg-amber-50/60 p-3.5 text-xs text-amber-900">
+                <ul className="grid gap-1">
+                  {missingData.map((message) => (
+                    <li key={message} className="flex items-start gap-1.5">
+                      <span className="shrink-0 font-bold">•</span>
+                      <span>{message}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ) : null}
-            <div className="mt-3 flex flex-wrap gap-4">
+
+            <div className="mt-4 flex flex-wrap items-center gap-3">
               {profile?.sourceUrl ? (
-                <a className="font-medium text-action underline" href={profile.sourceUrl} target="_blank" rel="noreferrer">
-                  Official CAP institute profile
+                <a
+                  className="focus-ring inline-flex items-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-2xs hover:border-action hover:bg-slate-50 hover:text-action transition-all"
+                  href={profile.sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <span>Official CAP Institute Profile</span>
+                  <ExternalLink size={14} className="text-slate-400" />
                 </a>
               ) : null}
               {fees[0]?.sourceUrl ? (
-                <a className="font-medium text-action underline" href={fees[0].sourceUrl} target="_blank" rel="noreferrer">
-                  Official approved fee source
+                <a
+                  className="focus-ring inline-flex items-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-2xs hover:border-action hover:bg-slate-50 hover:text-action transition-all"
+                  href={fees[0].sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <span>Official Approved Fee Source</span>
+                  <ExternalLink size={14} className="text-slate-400" />
                 </a>
               ) : null}
               {officialRanking?.sourceUrl ? (
-                <a className="font-medium text-action underline" href={officialRanking.sourceUrl} target="_blank" rel="noreferrer">
-                  Official {officialRanking.rankingSystem} {officialRanking.rankingYear} source
+                <a
+                  className="focus-ring inline-flex items-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-2xs hover:border-action hover:bg-slate-50 hover:text-action transition-all"
+                  href={officialRanking.sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <span>Official {officialRanking.rankingSystem} {officialRanking.rankingYear} Source</span>
+                  <ExternalLink size={14} className="text-slate-400" />
                 </a>
               ) : null}
             </div>

@@ -695,7 +695,7 @@ export function AdminImportCentre() {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                {["NEEDS_REVIEW", "REJECTED"].includes(selected.status) ? (
+                {["NEEDS_REVIEW", "REJECTED", "PROCESSING", "UPLOADED"].includes(selected.status) ? (
                   <button
                     className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-xl border border-action bg-white px-4 text-sm font-semibold text-action hover:bg-cyan-50/50 transition-colors disabled:opacity-50"
                     type="button"
@@ -703,7 +703,7 @@ export function AdminImportCentre() {
                     onClick={() => runAction("reprocess")}
                   >
                     <RefreshCw aria-hidden="true" className={working === "reprocess" ? "animate-spin" : ""} size={17} />
-                    {working === "reprocess" ? "Reprocessing PDF..." : "Reprocess with latest extractor"}
+                    {working === "reprocess" ? "Reprocessing PDF..." : selected.status === "PROCESSING" ? "Force Reprocess / Reset" : "Reprocess with latest extractor"}
                   </button>
                 ) : null}
                 {selected.status === "VERIFIED" && selected.summary?.publishableRecords > 0 ? (

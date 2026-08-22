@@ -97,138 +97,158 @@ function ComparisonCard({ item, position }) {
   const missing = [
     !item.branch ? "Select a branch to compare cutoff and seat information." : null,
     item.branch && !item.latestOpenCutoff ? `${routeName} OPEN general cutoff history is unavailable for this branch.` : null,
-    !item.approvedFee ? "Approved annual fee is not available." : null
+    !item.approvedFee ? "Approved annual fee is not available in our records." : null
   ].filter(Boolean);
   const marginTone = prediction?.margin >= 0 ? "good" : "warning";
   const collegeParams = new URLSearchParams({ route: item.admissionRoute });
   if (item.branch) collegeParams.set("branch", item.branch.name);
 
   return (
-    <article className="surface-card min-w-0 overflow-hidden rounded-xl">
-      <div className={`h-1.5 ${prediction?.zone === "SAFE" ? "bg-gradient-to-r from-emerald-500 to-emerald-400" : prediction?.zone === "TARGET" ? "bg-gradient-to-r from-action to-cyan-500" : prediction ? "bg-gradient-to-r from-amber-500 to-amber-400" : "bg-slate-300"}`} />
-      <header className="min-h-[178px] p-4 md:p-5">
-        <p className="text-xs font-semibold uppercase text-slate-500">{routeName} choice {position} | Institute {item.instituteCode}</p>
-        <h2 className="mt-2 text-lg font-semibold leading-6 text-ink">{item.name}</h2>
-        <p className="mt-2 font-semibold text-action">{item.branch?.name || "College overview"}</p>
-        <div className="mt-3 grid gap-1 text-xs text-slate-500">
-          {item.city ? <span className="inline-flex items-start gap-1.5"><MapPin aria-hidden="true" className="mt-0.5 shrink-0" size={14} />{item.city}</span> : null}
-          {item.university ? <span className="inline-flex items-start gap-1.5"><Building2 aria-hidden="true" className="mt-0.5 shrink-0" size={14} />{item.university}</span> : null}
-        </div>
-      </header>
+    <article className="surface-card flex h-full flex-col justify-between min-w-0 overflow-hidden rounded-2xl border border-line bg-white shadow-sm hover:shadow-md transition-all">
+      <div className="flex flex-col flex-1">
+        <div className={`h-1.5 shrink-0 ${prediction?.zone === "SAFE" ? "bg-gradient-to-r from-emerald-500 to-emerald-400" : prediction?.zone === "TARGET" ? "bg-gradient-to-r from-action to-cyan-500" : prediction ? "bg-gradient-to-r from-amber-500 to-amber-400" : "bg-slate-300"}`} />
 
-      {prediction ? (
-        <section className="border-y border-line bg-panel px-4 py-4 md:px-5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs font-medium uppercase text-slate-500">Your prediction</p>
-            <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${zoneStyle[prediction.zone] || "border-line"}`}>
-              {zoneLabel[prediction.zone] || prediction.zone}
-            </span>
-          </div>
-          <dl className="mt-2 grid grid-cols-2 gap-x-5 divide-x divide-line">
-            <Fact
-              label="Your margin"
-              value={`${prediction.margin >= 0 ? "+" : ""}${formatNumber(prediction.margin)}`}
-              tone={marginTone}
-              note="Against prediction benchmark"
-            />
-            <div className="pl-5">
-              <Fact label="Seat used" value={prediction.seatType || "Not available"} note={`${prediction.year || ""}${prediction.round ? `, Round ${prediction.round}` : ""}`} />
+        {/* Card Header */}
+        <header className="p-4 md:p-5 border-b border-line bg-slate-50/60 min-h-[160px] flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="rounded-md bg-indigo-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-indigo-700 border border-indigo-100/80">
+                {routeName} Choice {position} | Inst. {item.instituteCode}
+              </span>
             </div>
+            <h2 className="mt-2.5 text-base font-bold leading-snug text-ink line-clamp-2">{item.name}</h2>
+            <p className="mt-1 font-bold text-action text-sm line-clamp-1">{item.branch?.name || "College Overview"}</p>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
+            {item.city ? <span className="inline-flex items-center gap-1"><MapPin aria-hidden="true" className="text-slate-400" size={13} />{item.city}</span> : null}
+            {item.university ? <span className="inline-flex items-center gap-1 truncate max-w-[220px]"><Building2 aria-hidden="true" className="text-slate-400" size={13} />{item.university}</span> : null}
+          </div>
+        </header>
+
+        {/* Prediction section if present */}
+        {prediction ? (
+          <section className="border-b border-line bg-slate-50/40 p-4 md:p-5 text-xs">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-semibold text-slate-600">Your Prediction Fit</span>
+              <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${zoneStyle[prediction.zone] || "border-line"}`}>
+                {zoneLabel[prediction.zone] || prediction.zone}
+              </span>
+            </div>
+            <dl className="mt-2 grid grid-cols-2 gap-x-4 divide-x divide-line rounded-xl bg-white p-3 border border-line">
+              <Fact
+                label="Your margin"
+                value={`${prediction.margin >= 0 ? "+" : ""}${formatNumber(prediction.margin)}`}
+                tone={marginTone}
+                note="Benchmark fit"
+              />
+              <div className="pl-4">
+                <Fact label="Seat used" value={prediction.seatType || "Not available"} note={`${prediction.year || ""}${prediction.round ? `, Round ${prediction.round}` : ""}`} />
+              </div>
+            </dl>
+          </section>
+        ) : null}
+
+        {/* Strength section */}
+        <section className="p-4 md:p-5 border-b border-line">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">College & Branch Strength</h3>
+          <dl className="mt-2 divide-y divide-line border-y border-line text-sm">
+            <Fact
+              label="Historical Demand Index"
+              value={hasValue(item.historicalDemandIndex) ? `${Math.round(item.historicalDemandIndex)} / 100` : "Not available"}
+              note={item.demandBand ? `${item.demandBand} demand band` : `Based on previous ${item.admissionRoute} cutoff demand`}
+            />
+            <Fact
+              label={`Latest ${item.admissionRoute} OPEN cutoff`}
+              value={formatNumber(item.latestOpenCutoff?.closingScore)}
+              note={item.latestOpenCutoff
+                ? `${item.latestOpenCutoff.year}, CAP Round ${item.latestOpenCutoff.round} | ${item.latestOpenCutoff.seatType}`
+                : "Choose a branch with published OPEN general records"}
+            />
+            {isDse ? (
+              <div className={`grid gap-x-4 ${hasValue(item.branch?.vacantSeats) ? "grid-cols-2 divide-x divide-line" : "grid-cols-1"}`}>
+                <Fact
+                  label="DSE lateral seats"
+                  value={item.branch?.lateralEntrySeats ?? "Not available"}
+                  note={item.branch?.academicYear || undefined}
+                />
+                {hasValue(item.branch?.vacantSeats) ? (
+                  <div className="pl-4">
+                    <Fact label="Vacancies" value={item.branch.vacantSeats} />
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-x-4 divide-x divide-line">
+                <Fact label="Branch intake" value={item.branch?.sanctionedIntake ?? "Not available"} note={item.branch?.academicYear || undefined} />
+                <div className="pl-4">
+                  <Fact label="CAP seats" value={item.branch?.capSeats ?? "Not available"} />
+                </div>
+              </div>
+            )}
           </dl>
         </section>
-      ) : null}
 
-      <section className="px-4 py-4 md:px-5">
-        <h3 className="text-sm font-semibold text-ink">College and branch strength</h3>
-        <dl className="mt-2 divide-y divide-line border-y border-line">
-          <Fact
-            label="Historical Demand Index"
-            value={hasValue(item.historicalDemandIndex) ? `${Math.round(item.historicalDemandIndex)} / 100` : "Not available"}
-            note={item.demandBand ? `${item.demandBand} demand band` : `Based on previous ${item.admissionRoute} cutoff demand`}
-          />
-          <Fact
-            label={`Latest ${item.admissionRoute} OPEN cutoff`}
-            value={formatNumber(item.latestOpenCutoff?.closingScore)}
-            note={item.latestOpenCutoff
-              ? `${item.latestOpenCutoff.year}, CAP Round ${item.latestOpenCutoff.round} | ${item.latestOpenCutoff.seatType}`
-              : "Choose a branch with published OPEN general records"}
-          />
-          {isDse ? (
-            <div className={`grid gap-x-5 ${hasValue(item.branch?.vacantSeats) ? "grid-cols-2 divide-x divide-line" : "grid-cols-1"}`}>
-              <Fact
-                label="DSE lateral-entry seats"
-                value={item.branch?.lateralEntrySeats ?? "Not available"}
-                note={item.branch?.academicYear || undefined}
-              />
-              {hasValue(item.branch?.vacantSeats) ? (
-                <div className="pl-5">
-                  <Fact label="Previous-intake vacancies" value={item.branch.vacantSeats} />
-                </div>
-              ) : null}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-x-5 divide-x divide-line">
-              <Fact label="Approved branch intake" value={item.branch?.sanctionedIntake ?? "Not available"} note={item.branch?.academicYear || undefined} />
-              <div className="pl-5">
-                <Fact label="CAP seats" value={item.branch?.capSeats ?? "Not available"} />
+        {/* Institute facts & Fee section */}
+        <section className="p-4 md:p-5 border-b border-line bg-slate-50/20">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Institute Facts</h3>
+          <dl className="mt-2 divide-y divide-line border-y border-line text-sm">
+            <Fact label="Ownership" value={item.ownership || "Not available"} />
+            <Fact
+              label="Academic status"
+              value={item.autonomous === true ? "Autonomous" : item.autonomous === false ? "Non-autonomous" : "Not available"}
+            />
+            {item.minority ? <Fact label="Minority status" value={item.minority} /> : null}
+            <Fact
+              label="Approved annual fee"
+              value={formatMoney(item.approvedFee)}
+              note={item.feeYear ? `Fee year ${item.feeYear} • Verify on official college/FRA website` : "Fees change over time; verify on official college/FRA page"}
+            />
+          </dl>
+
+          <p className="mt-2 text-[11px] leading-4 text-slate-500">
+            ℹ️ <strong>Fee notice:</strong> Approved fees are subject to periodic FRA revisions. Always confirm latest fee details on the official college website or FRA portal.
+          </p>
+        </section>
+
+        {/* OPEN Cutoff History */}
+        {item.openCutoffHistory.length ? (
+          <details className="border-b border-line text-sm">
+            <summary className="focus-ring cursor-pointer px-4 py-3.5 font-semibold text-action hover:bg-slate-50 transition-colors flex items-center justify-between md:px-5">
+              <span>OPEN cutoff history ({item.openCutoffHistory.length} year{item.openCutoffHistory.length === 1 ? "" : "s"})</span>
+            </summary>
+            <div className="border-t border-line px-4 py-3 md:px-5 bg-slate-50/50 max-h-48 overflow-y-auto">
+              {item.cutoffTrend ? <p className="mb-2 text-xs font-medium text-slate-500">{trendLabel[item.cutoffTrend]}</p> : null}
+              <div className="divide-y divide-line border-y border-line">
+                {item.openCutoffHistory.map((record) => (
+                  <div key={record.year} className="grid grid-cols-[1fr_auto] gap-3 py-2.5 text-xs">
+                    <div>
+                      <p className="font-bold text-ink">{record.year}, Round {record.round}</p>
+                      <p className="text-[11px] text-slate-500">{record.seatType}</p>
+                    </div>
+                    <p className="font-bold text-ink">{formatNumber(record.closingScore)}</p>
+                  </div>
+                ))}
               </div>
             </div>
-          )}
-        </dl>
-      </section>
+          </details>
+        ) : null}
 
-      <section className="border-t border-line px-4 py-4 md:px-5">
-        <h3 className="text-sm font-semibold text-ink">Institute facts</h3>
-        <dl className="mt-2 divide-y divide-line border-y border-line">
-          <Fact label="Ownership" value={item.ownership || "Not available"} />
-          <Fact
-            label="Academic status"
-            value={item.autonomous === true ? "Autonomous" : item.autonomous === false ? "Non-autonomous" : "Not available"}
-          />
-          {item.minority ? <Fact label="Minority status" value={item.minority} /> : null}
-          <Fact
-            label="Approved annual fee"
-            value={formatMoney(item.approvedFee)}
-            note={item.feeYear ? `Fee year ${item.feeYear}` : "Use the latest official FRA notice before admission"}
-          />
-        </dl>
-      </section>
-
-      {item.openCutoffHistory.length ? (
-        <details className="border-t border-line text-sm">
-          <summary className="focus-ring cursor-pointer px-4 py-4 font-semibold text-action md:px-5">
-            OPEN cutoff history ({item.openCutoffHistory.length} year{item.openCutoffHistory.length === 1 ? "" : "s"})
-          </summary>
-          <div className="border-t border-line px-4 py-3 md:px-5">
-            {item.cutoffTrend ? <p className="mb-2 text-xs font-medium text-slate-500">{trendLabel[item.cutoffTrend]}</p> : null}
-            <div className="divide-y divide-line border-y border-line">
-              {item.openCutoffHistory.map((record) => (
-                <div key={record.year} className="grid grid-cols-[1fr_auto] gap-3 py-3 text-sm">
-                  <div>
-                    <p className="font-semibold text-ink">{record.year}, Round {record.round}</p>
-                    <p className="text-xs text-slate-500">{record.seatType}</p>
-                  </div>
-                  <p className="font-semibold text-ink">{formatNumber(record.closingScore)}</p>
-                </div>
-              ))}
-            </div>
+        {missing.length ? (
+          <div className="bg-amber-50/60 p-3.5 text-xs text-amber-900 border-b border-line">
+            {missing.map((message) => <p key={message}>• {message}</p>)}
           </div>
-        </details>
-      ) : null}
+        ) : null}
+      </div>
 
-      {missing.length ? (
-        <div className="border-t border-line bg-panel px-4 py-3 text-xs leading-5 text-slate-600 md:px-5">
-          {missing.map((message) => <p key={message}>{message}</p>)}
-        </div>
-      ) : null}
-
-      <footer className="flex flex-wrap gap-2 border-t border-line bg-slate-50/50 px-4 py-4 md:px-5">
-        <Link className="btn-primary focus-ring text-sm shadow-sm" href={`/colleges/${item.slug}?${collegeParams.toString()}`}>
-          College details <ArrowRight aria-hidden="true" size={17} />
+      {/* Footer ALWAYS SNAPPED to bottom of column */}
+      <footer className="mt-auto flex flex-wrap gap-2 border-t border-line bg-slate-50/80 p-4 md:p-5">
+        <Link className="btn-primary focus-ring flex-1 text-xs py-2.5 shadow-xs justify-center" href={`/colleges/${item.slug}?${collegeParams.toString()}`}>
+          <span>College details</span>
+          <ArrowRight aria-hidden="true" size={15} />
         </Link>
         {item.officialWebsite ? (
-          <a className="btn-secondary focus-ring text-sm" href={item.officialWebsite} target="_blank" rel="noreferrer">
-            Official site <ExternalLink aria-hidden="true" size={16} />
+          <a className="btn-secondary focus-ring text-xs py-2.5 px-3" href={item.officialWebsite} target="_blank" rel="noreferrer" title="Official College Website">
+            <ExternalLink aria-hidden="true" size={15} />
           </a>
         ) : null}
       </footer>
@@ -599,7 +619,7 @@ export default function ComparePage() {
                 Historical Demand Index measures previous {routeName} admission demand. It is not an official college ranking.
               </p>
             </div>
-            <div className={`mt-4 grid items-start gap-4 ${results.length === 2 ? "lg:grid-cols-2" : "lg:grid-cols-3"}`}>
+            <div className={`mt-4 grid items-stretch gap-4 ${results.length === 2 ? "lg:grid-cols-2" : "lg:grid-cols-3"}`}>
               {results.map((item, index) => (
                 <ComparisonCard key={`${item.instituteCode}-${item.branch?.branchCode || "overview"}`} item={item} position={index + 1} />
               ))}

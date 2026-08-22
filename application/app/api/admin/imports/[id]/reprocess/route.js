@@ -13,7 +13,7 @@ export async function POST(request, { params }) {
   if (!/^\d+$/.test(id)) return NextResponse.json({ error: "Invalid import ID." }, { status: 400 });
 
   try {
-    const adminImport = await reprocessAdminImport(id);
+    const adminImport = await reprocessAdminImport(id, { force: true });
     return NextResponse.json({ data: serializeAdminImport(adminImport) });
   } catch (error) {
     console.error("Admin import reprocessing failed", error);
