@@ -96,6 +96,24 @@ function FilterFields({ filters, options, onChange, onApply, onClear, idPrefix, 
     if (!advancedActive) setAdvancedOpen(false);
   }, [advancedActive, resetKey]);
 
+  const availableRounds = useMemo(() => {
+    if (filters.year && options?.yearRounds?.[filters.year]) {
+      return options.yearRounds[filters.year];
+    }
+    return options?.rounds || [];
+  }, [filters.year, options]);
+
+  function handleYearChange(event) {
+    const newYear = event.target.value;
+    onChange("year", newYear);
+    if (filters.round && newYear && options?.yearRounds?.[newYear]) {
+      const allowed = options.yearRounds[newYear];
+      if (!allowed.includes(Number(filters.round))) {
+        onChange("round", "");
+      }
+    }
+  }
+
   return (
     <form className="grid gap-4" onSubmit={onApply}>
       <div>
@@ -136,7 +154,7 @@ function FilterFields({ filters, options, onChange, onApply, onClear, idPrefix, 
       </div>
       <label className="grid gap-1.5 text-sm font-medium text-ink">
         Academic year
-        <select className="focus-ring min-h-11 rounded border border-line px-3" value={filters.year} onChange={(event) => onChange("year", event.target.value)}>
+        <select className="focus-ring min-h-11 rounded border border-line px-3" value={filters.year} onChange={handleYearChange}>
           <option value="">Latest and previous years</option>
           {options.years.map((year) => <option key={year} value={year}>{year}</option>)}
         </select>
@@ -150,49 +168,48 @@ function FilterFields({ filters, options, onChange, onApply, onClear, idPrefix, 
         <summary className="cursor-pointer px-3 py-3 text-sm font-semibold text-ink">Category, location and seat filters</summary>
         <div className="grid gap-4 border-t border-line bg-white p-3">
           <label className="grid gap-1.5 text-sm font-medium text-ink">
-          CAP round
-          <select className="focus-ring min-h-11 rounded border border-line px-3" value={filters.round} onChange={(event) => onChange("round", event.target.value)}>
-            <option value="">All rounds</option>
-            {options.rounds.map((round) => <option key={round} value={round}>Round {round}</option>)}
-          </select>
-          </label>
-
-          <div className="grid grid-cols-2 gap-3">
-            <label className="grid gap-1.5 text-sm font-medium text-ink">
-          Category
-          <select className="focus-ring min-h-11 rounded border border-line px-3" value={filters.category} onChange={(event) => onChange("category", event.target.value)}>
-            <option value="">All categories</option>
-            {options.categories.map((category) => <option key={category} value={category}>{category}</option>)}
-          </select>
-            </label>
-            <label className="grid gap-1.5 text-sm font-medium text-ink">
-          City
-          <select className="focus-ring min-h-11 rounded border border-line px-3" value={filters.city} onChange={(event) => onChange("city", event.target.value)}>
-            <option value="">All cities</option>
-            {options.cities.map((city) => <option key={city} value={city}>{city}</option>)}
-          </select>
-            </label>
-          </div>
-
-          <label className="grid gap-1.5 text-sm font-medium text-ink">
-        Exact seat type
-        <input
-          className="focus-ring min-h-11 rounded border border-line px-3 uppercase"
-          list={`${idPrefix}-seat-types`}
-          placeholder="Example: GOBCH"
-          value={filters.seatType}
-          onChange={(event) => onChange("seatType", event.target.value.toUpperCase())}
-        />
-        <datalist id={`${idPrefix}-seat-types`}>
-          {options.seatTypes.map((seatType) => <option key={seatType} value={seatType} />)}
-        </datalist>
+            CAP round
+            <select className="focus-ring min-h-11 rounded border border-line px-3" value={filters.round} onChange={(event) => onChange("round", event.target.value)}>
+              <option value="">All rounds</option>
+              {availableRounds.map((round) => <option key={round} value={round}>Round {round}</option>)}
+            </select>
           </label>
 
           <label className="grid gap-1.5 text-sm font-medium text-ink">
-        Sort results
-        <select className="focus-ring min-h-11 rounded border border-line px-3" value={filters.sort} onChange={(event) => onChange("sort", event.target.value)}>
-          {sortOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-        </select>
+            Category
+            <select className="focus-ring min-h-11 w-full rounded border border-line px-3 text-sm text-slate-700 bg-white" value={filters.category} onChange={(event) => onChange("category", event.target.value)}>
+              <option value="">All categories</option>
+              {options.categories.map((category) => <option key={category} value={category}>{category}</option>)}
+            </select>
+          </label>
+
+          <label className="grid gap-1.5 text-sm font-medium text-ink">
+            City
+            <select className="focus-ring min-h-11 w-full rounded border border-line px-3 text-sm text-slate-700 bg-white" value={filters.city} onChange={(event) => onChange("city", event.target.value)}>
+              <option value="">All cities</option>
+              {options.cities.map((city) => <option key={city} value={city}>{city}</option>)}
+            </select>
+          </label>
+
+          <label className="grid gap-1.5 text-sm font-medium text-ink">
+            Exact seat type
+            <input
+              className="focus-ring min-h-11 rounded border border-line px-3 uppercase"
+              list={`${idPrefix}-seat-types`}
+              placeholder="Example: GOBCH"
+              value={filters.seatType}
+              onChange={(event) => onChange("seatType", event.target.value.toUpperCase())}
+            />
+            <datalist id={`${idPrefix}-seat-types`}>
+              {options.seatTypes.map((seatType) => <option key={seatType} value={seatType} />)}
+            </datalist>
+          </label>
+
+          <label className="grid gap-1.5 text-sm font-medium text-ink">
+            Sort results
+            <select className="focus-ring min-h-11 rounded border border-line px-3" value={filters.sort} onChange={(event) => onChange("sort", event.target.value)}>
+              {sortOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            </select>
           </label>
         </div>
       </details>

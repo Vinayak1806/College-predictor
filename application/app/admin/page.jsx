@@ -24,10 +24,10 @@ export default async function AdminPage() {
             Find records that can mislead predictions, then separate required corrections from optional college-research coverage.
           </p>
         </div>
-        <div className="mt-5">
+        <div className="mt-6">
           <AdminSessionBar requiresToken={access.requiresToken} />
         </div>
-        <div className="mt-5 grid gap-5">
+        <div className="mt-6 grid gap-6">
           <AdminImportCentre />
           <AdminDataControls />
           <PredictionHealthDashboard />

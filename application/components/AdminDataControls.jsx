@@ -90,8 +90,10 @@ export function AdminDataControls() {
   useEffect(() => {
     if (!cutoffForm.academicYear || !years.includes(cutoffForm.academicYear)) {
       setCutoffForm((current) => ({ ...current, academicYear: years[0] || "", capRound: "" }));
+    } else if (cutoffForm.capRound && rounds.length && !rounds.includes(Number(cutoffForm.capRound))) {
+      setCutoffForm((current) => ({ ...current, capRound: "" }));
     }
-  }, [cutoffForm.academicYear, cutoffForm.admissionRoute, years.join("|")]);
+  }, [cutoffForm.academicYear, cutoffForm.admissionRoute, years.join("|"), rounds.join("|")]);
 
   async function runAction(payload, confirmation, successMessage) {
     if (!window.confirm(confirmation)) return;

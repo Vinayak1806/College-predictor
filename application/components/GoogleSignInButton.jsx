@@ -29,14 +29,14 @@ export function GoogleSignInButton({ configured, callbackURL = "/account" }) {
         type="button"
         disabled={!configured || loading}
         onClick={signIn}
-        className="focus-ring flex min-h-14 w-full items-center justify-center gap-3 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-action hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+        className="focus-ring flex min-h-12 w-full items-center justify-center gap-3 rounded-xl border border-indigo-600 bg-indigo-600 px-5 text-sm font-bold text-white shadow-md transition-all hover:bg-indigo-700 hover:shadow-lg active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {loading ? (
-          <LoaderCircle aria-hidden="true" className="animate-spin" size={18} />
+          <LoaderCircle aria-hidden="true" className="animate-spin text-white" size={18} />
         ) : (
-          <span aria-hidden="true" className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-[#4285f4]">G</span>
+          <span aria-hidden="true" className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-sm font-extrabold text-indigo-600 shadow-2xs">G</span>
         )}
-        {loading ? "Opening Google..." : "Continue with Google"}
+        <span>{loading ? "Opening Google..." : "Continue with Google"}</span>
       </button>
       {error ? <p className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{error}</p> : null}
     </div>

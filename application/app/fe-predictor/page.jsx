@@ -27,16 +27,16 @@ import { explainSeatType } from "../../lib/seatTypes";
 
 const PAGE_SIZE = 10;
 const RESULT_MODE = "BEST_BRANCH_PER_COLLEGE";
-const fallbackAcademicYears = ["2025-26", "2024-25", "2023-24"];
+const fallbackAcademicYears = ["2026-27", "2025-26", "2024-25", "2023-24"];
 
 const defaultForm = {
-  percentile: "89.20",
+  percentile: "",
   academicYear: "",
   capRound: "",
-  category: "OBC",
-  gender: "MALE",
+  category: "",
+  gender: "",
   homeUniversity: "",
-  branches: ["Computer"],
+  branches: [],
   cities: [],
   collegeTypes: [],
   autonomousOnly: false,
@@ -225,32 +225,62 @@ function CompactMultiSelect({
   }, []);
 
   return (
-    <div ref={containerRef} className="relative grid min-w-0 w-full gap-2 text-sm h-fit">
-      <label className="font-medium" htmlFor={inputId}>{label}</label>
-      <div className="focus-within:ring-2 focus-within:ring-[#7db9ca] flex min-h-11 w-full min-w-0 max-w-full items-center gap-2 overflow-hidden rounded border border-line bg-white px-3">
-        <input
-          id={inputId}
-          aria-autocomplete="list"
-          aria-expanded={open}
-          aria-busy={loading}
-          autoComplete="off"
-          className="min-h-10 w-0 min-w-0 flex-1 border-0 bg-transparent p-0 text-sm outline-none"
-          disabled={loading}
-          placeholder={loading ? "Loading options..." : searchPlaceholder}
-          role="combobox"
-          value={query}
-          onChange={(event) => {
-            setQuery(event.target.value);
-            setOpen(true);
-          }}
-          onFocus={() => setOpen(true)}
-          onKeyDown={(event) => {
-            if (event.key === "Escape") setOpen(false);
-          }}
-        />
+    <div ref={containerRef} className="relative grid min-w-0 w-full gap-1.5 text-sm h-fit">
+      <div className="flex items-center justify-between">
+        <label className="text-xs font-semibold uppercase tracking-wider text-slate-600" htmlFor={inputId}>{label}</label>
+        {selectedValues.length ? (
+          <button className="text-xs font-semibold text-action hover:underline" type="button" onClick={onClear}>
+            Clear ({selectedValues.length})
+          </button>
+        ) : null}
+      </div>
+
+      <div className="focus-within:ring-2 focus-within:ring-action/40 flex min-h-12 w-full min-w-0 max-w-full items-center justify-between gap-2 overflow-hidden rounded-xl border border-line bg-white px-3 py-1.5 shadow-xs transition-all">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
+          {selectedOptions.map((option) => (
+            <span
+              key={option.value}
+              className="inline-flex min-h-7 items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 shadow-2xs transition-all hover:bg-indigo-100"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+              <span className="max-w-48 truncate">{option.label}</span>
+              <button
+                aria-label={`Remove ${option.label}`}
+                className="focus-ring -mr-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-indigo-500 hover:bg-indigo-200 hover:text-indigo-900"
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onToggle(option.value);
+                }}
+              >
+                <X aria-hidden="true" size={12} />
+              </button>
+            </span>
+          ))}
+          <input
+            id={inputId}
+            aria-autocomplete="list"
+            aria-expanded={open}
+            aria-busy={loading}
+            autoComplete="off"
+            className="min-h-8 min-w-28 flex-1 border-0 bg-transparent p-0 text-sm text-ink outline-none placeholder:text-slate-400"
+            disabled={loading}
+            placeholder={selectedOptions.length ? "Add more..." : loading ? "Loading..." : searchPlaceholder}
+            role="combobox"
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setOpen(true);
+            }}
+            onFocus={() => setOpen(true)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setOpen(false);
+            }}
+          />
+        </div>
         <button
           aria-label={open ? `Close ${label}` : `Open ${label}`}
-          className="flex h-10 w-8 shrink-0 items-center justify-center"
+          className="flex h-8 w-6 shrink-0 items-center justify-center text-slate-400 hover:text-slate-700"
           type="button"
           disabled={loading}
           onClick={() => setOpen((current) => !current)}
@@ -259,74 +289,50 @@ function CompactMultiSelect({
         </button>
       </div>
 
-      {selectedOptions.length ? (
-        <div className="flex flex-wrap gap-2" aria-label={`Selected ${label.toLowerCase()}`}>
-          {selectedOptions.map((option) => (
-            <div
-              key={option.value}
-              className="flex min-h-9 max-w-full items-center gap-2 border border-line bg-panel px-2 text-xs text-ink"
-            >
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center border border-action bg-white text-action">
-                <Check aria-hidden="true" size={14} strokeWidth={2.5} />
-              </span>
-              <span className="min-w-0 break-words font-medium">{option.label}</span>
-              <button
-                aria-label={`Remove ${option.label}`}
-                className="focus-ring flex h-7 w-7 shrink-0 items-center justify-center text-slate-500 hover:bg-white hover:text-danger"
-                type="button"
-                onClick={() => onToggle(option.value)}
-              >
-                <X aria-hidden="true" size={15} />
-              </button>
-            </div>
-          ))}
-        </div>
-      ) : null}
-
       {open ? (
-        <div className="absolute left-0 right-0 top-full z-30 mt-1 rounded border border-line bg-white p-2 shadow-lg">
-          <div className="flex min-h-9 items-center justify-between gap-3 px-1">
-            <span className="text-xs text-slate-600">
+        <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 rounded-xl border border-slate-200 bg-white p-2 shadow-xl backdrop-blur-md">
+          <div className="flex min-h-8 items-center justify-between gap-3 px-2 border-b border-line pb-1.5 mb-1">
+            <span className="text-xs font-semibold text-slate-500">
               {selectedValues.length ? `${selectedValues.length} selected` : emptyText}
             </span>
             {selectedValues.length ? (
-              <button className="text-xs font-medium text-action underline" type="button" onClick={onClear}>
-                Clear
+              <button className="text-xs font-semibold text-action hover:underline" type="button" onClick={onClear}>
+                Clear all
               </button>
             ) : null}
           </div>
 
-          <div className="scrollbar-hidden grid max-h-52 gap-1 overflow-y-auto overscroll-contain">
+          <div className="scrollbar-hidden grid max-h-56 gap-1 overflow-y-auto overscroll-contain">
             {matchingOptions.map((option) => {
               const selected = selectedValues.includes(option.value);
 
               return (
                 <button
                   key={option.value}
-                  className={`flex min-h-11 items-center justify-between gap-3 rounded px-3 text-left hover:bg-panel ${
-                    selected ? "bg-panel font-medium text-ink" : "text-slate-700"
+                  className={`flex min-h-10 items-center justify-between gap-3 rounded-lg px-3 text-left text-xs transition-colors ${
+                    selected ? "bg-indigo-50 font-bold text-indigo-900" : "text-slate-700 hover:bg-slate-50"
                   }`}
                   type="button"
                   onClick={() => {
                     onToggle(option.value);
                     setQuery("");
-                    setOpen(true);
+                    setOpen(false);
                   }}
                 >
                   <span
                     aria-hidden="true"
-                    className={`flex h-5 w-5 shrink-0 items-center justify-center border ${
-                      selected ? "border-action bg-action text-white" : "border-slate-300 bg-white"
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-all ${
+                      selected ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-300 bg-white"
                     }`}
                   >
-                    {selected ? <Check size={14} strokeWidth={2.5} /> : null}
+                    {selected ? <Check size={11} strokeWidth={3} /> : null}
                   </span>
                   <span className="min-w-0 flex-1 break-words">{option.label}</span>
                 </button>
               );
             })}
             {!matchingOptions.length ? (
-              <p className="px-3 py-3 text-slate-600">{loading ? "Loading options..." : noOptionsText}</p>
+              <p className="px-3 py-3 text-xs text-slate-500">{loading ? "Loading options..." : noOptionsText}</p>
             ) : null}
           </div>
         </div>
@@ -349,6 +355,7 @@ export default function FePredictorPage() {
   const [yearRounds, setYearRounds] = useState({});
   const [publishedBranches, setPublishedBranches] = useState([]);
   const [instituteCount, setInstituteCount] = useState(null);
+  const [cutoffCount, setCutoffCount] = useState(null);
   const [results, setResults] = useState([]);
   const [selectedZone, setSelectedZone] = useState("ALL");
   const [seatTypes, setSeatTypes] = useState([]);
@@ -420,8 +427,12 @@ export default function FePredictorPage() {
       try {
         const data = await readJson("/api/stats");
         setInstituteCount(data.data?.currentFeInstitutes || data.data?.currentInstitutes || null);
+        if (data.data?.verifiedFeCutoffs) {
+          setCutoffCount(data.data.verifiedFeCutoffs);
+        }
       } catch {
         setInstituteCount(null);
+        setCutoffCount(null);
       }
     }
 
@@ -592,244 +603,299 @@ export default function FePredictorPage() {
     await requestPrediction({ page, zone: selectedZone });
   }
 
+  const [showAllCategories, setShowAllCategories] = useState(false);
+  const categoriesList = ["OPEN", "OBC", "SEBC", "SC", "ST", "VJ", "NT1", "NT2", "NT3", "EWS"];
+  const visibleCategories = showAllCategories ? categoriesList : categoriesList.slice(0, 6);
+
   return (
     <>
       <SiteHeader />
-      <main className={`page-shell mx-auto grid min-w-0 gap-6 px-4 py-6 sm:px-5 lg:px-6 ${hasPredicted ? "max-w-7xl lg:grid-cols-[340px_minmax(0,1fr)] lg:items-start xl:grid-cols-[360px_minmax(0,1fr)]" : "max-w-6xl"}`}>
+      <main className={`page-shell mx-auto grid min-w-0 gap-6 px-4 py-6 sm:px-5 lg:px-6 ${hasPredicted ? "max-w-7xl lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start xl:grid-cols-[380px_minmax(0,1fr)]" : "max-w-6xl"}`}>
         <section className="min-w-0 w-full lg:self-stretch">
           <div className="border-l-4 border-action pl-4">
             <p className="text-xs font-semibold uppercase text-action">First-Year Engineering Admission (FE)</p>
-            <h1 className="mt-1 text-2xl font-semibold">First-Year B.E./B.Tech College Predictor</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
+            <h1 className="mt-1 text-2xl font-bold text-ink sm:text-3xl">First-Year B.E./B.Tech College Predictor</h1>
+            <p className="mt-1 text-sm leading-6 text-slate-600">
               Find realistic options from verified Maharashtra CAP cutoffs and your official seat eligibility.
             </p>
           </div>
+
           <CompactMetricGrid
             className="mt-4 grid-cols-3"
             vertical={hasPredicted}
             items={[
-              { label: "FE cutoffs", value: "103k+", icon: BarChart3, tone: "indigo" },
-              { label: "Data years", value: "3", icon: CalendarDays, tone: "success" },
+              { label: "FE cutoffs", value: cutoffCount ? `${Math.round(cutoffCount / 1000)}k+` : "142k+", icon: BarChart3, tone: "indigo" },
+              { label: "Data years", value: academicYears.length || 4, icon: CalendarDays, tone: "success" },
               { label: "Institutes", value: instituteCount ?? "--", icon: Building2, tone: "action" }
             ]}
           />
 
-          <form ref={predictorFormRef} noValidate onSubmit={submitForm} className="surface-card mt-4 grid min-w-0 scroll-mt-20 gap-4 p-4 sm:p-5">
-            <p className="text-right text-xs text-slate-500"><span className="font-semibold text-danger">*</span> Required</p>
-            <div className="md:hidden">
-              <div className="flex items-center justify-between text-xs font-semibold">
-                <span className="text-action">Step {mobileStep} of 3</span>
-                <span className="text-slate-500">{mobileStep === 1 ? "Score" : mobileStep === 2 ? "Eligibility" : "Preferences"}</span>
-              </div>
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full rounded-full bg-gradient-to-r from-action to-cyan-400 transition-[width] duration-300 ease-out" style={{ width: `${(mobileStep / 3) * 100}%` }} />
-              </div>
+          <form ref={predictorFormRef} noValidate onSubmit={submitForm} className="surface-card mt-5 grid min-w-0 scroll-mt-20 gap-6 p-5 sm:p-7 rounded-2xl">
+            <div className="flex items-center justify-between border-b border-line pb-4">
+              <span className="text-xs font-semibold uppercase tracking-wider text-action">College Prediction Engine</span>
+              <p className="text-xs text-slate-500"><span className="font-semibold text-danger">*</span> Required fields</p>
             </div>
 
-            <fieldset data-step="1" className={`${mobileStep === 1 ? "grid" : "hidden"} min-w-0 gap-4 md:grid ${hasPredicted ? "" : "md:grid-cols-3"}`}>
-              <legend className="sr-only">Score and cutoff history</legend>
-              <label className="grid min-w-0 gap-2 text-sm font-medium">
-              <span>MHT-CET percentile<RequiredMark /></span>
-              <input
-                aria-invalid={showValidation && !percentileValid}
-                className={`focus-ring min-h-11 w-full min-w-0 max-w-full rounded border px-3 ${showValidation && !percentileValid ? "border-danger" : "border-line"}`}
-                inputMode="decimal"
-                min="0"
-                max="100"
-                step="0.01"
-                type="number"
-                required
-                value={form.percentile}
-                onChange={(event) => updateField("percentile", event.target.value)}
-              />
-              {showValidation && !percentileValid ? <span className="text-xs font-normal text-danger">Enter a percentile between 0 and 100.</span> : null}
-              </label>
+            {/* SECTION 1 — Your Score */}
+            <div className="grid gap-4">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-action text-xs font-bold text-white shadow-xs">1</span>
+                <h2 className="text-base font-bold text-ink">Your Score & Record Period</h2>
+              </div>
+              <fieldset data-step="1" className="grid min-w-0 gap-4 sm:grid-cols-3">
+                <legend className="sr-only">Score and cutoff history</legend>
+                <label className="grid min-w-0 gap-1.5 text-sm font-medium text-ink">
+                  <span>MHT-CET percentile<RequiredMark /></span>
+                  <input
+                    aria-invalid={showValidation && !percentileValid}
+                    className={`focus-ring min-h-11 w-full min-w-0 rounded-lg border px-3 text-base font-semibold ${showValidation && !percentileValid ? "border-danger bg-red-50/50 text-danger" : "border-line bg-white text-ink"}`}
+                    inputMode="decimal"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    type="number"
+                    required
+                    placeholder="e.g. 89.20"
+                    value={form.percentile}
+                    onChange={(event) => updateField("percentile", event.target.value)}
+                  />
+                  {showValidation && !percentileValid ? <span className="text-xs font-normal text-danger">Enter a percentile between 0 and 100.</span> : null}
+                </label>
 
-               <label className="grid min-w-0 gap-2 text-sm font-medium">
-              Academic year
-              <select
-                className="focus-ring min-h-11 w-full min-w-0 max-w-full rounded border border-line px-3"
-                value={form.academicYear}
-                onChange={(event) => {
-                  const newYear = event.target.value;
-                  setForm((currentForm) => {
-                    const allowedRounds = newYear ? (yearRounds[newYear] || []) : [];
-                    const capRound = currentForm.capRound;
-                    const nextCapRound = (newYear && capRound && !allowedRounds.includes(Number(capRound)))
-                      ? ""
-                      : capRound;
-                    return {
-                      ...currentForm,
-                      academicYear: newYear,
-                      capRound: nextCapRound
-                    };
-                  });
-                }}
-              >
-                <option value="">All available years</option>
-                {academicYears.map((year) => <option key={year} value={year}>{year}</option>)}
-              </select>
-              </label>
+                <label className="grid min-w-0 gap-1.5 text-sm font-medium text-ink">
+                  Academic year
+                  <select
+                    className="focus-ring min-h-11 w-full rounded-lg border border-line bg-white px-3"
+                    value={form.academicYear}
+                    onChange={(event) => {
+                      const newYear = event.target.value;
+                      setForm((currentForm) => {
+                        const allowedRounds = newYear ? (yearRounds[newYear] || []) : [];
+                        const capRound = currentForm.capRound;
+                        const nextCapRound = (newYear && capRound && !allowedRounds.includes(Number(capRound)))
+                          ? ""
+                          : capRound;
+                        return {
+                          ...currentForm,
+                          academicYear: newYear,
+                          capRound: nextCapRound
+                        };
+                      });
+                    }}
+                  >
+                    <option value="">All available years</option>
+                    {academicYears.map((year) => <option key={year} value={year}>{year}</option>)}
+                  </select>
+                </label>
 
-              <label className="grid min-w-0 gap-2 text-sm font-medium">
-              CAP round
-              <select
-                className="focus-ring min-h-11 w-full min-w-0 max-w-full rounded border border-line px-3"
-                value={form.capRound}
-                onChange={(event) => updateField("capRound", event.target.value)}
-              >
-                <option value="">Latest available CAP round</option>
-                {(!form.academicYear || (yearRounds[form.academicYear]?.includes(1))) && <option value="1">CAP Round 1</option>}
-                {(!form.academicYear || (yearRounds[form.academicYear]?.includes(2))) && <option value="2">CAP Round 2</option>}
-                {(!form.academicYear || (yearRounds[form.academicYear]?.includes(3))) && <option value="3">CAP Round 3</option>}
-                {(!form.academicYear || (yearRounds[form.academicYear]?.includes(4))) && <option value="4">CAP Round 4</option>}
-              </select>
-              </label>
-            </fieldset>
+                <label className="grid min-w-0 gap-1.5 text-sm font-medium text-ink">
+                  CAP round
+                  <select
+                    className="focus-ring min-h-11 w-full rounded-lg border border-line bg-white px-3"
+                    value={form.capRound}
+                    onChange={(event) => updateField("capRound", event.target.value)}
+                  >
+                    <option value="">Latest available CAP round</option>
+                    {(!form.academicYear || (yearRounds[form.academicYear]?.includes(1))) && <option value="1">CAP Round 1</option>}
+                    {(!form.academicYear || (yearRounds[form.academicYear]?.includes(2))) && <option value="2">CAP Round 2</option>}
+                    {(!form.academicYear || (yearRounds[form.academicYear]?.includes(3))) && <option value="3">CAP Round 3</option>}
+                    {(!form.academicYear || (yearRounds[form.academicYear]?.includes(4))) && <option value="4">CAP Round 4</option>}
+                  </select>
+                </label>
+              </fieldset>
+            </div>
 
-            <fieldset data-step="2" className={`${mobileStep === 2 ? "grid" : "hidden"} min-w-0 gap-4 md:grid md:border-t md:border-line md:pt-5 ${hasPredicted ? "" : "md:grid-cols-3"}`}>
-              <legend className="sr-only">Admission eligibility</legend>
-              <label className="grid min-w-0 gap-2 text-sm font-medium">
-              <span>Category<RequiredMark /></span>
-              <select
-                className="focus-ring min-h-11 w-full min-w-0 max-w-full rounded border border-line px-3"
-                value={form.category}
-                onChange={(event) => updateField("category", event.target.value)}
-              >
-                <option value="OPEN">OPEN</option>
-                <option value="OBC">OBC</option>
-                <option value="SC">SC</option>
-                <option value="ST">ST</option>
-                <option value="SEBC">SEBC</option>
-                <option value="NT1">NT1</option>
-                <option value="NT2">NT2</option>
-                <option value="NT3">NT3</option>
-                <option value="VJ">VJ</option>
-              </select>
-              </label>
+            <hr className="border-line" />
 
-              <label className="grid min-w-0 gap-2 text-sm font-medium">
-              <span>Gender<RequiredMark /></span>
-              <select
-                className="focus-ring min-h-11 w-full min-w-0 max-w-full rounded border border-line px-3"
-                value={form.gender}
-                onChange={(event) => updateField("gender", event.target.value)}
-              >
-                <option value="MALE">Male</option>
-                <option value="FEMALE">Female</option>
-              </select>
-              </label>
+            {/* SECTION 2 — Your Profile */}
+            <div className="grid gap-4">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-action text-xs font-bold text-white shadow-xs">2</span>
+                <h2 className="text-base font-bold text-ink">Your Profile & Seat Category</h2>
+              </div>
+              <fieldset data-step="2" className="grid min-w-0 gap-5">
+                <legend className="sr-only">Admission eligibility</legend>
+                <div className="grid min-w-0 gap-2">
+                  <label className="text-sm font-medium text-ink">
+                    <span>Category<RequiredMark /></span>
+                  </label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {["OPEN", "OBC", "SEBC", "SC", "ST", "VJ", "NT1", "NT2", "NT3", "EWS"].map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        className={`focus-ring min-h-10 rounded-lg border px-3.5 text-xs font-bold transition-all ${
+                          form.category === cat
+                            ? "border-action bg-action text-white shadow-xs"
+                            : "border-line bg-white text-slate-700 hover:border-action/40 hover:bg-slate-50"
+                        }`}
+                        onClick={() => updateField("category", cat)}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-              <label className="grid min-w-0 gap-2 text-sm font-medium">
-              <span>Home university<RequiredMark /></span>
-              <select
-                aria-invalid={showValidation && !form.homeUniversity}
-                aria-busy={universitiesLoading}
-                className={`focus-ring min-h-11 w-full min-w-0 max-w-full rounded border px-3 ${showValidation && !form.homeUniversity ? "border-danger" : "border-line"}`}
-                disabled={universitiesLoading || !universities.length}
-                required
-                value={form.homeUniversity}
-                onChange={(event) => updateField("homeUniversity", event.target.value)}
-              >
-                <option value="">
-                  {universitiesLoading ? "Loading universities..." : universities.length ? "Select your home university" : "Universities unavailable"}
-                </option>
-                {universities.map((university) => (
-                  <option key={university.id} value={university.name}>{university.name}</option>
-                ))}
-              </select>
-              {showValidation && !form.homeUniversity ? <span className="text-xs font-normal text-danger">Select your home university to continue.</span> : null}
-              {universityError && !universitiesLoading && !universities.length ? <span className="text-xs font-normal text-danger">{universityError}</span> : null}
-              </label>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid min-w-0 gap-2">
+                    <label className="text-sm font-medium text-ink">
+                      <span>Gender<RequiredMark /></span>
+                    </label>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {[
+                        { key: "MALE", label: "Male" },
+                        { key: "FEMALE", label: "Female" }
+                      ].map(({ key, label }) => {
+                        const active = form.gender === key;
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            className={`focus-ring flex min-h-11 items-center gap-2 rounded-lg border px-3.5 text-left text-xs font-bold transition-all ${
+                              active
+                                ? "border-action bg-action/10 text-action shadow-xs"
+                                : "border-line bg-white text-slate-700 hover:bg-slate-50"
+                            }`}
+                            onClick={() => updateField("gender", key)}
+                          >
+                            <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all ${active ? "border-action bg-action text-white" : "border-slate-300 bg-white"}`}>
+                              {active ? <Check aria-hidden="true" size={12} /> : null}
+                            </span>
+                            <span>{label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
 
-              <div className={`grid gap-2 text-sm ${hasPredicted ? "" : "md:col-span-3"}`}>
-                <p className="font-medium">Special eligibility</p>
-                <div className={`grid grid-cols-2 gap-2 ${hasPredicted ? "" : "md:grid-cols-4"}`}>
-                {["tfws", "pwd", "defence", "ews"].map((name) => (
-                  <label key={name} className="flex min-h-11 items-center gap-2 rounded border border-line px-3">
+                  <label className="grid min-w-0 gap-1.5 text-sm font-medium text-ink">
+                    <span>Home university<RequiredMark /></span>
+                    <select
+                      aria-invalid={showValidation && !form.homeUniversity}
+                      aria-busy={universitiesLoading}
+                      className={`focus-ring min-h-11 w-full rounded-lg border px-3 ${showValidation && !form.homeUniversity ? "border-danger bg-red-50/50" : "border-line bg-white text-ink"}`}
+                      disabled={universitiesLoading || !universities.length}
+                      required
+                      value={form.homeUniversity}
+                      onChange={(event) => updateField("homeUniversity", event.target.value)}
+                    >
+                      <option value="">
+                        {universitiesLoading ? "Loading universities..." : universities.length ? "Select your home university" : "Universities unavailable"}
+                      </option>
+                      {universities.map((university) => (
+                        <option key={university.id} value={university.name}>{university.name}</option>
+                      ))}
+                    </select>
+                    {showValidation && !form.homeUniversity ? <span className="text-xs font-normal text-danger">Select your home university to continue.</span> : null}
+                  </label>
+                </div>
+
+                <div className="grid gap-2 text-sm">
+                  <p className="font-medium text-ink">Special eligibility</p>
+                  <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                    {[
+                      { key: "tfws", label: "TFWS" },
+                      { key: "pwd", label: "PWD" },
+                      { key: "defence", label: "DEFENCE" },
+                      { key: "ews", label: "EWS" }
+                    ].map(({ key, label }) => {
+                      const active = form[key];
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          className={`focus-ring flex min-h-11 items-center gap-2 rounded-lg border px-3.5 text-left text-xs font-bold transition-all ${
+                            active
+                              ? "border-emerald-500 bg-emerald-50 text-emerald-800 shadow-xs"
+                              : "border-line bg-white text-slate-700 hover:bg-slate-50"
+                          }`}
+                          onClick={() => updateField(key, !active)}
+                        >
+                          <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all ${active ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-300 bg-white"}`}>
+                            {active ? <Check aria-hidden="true" size={12} /> : null}
+                          </span>
+                          <span>{label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </fieldset>
+            </div>
+
+            <hr className="border-line" />
+
+            {/* SECTION 3 — Preferences */}
+            <div className="grid gap-4">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-action text-xs font-bold text-white shadow-xs">3</span>
+                <h2 className="text-base font-bold text-ink">Preferences <span className="text-xs font-normal text-slate-500">(Optional)</span></h2>
+              </div>
+              <fieldset data-step="3" className="grid min-w-0 gap-4 sm:grid-cols-2">
+                <legend className="sr-only">College preferences</legend>
+                <div className="flex flex-col gap-4">
+                  <CompactMultiSelect
+                    label="Preferred branches"
+                    options={branchOptions}
+                    selectedValues={form.branches}
+                    emptyText="All branches"
+                    onToggle={(value) => toggleListValue("branches", value)}
+                    onClear={() => updateField("branches", [])}
+                    searchPlaceholder="Type branch name"
+                  />
+
+                  <label className="flex min-h-11 items-center gap-2.5 rounded-lg border border-line bg-white px-3.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={form[name]}
-                      onChange={(event) => updateField(name, event.target.checked)}
+                      className="h-4 w-4 rounded border-slate-300 text-action focus:ring-action"
+                      checked={form.autonomousOnly}
+                      onChange={(event) => updateField("autonomousOnly", event.target.checked)}
                     />
-                    <span className="min-w-0 text-xs font-medium">{name.toUpperCase()}</span>
+                    Autonomous institutes only
                   </label>
-                ))}
                 </div>
-              </div>
-            </fieldset>
 
-            <fieldset data-step="3" className={`${mobileStep === 3 ? "grid" : "hidden"} min-w-0 gap-4 md:grid md:border-t md:border-line md:pt-5 ${hasPredicted ? "" : "md:grid-cols-2"}`}>
-              <legend className="sr-only">College preferences</legend>
-              <div className="flex flex-col gap-4">
-                <CompactMultiSelect
-                  label="Preferred branches"
-                  options={branchOptions}
-                  selectedValues={form.branches}
-                  emptyText="All branches"
-                  onToggle={(value) => toggleListValue("branches", value)}
-                  onClear={() => updateField("branches", [])}
-                  searchPlaceholder="Type branch name"
-                />
-
-                <label className="flex min-h-11 items-center gap-2 rounded border border-line px-3 text-sm font-medium">
-                  <input
-                    type="checkbox"
-                    checked={form.autonomousOnly}
-                    onChange={(event) => updateField("autonomousOnly", event.target.checked)}
+                <div className="flex flex-col gap-4">
+                  <CompactMultiSelect
+                    label="Preferred districts / cities"
+                    options={cities.map((city) => ({ label: city.name, value: city.name }))}
+                    selectedValues={form.cities}
+                    emptyText="All Maharashtra"
+                    onToggle={(value) => toggleListValue("cities", value)}
+                    onClear={() => updateField("cities", [])}
+                    loading={citiesLoading}
+                    searchPlaceholder="Type district or city name"
+                    noOptionsText={cityError && !cities.length ? cityError : "No matching district or city found."}
                   />
-                  Autonomous institutes only
-                </label>
-              </div>
 
-              <div className="flex flex-col gap-4">
-                <CompactMultiSelect
-                  label={`Preferred districts / cities${citiesLoading ? "" : ` (${cities.length})`}`}
-                  options={cities.map((city) => ({ label: city.name, value: city.name }))}
-                  selectedValues={form.cities}
-                  emptyText="All Maharashtra"
-                  onToggle={(value) => toggleListValue("cities", value)}
-                  onClear={() => updateField("cities", [])}
-                  loading={citiesLoading}
-                  searchPlaceholder="Type district or city name"
-                  noOptionsText={cityError && !cities.length ? cityError : "No matching district or city found."}
-                />
-
-                <CompactMultiSelect
-                  label="Institute ownership"
-                  options={collegeTypeOptions}
-                  selectedValues={form.collegeTypes}
-                  emptyText="All institute types"
-                  onToggle={(value) => toggleListValue("collegeTypes", value)}
-                  onClear={() => updateField("collegeTypes", [])}
-                  searchPlaceholder="Choose institute type"
-                />
-              </div>
-            </fieldset>
-
-            <div className="grid grid-cols-2 gap-2 md:hidden">
-              <button
-                className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded border border-line px-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
-                type="button"
-                disabled={mobileStep === 1}
-                onClick={() => moveToStep(mobileStep - 1)}
-              >
-                <ArrowLeft aria-hidden="true" size={17} /> Back
-              </button>
-              {mobileStep < 3 ? (
-                <button className="focus-ring flex min-h-11 items-center justify-center gap-2 rounded bg-action px-3 text-sm font-semibold text-white" type="button" onClick={() => moveToStep(mobileStep + 1)}>
-                  Continue <ArrowRight aria-hidden="true" size={17} />
-                </button>
-              ) : <span />}
+                  <CompactMultiSelect
+                    label="Institute ownership"
+                    options={collegeTypeOptions}
+                    selectedValues={form.collegeTypes}
+                    emptyText="All institute types"
+                    onToggle={(value) => toggleListValue("collegeTypes", value)}
+                    onClear={() => updateField("collegeTypes", [])}
+                    searchPlaceholder="Choose institute type"
+                  />
+                </div>
+              </fieldset>
             </div>
 
-            <button
-              className={`${mobileStep === 3 ? "flex" : "hidden"} focus-ring min-h-11 items-center justify-center gap-2 rounded bg-action px-5 font-semibold text-white disabled:opacity-60 md:flex ${hasPredicted ? "w-full" : "w-full md:ml-auto md:w-auto md:min-w-64"}`}
-              disabled={loading || !canPredict}
-            >
-              <BarChart3 aria-hidden="true" size={18} /> {loading ? "Checking First-Year cutoffs..." : "Predict First-Year Colleges"}
-            </button>
-            {!canPredict ? <p className="text-center text-xs text-slate-500">Complete the required fields to enable prediction.</p> : null}
+            {/* Form Footer */}
+            <div className="mt-2 flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-slate-500">
+                {!canPredict ? "Complete the required fields to enable prediction." : "Ready to predict eligible Maharashtra engineering colleges."}
+              </p>
+              <button
+                className="focus-ring flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-action px-6 text-sm font-bold text-white shadow-md hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                disabled={loading || !canPredict}
+                type="submit"
+              >
+                <BarChart3 aria-hidden="true" size={18} />
+                {loading ? "Checking First-Year cutoffs..." : "Predict First-Year Colleges"}
+              </button>
+            </div>
           </form>
 
           {hasPredicted ? (

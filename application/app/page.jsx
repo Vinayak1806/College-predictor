@@ -93,6 +93,7 @@ export default async function HomePage() {
       href: "/fe-predictor",
       action: "Open First-Year Predictor",
       accent: "border-indigo-600",
+      cardHoverStyle: "hover:border-indigo-500",
       badgeStyle: "bg-indigo-50 text-indigo-700 border-indigo-100",
       iconStyle: "bg-indigo-600 text-white",
       codeStyle: "text-indigo-600",
@@ -109,6 +110,7 @@ export default async function HomePage() {
       href: "/dse-predictor",
       action: "Open Direct Second-Year Predictor",
       accent: "border-emerald-600",
+      cardHoverStyle: "hover:border-emerald-500",
       badgeStyle: "bg-emerald-50 text-emerald-700 border-emerald-100",
       iconStyle: "bg-emerald-600 text-white",
       codeStyle: "text-emerald-700",
@@ -214,7 +216,7 @@ export default async function HomePage() {
 
           <div className="mt-8 grid gap-6 lg:grid-cols-2">
             {admissionRoutes.map((route) => (
-              <article key={route.code} className={`surface-card overflow-hidden border-t-4 ${route.accent} transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5`}>
+              <article key={route.code} className={`surface-card overflow-hidden border-t-4 ${route.accent} ${route.cardHoverStyle} transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5`}>
                 <div className="grid gap-5 p-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
                   <div className="min-w-0">
                     <div className="flex items-center gap-3">
@@ -232,14 +234,14 @@ export default async function HomePage() {
                   <span className={`rounded-full border px-3.5 py-1 text-xs font-bold ${route.badgeStyle}`}>Latest: {route.latestYear}</span>
                 </div>
 
-                <dl className="grid grid-cols-2 border-y border-slate-200/80 bg-slate-50/60 text-center">
-                  <div className="border-r border-slate-200/80 px-3 py-4">
-                    <dt className="text-lg font-extrabold text-slate-900">{route.institutes.toLocaleString("en-IN")}</dt>
-                    <dd className="mt-1 text-xs font-medium text-slate-500">Current institutes</dd>
+                <dl className="grid grid-cols-2 border-y border-slate-200/80 bg-slate-50/70 text-center">
+                  <div className="border-r border-slate-200/80 px-4 py-3.5">
+                    <dt className="text-xl sm:text-2xl font-extrabold text-slate-900">{route.institutes.toLocaleString("en-IN")}</dt>
+                    <dd className="mt-1 text-xs font-semibold uppercase tracking-wider text-slate-500">Current institutes</dd>
                   </div>
-                  <div className="px-3 py-4">
-                    <dt className="text-lg font-extrabold text-slate-900">{route.cutoffs.toLocaleString("en-IN")}</dt>
-                    <dd className="mt-1 text-xs font-medium text-slate-500">Verified cutoffs</dd>
+                  <div className="px-4 py-3.5">
+                    <dt className={`text-xl sm:text-2xl font-extrabold ${route.code === "FE" ? "text-indigo-600" : "text-emerald-600"}`}>{route.cutoffs.toLocaleString("en-IN")}</dt>
+                    <dd className="mt-1 text-xs font-semibold uppercase tracking-wider text-slate-500">Verified cutoffs</dd>
                   </div>
                 </dl>
 

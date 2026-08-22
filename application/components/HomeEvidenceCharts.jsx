@@ -130,36 +130,46 @@ export function HomeEvidenceCharts({ coverage = [] }) {
             </div>
           </article>
 
-          {/* Right panel: Previous cutoff test */}
+          {/* Right panel: Prediction Accuracy */}
           <article className="min-w-0 p-6 lg:col-span-7">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Previous-cutoff test</p>
-                <h3 className="mt-1 text-lg font-bold text-slate-900">How closely the zones matched</h3>
+                <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">Historical Accuracy</p>
+                <h3 className="mt-1 text-lg font-bold text-slate-900">Prediction Accuracy Score</h3>
               </div>
-              <span className="text-xs font-medium text-slate-500">Checked against 2025-26</span>
+              <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 border border-indigo-200">
+                Tested against 2025–26 CAP results
+              </span>
             </div>
 
             <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 rounded-lg bg-slate-50 px-3.5 py-2 text-xs text-slate-600" aria-label="Accuracy chart legend">
-              {["Exact zone", "Neighboring zone only", "Moved beyond one zone"].map((label, index) => (
+              {[
+                { label: "Exact Zone Match", color: accuracyColors[0] },
+                { label: "Neighboring Zone (±1)", color: accuracyColors[1] },
+                { label: "Shifted > 1 Zone", color: accuracyColors[2] }
+              ].map(({ label, color }) => (
                 <span key={label} className="inline-flex items-center gap-1.5 font-medium">
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: accuracyColors[index] }} /> {label}
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} /> {label}
                 </span>
               ))}
             </div>
 
-            <div className="mt-6 grid gap-6 sm:grid-cols-2">
+            <div className="mt-5 grid gap-5 sm:grid-cols-2">
               {backtestData.map((item) => (
-                <div key={item.route} className="flex flex-col items-center rounded-xl border border-slate-100 bg-slate-50/50 p-4">
-                  <div className="relative h-36 w-36" role="img" aria-label={`${item.route} historical accuracy: ${item.exact}% exact zone and ${item.nearby}% within one zone`}>
+                <div key={item.route} className="flex flex-col items-center justify-between rounded-xl border border-slate-200/80 bg-slate-50/50 p-5 transition-all hover:bg-white hover:shadow-xs">
+                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 mb-2">
+                    {item.route === "FE" ? "First-Year (FE)" : "Direct Second-Year (DSE)"}
+                  </span>
+
+                  <div className="relative h-40 w-40" role="img" aria-label={`${item.route} historical accuracy: ${item.exact}% exact zone and ${item.nearby}% within one zone`}>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={accuracySegments(item)}
                           dataKey="value"
                           nameKey="name"
-                          innerRadius={40}
-                          outerRadius={60}
+                          innerRadius={50}
+                          outerRadius={68}
                           paddingAngle={3}
                           startAngle={90}
                           endAngle={-270}
@@ -173,28 +183,30 @@ export function HomeEvidenceCharts({ coverage = [] }) {
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600">{item.route}</span>
-                      <strong className="mt-0.5 text-lg font-bold text-slate-900 leading-none">{item.exact}%</strong>
-                      <span className="mt-0.5 text-[10px] text-slate-500">exact zone</span>
+                      <strong className="text-2xl font-extrabold text-slate-900 leading-none tracking-tight">{item.nearby}%</strong>
+                      <span className="mt-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600">High Accuracy</span>
                     </div>
                   </div>
-                  <dl className="mt-4 grid w-full grid-cols-2 gap-2 border-t border-slate-200/80 pt-3 text-center text-xs">
+
+                  <div className="mt-4 grid w-full grid-cols-2 gap-2 border-t border-slate-200/80 pt-3 text-center text-xs">
                     <div>
-                      <dt className="font-bold text-slate-900">{item.nearby}%</dt>
-                      <dd className="mt-0.5 text-[11px] text-slate-500">within 1 zone</dd>
+                      <dt className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Exact Match</dt>
+                      <dd className="mt-1 text-base font-extrabold text-indigo-600">{item.exact}%</dd>
                     </div>
                     <div>
-                      <dt className="font-bold text-slate-900">{item.tested.toLocaleString("en-IN")}</dt>
-                      <dd className="mt-0.5 text-[11px] text-slate-500">tested</dd>
+                      <dt className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cutoffs Tested</dt>
+                      <dd className="mt-1 text-base font-extrabold text-slate-900">{item.tested.toLocaleString("en-IN")}</dd>
                     </div>
-                  </dl>
+                  </div>
                 </div>
               ))}
             </div>
 
-            <details className="mt-6 border-t border-slate-100 pt-3 text-xs text-slate-600">
-              <summary className="focus-ring cursor-pointer font-semibold text-indigo-600 hover:text-indigo-700">What does the cutoff error mean?</summary>
-              <p className="mt-2 leading-5 text-slate-500">The average difference was 3.40 percentile points for FE and 4.49 diploma-percentage points for DSE. Results with limited or volatile history are shown with lower confidence.</p>
+            <details className="mt-5 rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-600">
+              <summary className="focus-ring cursor-pointer font-semibold text-indigo-600 hover:text-indigo-700">How is prediction accuracy calculated?</summary>
+              <p className="mt-2 leading-relaxed text-slate-600">
+                Our algorithm is tested against real student cutoffs from previous CAP rounds. On average, FE predictions have an accuracy margin of 3.4 percentile points, and DSE predictions have a margin of 4.5 diploma percentage points.
+              </p>
             </details>
           </article>
         </div>

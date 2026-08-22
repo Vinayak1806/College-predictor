@@ -187,13 +187,13 @@ export default async function CollegesPage({ searchParams }) {
           <p className="mt-3 text-sm leading-6 text-slate-600">{routeDescription}</p>
         </header>
 
-        <div className="mt-6 grid gap-3 lg:grid-cols-[340px_minmax(0,1fr)] lg:items-stretch">
-          <nav className="flex min-h-12 items-center gap-2 rounded-xl bg-slate-100/90 p-1.5 border border-slate-200/80" aria-label="Admission route">
+        <div className="mt-6 grid gap-4 lg:grid-cols-[420px_minmax(0,1fr)] lg:items-stretch">
+          <nav className="flex min-h-12 items-center gap-2 rounded-xl bg-slate-100/90 p-1.5 border border-slate-200/80 shadow-xs" aria-label="Admission route">
             {["FE", "DSE"].map((route) => (
               <Link
                 key={route}
                 aria-current={admissionRoute === route ? "page" : undefined}
-                className={`focus-ring flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-4 text-xs font-bold transition-all ${
+                className={`focus-ring flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-4 text-xs font-bold whitespace-nowrap transition-all ${
                   admissionRoute === route ? "bg-indigo-600 text-white shadow-md" : "text-slate-600 hover:bg-white/80 hover:text-slate-900"
                 }`}
                 href={routeHref(route, search)}

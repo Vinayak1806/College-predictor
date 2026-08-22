@@ -492,7 +492,7 @@ section.border-y[class*="border-"] {
 /* --- Hover effects --- */
 @media (hover: hover) {
   .surface-card:hover {
-    border-color: #38bdf8;
+    border-color: #cbd5e1;
     box-shadow: var(--card-hover-shadow);
   }
 
