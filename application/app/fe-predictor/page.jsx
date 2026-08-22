@@ -33,8 +33,8 @@ const defaultForm = {
   percentile: "",
   academicYear: "",
   capRound: "",
-  category: "",
-  gender: "",
+  category: "OPEN",
+  gender: "MALE",
   homeUniversity: "",
   branches: [],
   cities: [],
@@ -636,8 +636,26 @@ export default function FePredictorPage() {
               <p className="text-xs text-slate-500"><span className="font-semibold text-danger">*</span> Required fields</p>
             </div>
 
+            {/* Mobile Step Indicator Header */}
+            <div className="flex items-center justify-between rounded-xl bg-slate-50 p-3 border border-line sm:hidden">
+              <span className="text-xs font-bold text-ink uppercase tracking-wider">
+                Step {mobileStep} of 3
+              </span>
+              <div className="flex gap-1.5">
+                {[1, 2, 3].map((step) => (
+                  <button
+                    key={step}
+                    type="button"
+                    onClick={() => moveToStep(step)}
+                    className={`h-2.5 rounded-full transition-all ${mobileStep === step ? "w-6 bg-action" : "w-2.5 bg-slate-300"}`}
+                    aria-label={`Go to step ${step}`}
+                  />
+                ))}
+              </div>
+            </div>
+
             {/* SECTION 1 — Your Score */}
-            <div className="grid gap-4">
+            <div className={`grid gap-4 ${mobileStep === 1 ? "" : "hidden sm:grid"}`}>
               <div className="flex items-center gap-2.5">
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-action text-xs font-bold text-white shadow-xs">1</span>
                 <h2 className="text-base font-bold text-ink">Your Score & Record Period</h2>
@@ -703,12 +721,22 @@ export default function FePredictorPage() {
                   </select>
                 </label>
               </fieldset>
+
+              <div className="mt-2 sm:hidden">
+                <button
+                  type="button"
+                  onClick={() => moveToStep(2)}
+                  className="focus-ring flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-action px-5 text-sm font-bold text-white shadow-md hover:bg-action-hover"
+                >
+                  Continue
+                </button>
+              </div>
             </div>
 
-            <hr className="border-line" />
+            <hr className="border-line hidden sm:block" />
 
             {/* SECTION 2 — Your Profile */}
-            <div className="grid gap-4">
+            <div className={`grid gap-4 ${mobileStep === 2 ? "" : "hidden sm:grid"}`}>
               <div className="flex items-center gap-2.5">
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-action text-xs font-bold text-white shadow-xs">2</span>
                 <h2 className="text-base font-bold text-ink">Your Profile & Seat Category</h2>
@@ -822,12 +850,29 @@ export default function FePredictorPage() {
                   </div>
                 </div>
               </fieldset>
+
+              <div className="mt-2 flex gap-3 sm:hidden">
+                <button
+                  type="button"
+                  onClick={() => moveToStep(1)}
+                  className="focus-ring flex min-h-12 items-center justify-center rounded-xl border border-line bg-white px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveToStep(3)}
+                  className="focus-ring flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-action px-5 text-sm font-bold text-white shadow-md hover:bg-action-hover"
+                >
+                  Continue
+                </button>
+              </div>
             </div>
 
-            <hr className="border-line" />
+            <hr className="border-line hidden sm:block" />
 
             {/* SECTION 3 — Preferences */}
-            <div className="grid gap-4">
+            <div className={`grid gap-4 ${mobileStep === 3 ? "" : "hidden sm:grid"}`}>
               <div className="flex items-center gap-2.5">
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-action text-xs font-bold text-white shadow-xs">3</span>
                 <h2 className="text-base font-bold text-ink">Preferences <span className="text-xs font-normal text-slate-500">(Optional)</span></h2>
@@ -880,10 +925,28 @@ export default function FePredictorPage() {
                   />
                 </div>
               </fieldset>
+
+              <div className="mt-2 flex gap-3 sm:hidden">
+                <button
+                  type="button"
+                  onClick={() => moveToStep(2)}
+                  className="focus-ring flex min-h-12 items-center justify-center rounded-xl border border-line bg-white px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || !canPredict}
+                  className="focus-ring flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-action px-6 text-sm font-bold text-white shadow-md hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <BarChart3 aria-hidden="true" size={18} />
+                  {loading ? "Checking Cutoffs..." : "Predict First-Year Colleges"}
+                </button>
+              </div>
             </div>
 
-            {/* Form Footer */}
-            <div className="mt-2 flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:items-center sm:justify-between">
+            {/* Form Footer (Desktop) */}
+            <div className="mt-2 hidden sm:flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-slate-500">
                 {!canPredict ? "Complete the required fields to enable prediction." : "Ready to predict eligible Maharashtra engineering colleges."}
               </p>

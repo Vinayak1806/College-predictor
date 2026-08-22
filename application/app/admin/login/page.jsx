@@ -126,7 +126,7 @@ export default function AdminLoginPage() {
               <form className="mt-8 space-y-5" onSubmit={signIn}>
                 <div>
                   <label className="block text-sm font-semibold text-ink" htmlFor="admin-token">
-                    Admin Security Token
+                    Admin token
                   </label>
                   <div className="relative mt-2">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
