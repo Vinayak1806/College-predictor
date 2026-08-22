@@ -628,12 +628,12 @@ export default function DsePredictorPage() {
                   <label className="text-sm font-medium text-ink">
                     <span>Category<RequiredMark /></span>
                   </label>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="grid grid-cols-5 gap-1.5">
                     {categories.map((cat) => (
                       <button
                         key={cat}
                         type="button"
-                        className={`focus-ring min-h-10 rounded-lg border px-3.5 text-xs font-bold transition-all ${
+                        className={`focus-ring min-h-10 w-full justify-center rounded-lg border px-1 text-center text-xs font-bold transition-all ${
                           form.category === cat
                             ? "border-action bg-action text-white shadow-xs"
                             : "border-line bg-white text-slate-700 hover:border-action/40 hover:bg-slate-50"
@@ -646,7 +646,7 @@ export default function DsePredictorPage() {
                   </div>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4">
                   <div className="grid min-w-0 gap-2">
                     <label className="text-sm font-medium text-ink">
                       <span>Gender<RequiredMark /></span>
@@ -691,17 +691,17 @@ export default function DsePredictorPage() {
                           <button
                             key={key}
                             type="button"
-                            className={`focus-ring flex min-h-11 items-center gap-2 rounded-lg border px-3 text-left text-xs font-bold transition-all ${
+                            className={`focus-ring flex min-h-10 items-center justify-center gap-1.5 rounded-lg border px-2 text-center text-xs font-bold transition-all ${
                               active
                                 ? "border-emerald-500 bg-emerald-50 text-emerald-800 shadow-xs"
                                 : "border-line bg-white text-slate-700 hover:bg-slate-50"
                             }`}
                             onClick={() => update(key, !active)}
                           >
-                            <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all ${active ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-300 bg-white"}`}>
-                              {active ? <Check aria-hidden="true" size={12} /> : null}
+                            <span className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-all ${active ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-300 bg-white"}`}>
+                              {active ? <Check aria-hidden="true" size={10} /> : null}
                             </span>
-                            <span>{label}</span>
+                            <span className="truncate">{label}</span>
                           </button>
                         );
                       })}
@@ -724,58 +724,53 @@ export default function DsePredictorPage() {
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-action text-xs font-bold text-white shadow-xs">3</span>
                 <h2 className="text-base font-bold text-ink">Preferences <span className="text-xs font-normal text-slate-500">(Optional)</span></h2>
               </div>
-              <fieldset data-step="3" className="grid min-w-0 gap-4 sm:grid-cols-2">
+              <fieldset data-step="3" className="flex flex-col gap-4">
                 <legend className="sr-only">College preferences</legend>
-                <div className="flex flex-col gap-4">
-                  <CompactMultiSelect
-                    label="Preferred B.E./B.Tech branches"
-                    options={branchOptions}
-                    selectedValues={form.branches}
-                    emptyText="All degree branches"
-                    onToggle={(value) => toggleListValue("branches", value)}
-                    onClear={() => update("branches", [])}
-                    loading={optionsLoading}
-                    searchPlaceholder="Type branch name"
-                  />
-                  <CompactMultiSelect
-                    label="Preferred universities"
-                    options={universityOptions}
-                    selectedValues={form.universities}
-                    emptyText="All universities"
-                    onToggle={(value) => toggleListValue("universities", value)}
-                    onClear={() => update("universities", [])}
-                    loading={optionsLoading}
-                    searchPlaceholder="Type university name"
-                    noOptionsText="No matching university found."
-                  />
-                  <label className="flex min-h-11 items-center gap-2.5 rounded-lg border border-line bg-white px-3.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer">
-                    <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-action focus:ring-action" checked={form.autonomousOnly} onChange={(event) => update("autonomousOnly", event.target.checked)} />
-                    Autonomous institutes only
-                  </label>
-                </div>
-
-                <div className="flex flex-col gap-4">
-                  <CompactMultiSelect
-                    label="Preferred districts / cities"
-                    options={cityOptions}
-                    selectedValues={form.cities}
-                    emptyText="All Maharashtra"
-                    onToggle={(value) => toggleListValue("cities", value)}
-                    onClear={() => update("cities", [])}
-                    loading={optionsLoading}
-                    searchPlaceholder="Type district or city"
-                    noOptionsText="No matching district or city found."
-                  />
-                  <CompactMultiSelect
-                    label="Institute ownership"
-                    options={collegeTypeOptions}
-                    selectedValues={form.collegeTypes}
-                    emptyText="All institute types"
-                    onToggle={(value) => toggleListValue("collegeTypes", value)}
-                    onClear={() => update("collegeTypes", [])}
-                    searchPlaceholder="Choose institute type"
-                  />
-                </div>
+                <CompactMultiSelect
+                  label="Preferred B.E./B.Tech branches"
+                  options={branchOptions}
+                  selectedValues={form.branches}
+                  emptyText="All degree branches"
+                  onToggle={(value) => toggleListValue("branches", value)}
+                  onClear={() => update("branches", [])}
+                  loading={optionsLoading}
+                  searchPlaceholder="Type branch name"
+                />
+                <CompactMultiSelect
+                  label="Preferred universities"
+                  options={universityOptions}
+                  selectedValues={form.universities}
+                  emptyText="All universities"
+                  onToggle={(value) => toggleListValue("universities", value)}
+                  onClear={() => update("universities", [])}
+                  loading={optionsLoading}
+                  searchPlaceholder="Type university name"
+                  noOptionsText="No matching university found."
+                />
+                <CompactMultiSelect
+                  label="Preferred districts / cities"
+                  options={cityOptions}
+                  selectedValues={form.cities}
+                  emptyText="All Maharashtra"
+                  onToggle={(value) => toggleListValue("cities", value)}
+                  onClear={() => update("cities", [])}
+                  loading={optionsLoading}
+                  searchPlaceholder="Type district or city name"
+                  noOptionsText="No matching district or city found."
+                />
+                <CompactMultiSelect
+                  label="Institute ownership"
+                  options={ownershipOptions}
+                  selectedValues={form.collegeTypes}
+                  emptyText="All institute types"
+                  onToggle={(value) => toggleListValue("collegeTypes", value)}
+                  onClear={() => update("collegeTypes", [])}
+                  searchPlaceholder="Choose institute type"
+                />
+                <label className="flex min-h-11 items-center gap-2.5 rounded-lg border border-line bg-white px-3.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer">
+                  <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-action focus:ring-action" checked={form.autonomousOnly} onChange={(event) => update("autonomousOnly", event.target.checked)} />
+                  Autonomous institutes only
+                </label>
               </fieldset>
             </div>
 

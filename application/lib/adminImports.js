@@ -216,16 +216,19 @@ async function processAdminImport(adminImport) {
         },
         include: { _count: { select: { records: true } } }
       });
-    }, { maxWait: 10000, timeout: 120000 });
+    }, { maxWait: 20000, timeout: 300000 });
   } catch (error) {
-    await prisma.adminImport.update({
-      where: { id: adminImport.id },
-      data: {
-        status: "REJECTED",
-        errorMessage: String(error.stderr || error.message || error).slice(0, 4000),
-        processedAt: new Date()
-      }
-    });
+    const current = await prisma.adminImport.findUnique({ where: { id: adminImport.id }, select: { status: true } });
+    if (current?.status !== "PUBLISHED") {
+      await prisma.adminImport.update({
+        where: { id: adminImport.id },
+        data: {
+          status: "REJECTED",
+          errorMessage: String(error.stderr || error.message || error).slice(0, 4000),
+          processedAt: new Date()
+        }
+      });
+    }
     throw error;
   } finally {
     // Clean up temp files when using Supabase storage

@@ -747,12 +747,12 @@ export default function FePredictorPage() {
                   <label className="text-sm font-medium text-ink">
                     <span>Category<RequiredMark /></span>
                   </label>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="grid grid-cols-5 gap-1.5">
                     {["OPEN", "OBC", "SEBC", "SC", "ST", "VJ", "NT1", "NT2", "NT3", "EWS"].map((cat) => (
                       <button
                         key={cat}
                         type="button"
-                        className={`focus-ring min-h-10 rounded-lg border px-3.5 text-xs font-bold transition-all ${
+                        className={`focus-ring min-h-10 w-full justify-center rounded-lg border px-1 text-center text-xs font-bold transition-all ${
                           form.category === cat
                             ? "border-action bg-action text-white shadow-xs"
                             : "border-line bg-white text-slate-700 hover:border-action/40 hover:bg-slate-50"
@@ -765,7 +765,7 @@ export default function FePredictorPage() {
                   </div>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4">
                   <div className="grid min-w-0 gap-2">
                     <label className="text-sm font-medium text-ink">
                       <span>Gender<RequiredMark /></span>
@@ -821,7 +821,7 @@ export default function FePredictorPage() {
 
                 <div className="grid gap-2 text-sm">
                   <p className="font-medium text-ink">Special eligibility</p>
-                  <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                  <div className="grid grid-cols-4 gap-1.5">
                     {[
                       { key: "tfws", label: "TFWS" },
                       { key: "pwd", label: "PWD" },
@@ -833,17 +833,17 @@ export default function FePredictorPage() {
                         <button
                           key={key}
                           type="button"
-                          className={`focus-ring flex min-h-11 items-center gap-2 rounded-lg border px-3.5 text-left text-xs font-bold transition-all ${
+                          className={`focus-ring flex min-h-10 items-center justify-center gap-1.5 rounded-lg border px-2 text-center text-xs font-bold transition-all ${
                             active
                               ? "border-emerald-500 bg-emerald-50 text-emerald-800 shadow-xs"
                               : "border-line bg-white text-slate-700 hover:bg-slate-50"
                           }`}
                           onClick={() => updateField(key, !active)}
                         >
-                          <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all ${active ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-300 bg-white"}`}>
-                            {active ? <Check aria-hidden="true" size={12} /> : null}
+                          <span className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-all ${active ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-300 bg-white"}`}>
+                            {active ? <Check aria-hidden="true" size={10} /> : null}
                           </span>
-                          <span>{label}</span>
+                          <span className="truncate">{label}</span>
                         </button>
                       );
                     })}
@@ -877,53 +877,49 @@ export default function FePredictorPage() {
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-action text-xs font-bold text-white shadow-xs">3</span>
                 <h2 className="text-base font-bold text-ink">Preferences <span className="text-xs font-normal text-slate-500">(Optional)</span></h2>
               </div>
-              <fieldset data-step="3" className="grid min-w-0 gap-4 sm:grid-cols-2">
+              <fieldset data-step="3" className="flex flex-col gap-4">
                 <legend className="sr-only">College preferences</legend>
-                <div className="flex flex-col gap-4">
-                  <CompactMultiSelect
-                    label="Preferred branches"
-                    options={branchOptions}
-                    selectedValues={form.branches}
-                    emptyText="All branches"
-                    onToggle={(value) => toggleListValue("branches", value)}
-                    onClear={() => updateField("branches", [])}
-                    searchPlaceholder="Type branch name"
-                  />
+                <CompactMultiSelect
+                  label="Preferred branches"
+                  options={branchOptions}
+                  selectedValues={form.branches}
+                  emptyText="All branches"
+                  onToggle={(value) => toggleListValue("branches", value)}
+                  onClear={() => updateField("branches", [])}
+                  searchPlaceholder="Type branch name"
+                />
 
-                  <label className="flex min-h-11 items-center gap-2.5 rounded-lg border border-line bg-white px-3.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-slate-300 text-action focus:ring-action"
-                      checked={form.autonomousOnly}
-                      onChange={(event) => updateField("autonomousOnly", event.target.checked)}
-                    />
-                    Autonomous institutes only
-                  </label>
-                </div>
+                <CompactMultiSelect
+                  label="Preferred districts / cities"
+                  options={cities.map((city) => ({ label: city.name, value: city.name }))}
+                  selectedValues={form.cities}
+                  emptyText="All Maharashtra"
+                  onToggle={(value) => toggleListValue("cities", value)}
+                  onClear={() => updateField("cities", [])}
+                  loading={citiesLoading}
+                  searchPlaceholder="Type district or city name"
+                  noOptionsText={cityError && !cities.length ? cityError : "No matching district or city found."}
+                />
 
-                <div className="flex flex-col gap-4">
-                  <CompactMultiSelect
-                    label="Preferred districts / cities"
-                    options={cities.map((city) => ({ label: city.name, value: city.name }))}
-                    selectedValues={form.cities}
-                    emptyText="All Maharashtra"
-                    onToggle={(value) => toggleListValue("cities", value)}
-                    onClear={() => updateField("cities", [])}
-                    loading={citiesLoading}
-                    searchPlaceholder="Type district or city name"
-                    noOptionsText={cityError && !cities.length ? cityError : "No matching district or city found."}
-                  />
+                <CompactMultiSelect
+                  label="Institute ownership"
+                  options={collegeTypeOptions}
+                  selectedValues={form.collegeTypes}
+                  emptyText="All institute types"
+                  onToggle={(value) => toggleListValue("collegeTypes", value)}
+                  onClear={() => updateField("collegeTypes", [])}
+                  searchPlaceholder="Choose institute type"
+                />
 
-                  <CompactMultiSelect
-                    label="Institute ownership"
-                    options={collegeTypeOptions}
-                    selectedValues={form.collegeTypes}
-                    emptyText="All institute types"
-                    onToggle={(value) => toggleListValue("collegeTypes", value)}
-                    onClear={() => updateField("collegeTypes", [])}
-                    searchPlaceholder="Choose institute type"
+                <label className="flex min-h-11 items-center gap-2.5 rounded-lg border border-line bg-white px-3.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-slate-300 text-action focus:ring-action"
+                    checked={form.autonomousOnly}
+                    onChange={(event) => updateField("autonomousOnly", event.target.checked)}
                   />
-                </div>
+                  Autonomous institutes only
+                </label>
               </fieldset>
 
               <div className="mt-2 flex gap-3 sm:hidden">
