@@ -760,7 +760,7 @@ export default function DsePredictorPage() {
                 />
                 <CompactMultiSelect
                   label="Institute ownership"
-                  options={ownershipOptions}
+                  options={collegeTypeOptions}
                   selectedValues={form.collegeTypes}
                   emptyText="All institute types"
                   onToggle={(value) => toggleListValue("collegeTypes", value)}
