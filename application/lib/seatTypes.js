@@ -122,3 +122,38 @@ export function explainSeatType(code) {
     note: `This cutoff is for ${category} category, ${group} seat group, ${universityType}.`
   };
 }
+
+export function scoreSeatTypePreference(seatTypeCode) {
+  const code = String(seatTypeCode || "").trim().toUpperCase();
+  if (code === "GOPENS") return 100;
+  if (code === "GOPENH") return 90;
+  if (code === "GOPENO") return 80;
+  if (code === "OPEN" || code === "GS") return 75;
+  if (code === "LOPENS") return 70;
+  if (code === "LOPENH") return 65;
+  if (code === "LOPENO") return 60;
+  if (code.includes("OPEN")) return 55;
+  if (code.startsWith("G")) return 50;
+  if (code.startsWith("L")) return 40;
+  return 10;
+}
+
+export function sortCutoffsByLatestAndOpen(cutoffs) {
+  return [...cutoffs].sort((a, b) => {
+    const yearA = a.dataset?.academicYear || a.academicYear || "";
+    const yearB = b.dataset?.academicYear || b.academicYear || "";
+    const yearDiff = yearB.localeCompare(yearA);
+    if (yearDiff !== 0) return yearDiff;
+
+    const codeA = a.seatType?.code || a.seatType || "";
+    const codeB = b.seatType?.code || b.seatType || "";
+    const scoreDiff = scoreSeatTypePreference(codeB) - scoreSeatTypePreference(codeA);
+    if (scoreDiff !== 0) return scoreDiff;
+
+    const roundA = a.dataset?.capRound ?? a.capRound ?? 0;
+    const roundB = b.dataset?.capRound ?? b.capRound ?? 0;
+    if (roundB !== roundA) return roundB - roundA;
+
+    return Number(b.closingScore ?? 0) - Number(a.closingScore ?? 0);
+  });
+}

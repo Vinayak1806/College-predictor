@@ -1,8 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { explainSeatType, matchesSeatGroup, seatTypeGroups } from "../lib/seatTypes";
+import { Check, Plus } from "lucide-react";
+import { explainSeatType, matchesSeatGroup, seatTypeGroups, sortCutoffsByLatestAndOpen } from "../lib/seatTypes";
+import { addPreferenceItem, preferenceItemId, readPreferenceList, writePreferenceList } from "../lib/preferenceList";
+import { saveCapListToAccount } from "../lib/accountStorage";
 
 function hasValue(value) {
   return value !== null && value !== undefined && value !== "" && value !== "N/A";
@@ -66,7 +69,7 @@ function FilterButton({ active, children, onClick }) {
   );
 }
 
-export function CollegeBranchExplorer({ branches, initialBranchName, initialYear, initialSeatType, admissionRoute = "FE" }) {
+export function CollegeBranchExplorer({ branches, initialBranchName, initialYear, initialSeatType, admissionRoute = "FE", college }) {
   const initialBranch = initialBranchName
     ? branches.find((branch) => branch.branchName.toLowerCase() === initialBranchName.toLowerCase())
     : null;
@@ -74,11 +77,57 @@ export function CollegeBranchExplorer({ branches, initialBranchName, initialYear
   const [selectedYear, setSelectedYear] = useState(initialYear || "ALL");
   const [selectedSeatGroup, setSelectedSeatGroup] = useState("ALL");
   const [selectedSeatType, setSelectedSeatType] = useState(initialSeatType || "ALL");
+  const [capListStatus, setCapListStatus] = useState("");
 
   const selectedBranch =
     branches.find((branch) => branch.branchCode === selectedBranchCode) ||
     branches[0] ||
     null;
+
+  useEffect(() => {
+    if (!college || !selectedBranch) return;
+    const existing = readPreferenceList().some(
+      (item) => item.id === preferenceItemId(college.instituteCode, selectedBranch.branchCode)
+    );
+    setCapListStatus(existing ? "In your CAP List" : "");
+  }, [college, selectedBranch]);
+
+  async function addToCapList() {
+    if (!college || !selectedBranch) return;
+
+    const sortedCutoffs = sortCutoffsByLatestAndOpen(selectedBranch.cutoffRows || []);
+    const latestCutoffRow = sortedCutoffs[0];
+    const item = {
+      id: preferenceItemId(college.instituteCode, selectedBranch.branchCode),
+      instituteCode: college.instituteCode,
+      collegeSlug: college.slug,
+      college: college.name,
+      branchCode: selectedBranch.branchCode,
+      branch: selectedBranch.branchName,
+      city: college.city || "",
+      zone: "TARGET",
+      cutoff: latestCutoffRow?.closingScore ? Number(latestCutoffRow.closingScore) : null,
+      margin: null,
+      seatType: latestCutoffRow?.seatType || "GOPENS",
+      year: latestCutoffRow?.academicYear || selectedBranch.latestYear || "",
+      round: latestCutoffRow?.capRound ?? null,
+      source: "COLLEGE_EXPLORER",
+      addedAt: new Date().toISOString()
+    };
+
+    const result = addPreferenceItem(readPreferenceList(), item);
+    if (result.added) {
+      writePreferenceList(result.items);
+      setCapListStatus("Added to CAP List");
+      try {
+        await saveCapListToAccount(result.items);
+      } catch {
+        // Saved locally
+      }
+    } else {
+      setCapListStatus("Already in CAP List");
+    }
+  }
 
   const years = selectedBranch ? findYears(selectedBranch) : [];
   const seatTypes = selectedBranch ? findSeatTypes(selectedBranch) : [];
@@ -172,9 +221,29 @@ export function CollegeBranchExplorer({ branches, initialBranchName, initialYear
           ) : (
             <>
               <section className="surface-card p-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-ink">{selectedBranch.branchName}</h3>
-                  <p className="mt-1 text-sm text-slate-600">Branch code: {selectedBranch.branchCode}</p>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-ink">{selectedBranch.branchName}</h3>
+                    <p className="mt-1 text-sm text-slate-600">Branch code: {selectedBranch.branchCode}</p>
+                  </div>
+                  {college ? (
+                    <button
+                      type="button"
+                      className={`focus-ring inline-flex min-h-10 items-center gap-2 rounded-xl px-4 text-xs font-semibold shadow-xs transition-all ${
+                        capListStatus === "Added to CAP List" || capListStatus === "In your CAP List"
+                          ? "border border-emerald-200 bg-emerald-50 text-emerald-700 font-bold"
+                          : "bg-action text-white hover:bg-action-dark active:scale-98"
+                      }`}
+                      onClick={addToCapList}
+                    >
+                      {capListStatus === "Added to CAP List" || capListStatus === "In your CAP List" ? (
+                        <Check aria-hidden="true" size={15} />
+                      ) : (
+                        <Plus aria-hidden="true" size={15} />
+                      )}
+                      <span>{capListStatus || "Add to CAP List"}</span>
+                    </button>
+                  ) : null}
                 </div>
 
                 <dl className="mt-4 grid grid-cols-2 gap-3 text-sm md:grid-cols-4">

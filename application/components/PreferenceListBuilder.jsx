@@ -28,6 +28,7 @@ import {
   readPreferenceList,
   writePreferenceList
 } from "../lib/preferenceList";
+import { sortCutoffsByLatestAndOpen } from "../lib/seatTypes";
 import { CollegeAutocomplete } from "./CollegeAutocomplete";
 
 const zoneStyles = {
@@ -100,15 +101,34 @@ export function PreferenceListBuilder() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Could not load branches.");
 
-      const latestBranches = [...new Map(
-        (data.collegeBranches || []).map((collegeBranch) => [
-          collegeBranch.branch.branchCode,
-          {
-            code: collegeBranch.branch.branchCode,
-            name: collegeBranch.branch.displayName || collegeBranch.branch.officialName
+      const branchMap = new Map();
+      for (const collegeBranch of data.collegeBranches || []) {
+        const branchCode = collegeBranch.branch.branchCode;
+        const sortedCutoffs = sortCutoffsByLatestAndOpen(collegeBranch.cutoffs || []);
+        const latestCutoff = sortedCutoffs[0];
+        const branchEntry = {
+          code: branchCode,
+          name: collegeBranch.branch.displayName || collegeBranch.branch.officialName,
+          cutoff: latestCutoff?.closingScore ? Number(latestCutoff.closingScore) : null,
+          year: latestCutoff?.dataset?.academicYear || "",
+          seatType: latestCutoff?.seatType?.code || "GOPENS",
+          round: latestCutoff?.dataset?.capRound ?? null
+        };
+
+        if (!branchMap.has(branchCode)) {
+          branchMap.set(branchCode, branchEntry);
+        } else {
+          const existing = branchMap.get(branchCode);
+          if (
+            (branchEntry.year && (!existing.year || branchEntry.year > existing.year)) ||
+            (!existing.cutoff && branchEntry.cutoff)
+          ) {
+            branchMap.set(branchCode, branchEntry);
           }
-        ])
-      ).values()].sort((a, b) => a.name.localeCompare(b.name));
+        }
+      }
+
+      const latestBranches = [...branchMap.values()].sort((a, b) => a.name.localeCompare(b.name));
 
       setBranches(latestBranches);
       if (latestBranches.length) setSelectedBranchCode(latestBranches[0].code);
@@ -136,11 +156,11 @@ export function PreferenceListBuilder() {
       branch: branch.name,
       city: selectedCollege.city?.name || "",
       zone: selectedZone,
-      cutoff: null,
+      cutoff: branch.cutoff ?? null,
       margin: null,
-      seatType: "",
-      year: "",
-      round: null,
+      seatType: branch.seatType || "",
+      year: branch.year || "",
+      round: branch.round ?? null,
       source: "MANUAL",
       addedAt: new Date().toISOString()
     };
@@ -357,6 +377,7 @@ export function PreferenceListBuilder() {
                     {item.cutoff !== null ? (
                       <p className="mt-1 text-xs leading-5 text-slate-500">
                         Cutoff {formatNumber(item.cutoff)}
+                        {item.year ? ` (${item.year})` : ""}
                         {item.margin !== null ? ` | Margin ${item.margin >= 0 ? "+" : ""}${formatNumber(item.margin)}` : ""}
                         {item.seatType ? ` | ${item.seatType}` : ""}
                       </p>

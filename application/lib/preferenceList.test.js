@@ -71,5 +71,5 @@ test("warns when a safer choice is placed above a more ambitious choice", () => 
   ]);
 
   assert.equal(warnings.length, 1);
-  assert.match(warnings[0], /Preference 1/);
+  assert.match(warnings[0], /Preference #?1/);
 });

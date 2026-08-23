@@ -16,7 +16,7 @@ import {
 import { CollegeBranchExplorer } from "../../../components/CollegeBranchExplorer";
 import { SiteHeader } from "../../../components/SiteHeader";
 import { SharePageButton } from "../../../components/SharePageButton";
-import { explainSeatType } from "../../../lib/seatTypes";
+import { explainSeatType, sortCutoffsByLatestAndOpen } from "../../../lib/seatTypes";
 import { prisma } from "../../../lib/prisma";
 import { currentCollegeWhere } from "../../../lib/publishedData";
 import { absoluteUrl, SITE_NAME } from "../../../lib/site";
@@ -130,17 +130,7 @@ function getUniqueBranches(collegeBranches) {
 }
 
 function sortCutoffs(cutoffs) {
-  return [...cutoffs].sort((a, b) => {
-    if (a.dataset.academicYear !== b.dataset.academicYear) {
-      return b.dataset.academicYear.localeCompare(a.dataset.academicYear);
-    }
-
-    if (a.dataset.capRound !== b.dataset.capRound) {
-      return b.dataset.capRound - a.dataset.capRound;
-    }
-
-    return Number(b.closingScore ?? 0) - Number(a.closingScore ?? 0);
-  });
+  return sortCutoffsByLatestAndOpen(cutoffs);
 }
 
 function normalizeOwnership(value) {
@@ -239,7 +229,12 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
           }
         }
       },
-      take: 1500
+      orderBy: [
+        { dataset: { academicYear: "desc" } },
+        { dataset: { capRound: "desc" } },
+        { closingScore: "desc" }
+      ],
+      take: 3000
     }),
     prisma.collegeProfile.findUnique({
       where: {
@@ -553,6 +548,12 @@ export default async function CollegeDetailsPage({ params, searchParams }) {
           initialBranchName={requestedBranchName}
           initialYear={typeof query?.year === "string" ? query.year : null}
           initialSeatType={seatTypeCode}
+          college={{
+            instituteCode: college.instituteCode,
+            name: college.name,
+            slug: college.slug,
+            city: college.city?.name || ""
+          }}
         />
 
         <section className="mt-10 grid gap-6 lg:grid-cols-2">

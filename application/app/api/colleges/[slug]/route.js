@@ -23,7 +23,16 @@ export async function GET(request, { params }) {
       collegeBranches: {
         include: {
           branch: true,
-          cutoffs: { include: { dataset: true, seatType: true }, take: 100 }
+          cutoffs: {
+            where: { needsReview: false, closingScore: { not: null } },
+            include: { dataset: true, seatType: true },
+            orderBy: [
+              { dataset: { academicYear: "desc" } },
+              { dataset: { capRound: "desc" } },
+              { closingScore: "desc" }
+            ],
+            take: 1000
+          }
         }
       }
     }

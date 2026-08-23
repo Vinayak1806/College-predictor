@@ -98,21 +98,44 @@ export function preferenceListWarnings(items) {
     seenIds.add(item.id);
   }
   if (duplicateIds.size) {
-    warnings.push(`${duplicateIds.size} duplicate college-branch choice${duplicateIds.size === 1 ? "" : "s"} found.`);
+    warnings.push(`${duplicateIds.size} duplicate choice${duplicateIds.size === 1 ? "" : "s"} found.`);
   }
 
+  const inversionsByEarlier = new Map();
   for (let earlierIndex = 0; earlierIndex < items.length; earlierIndex += 1) {
+    const earlierZone = items[earlierIndex].zone;
+    const earlierRisk = preferenceZoneOrder[earlierZone] ?? 99;
+
     for (let laterIndex = earlierIndex + 1; laterIndex < items.length; laterIndex += 1) {
-      const earlierRisk = preferenceZoneOrder[items[earlierIndex].zone] ?? 99;
-      const laterRisk = preferenceZoneOrder[items[laterIndex].zone] ?? 99;
+      const laterZone = items[laterIndex].zone;
+      const laterRisk = preferenceZoneOrder[laterZone] ?? 99;
 
       if (earlierRisk > laterRisk) {
-        warnings.push(
-          `Preference ${earlierIndex + 1} (${items[earlierIndex].zone.toLowerCase()}) is safer than preference ${laterIndex + 1} (${items[laterIndex].zone.toLowerCase()}). Check whether that order matches your real preference.`
-        );
-        if (warnings.length >= 4) return warnings;
+        if (!inversionsByEarlier.has(earlierIndex)) {
+          inversionsByEarlier.set(earlierIndex, {
+            zone: earlierZone,
+            laterIndices: []
+          });
+        }
+        inversionsByEarlier.get(earlierIndex).laterIndices.push(laterIndex + 1);
       }
     }
+  }
+
+  for (const [earlierIndex, data] of inversionsByEarlier.entries()) {
+    const prefNum = earlierIndex + 1;
+    const zoneName = data.zone.charAt(0) + data.zone.slice(1).toLowerCase();
+    const laterNumbers = data.laterIndices;
+
+    const laterFormatted = laterNumbers.length <= 3
+      ? `#${laterNumbers.join(", #")}`
+      : `#${laterNumbers[0]}–#${laterNumbers[laterNumbers.length - 1]}`;
+
+    warnings.push(
+      `Preference #${prefNum} (${zoneName}) is ranked above higher-risk choices (${laterFormatted}).`
+    );
+
+    if (warnings.length >= 3) break;
   }
 
   return warnings;
