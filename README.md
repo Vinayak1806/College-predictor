@@ -6,7 +6,6 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38BDF8?logo=tailwindcss)](https://tailwindcss.com/)
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python)](https://www.python.org/)
 [![Sentry](https://img.shields.io/badge/Monitoring-Sentry-362D59?logo=sentry)](https://sentry.io/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A data-first web application for exploring official MHT-CET (First-Year) and Direct Second-Year (DSE) CAP cutoffs, calculating admission probabilities, comparing engineering colleges side-by-side, and generating validated CAP preference lists — built on a real end-to-end **data analytics pipeline**, not synthetic or hardcoded data.
 
@@ -166,5 +165,3 @@ pnpm build
 - **Data Privacy**: No personal student records or sensitive marks sheets are stored publicly. User preferences and saved option lists remain strictly private to local browser storage or authenticated student accounts.
 - **Official Data Disclaimers**: All cutoff values link back to official CAP PDF source pages. Approved fees are compiled from official FRA publications; users should cross-check on official college websites before final admission.
 - **Security Best Practices**: Secrets, database credentials, and session keys are strictly isolated in `.env` configuration and kept out of public repositories.
-
----
