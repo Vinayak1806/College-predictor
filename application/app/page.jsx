@@ -123,7 +123,7 @@ export default async function HomePage() {
       <SiteHeader />
       <main className="home-page bg-white">
         {/* Hero Section */}
-        <section className="home-hero relative w-full min-w-0 overflow-hidden bg-[#0f172a] text-white">
+        <section className="home-hero relative w-full min-w-0 overflow-x-clip bg-[#0f172a] text-white">
           <Image
             src="/images/engineering-students-campus.png"
             alt="Engineering students walking through a modern college campus"
