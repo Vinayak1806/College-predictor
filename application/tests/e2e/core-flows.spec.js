@@ -42,8 +42,8 @@ test("FE prediction returns official college options", async ({ page }) => {
   const citySearch = page.getByRole("combobox", { name: /Preferred districts \/ cities/ });
   await expect(citySearch).toBeEnabled({ timeout: 30_000 });
   await citySearch.fill("sola");
-  await expect(page.getByRole("button", { name: "Solapur", exact: true })).toBeVisible();
-  await university.selectOption({ index: 1 });
+  await page.getByRole("button", { name: "Solapur", exact: true }).click();
+  await university.selectOption({ label: "Punyashlok Ahilyadevi Holkar Solapur University" });
   await page.getByRole("button", { name: "Predict First-Year Colleges" }).click();
   await expect(page.getByRole("heading", { name: "Your college-branch options" })).toBeVisible({ timeout: 30_000 });
   await expect(page.locator("article").first()).toContainText(/Selected official cutoff/i);

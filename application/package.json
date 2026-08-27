@@ -16,7 +16,7 @@
     "backup:db": "powershell -ExecutionPolicy Bypass -File scripts/backup-database.ps1",
     "restore:test": "powershell -ExecutionPolicy Bypass -File scripts/test-database-restore.ps1",
     "restore:staging": "powershell -ExecutionPolicy Bypass -File scripts/restore-staging-database.ps1",
-    "check:config": "node scripts/predeploy-check.js",
+    "check:config": "node --env-file=.env scripts/predeploy-check.js",
     "check:deploy": "pnpm check:config && pnpm test && pnpm build",
     "monitor:production": "node scripts/monitor-production.js",
     "check:launch": "pnpm check:deploy",
