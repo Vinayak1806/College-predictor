@@ -4,6 +4,7 @@ import argparse
 import csv
 import json
 import re
+import gc
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
@@ -665,7 +666,8 @@ def main() -> None:
     rows: list[dict[str, str]] = []
     with pdfplumber.open(input_path) as pdf:
         pages_to_process = min(args.limit_pages or len(pdf.pages), len(pdf.pages))
-        for page_number, page in enumerate(pdf.pages[:pages_to_process], start=1):
+        for page_number in range(1, pages_to_process + 1):
+            page = pdf.pages[page_number - 1]
             text = page.extract_text() or ""
             if args.route == "DSE":
                 extracted = parse_dse_page(page.extract_words() or [], page_number, args)
@@ -676,6 +678,9 @@ def main() -> None:
             else:
                 table_rows = parse_fe_table_page(page, page_number, args)
                 rows.extend(table_rows or parse_page(text, page_number, args))
+            page.flush_cache()
+            if page_number % 10 == 0:
+                gc.collect()
 
     counts = validate_records(rows)
     write_csv(rows, Path(args.output))

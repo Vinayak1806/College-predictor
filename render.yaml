@@ -63,3 +63,6 @@ services:
       # --- Python runtime (set by Dockerfile) ---
       - key: PYTHON_EXECUTABLE
         value: "/opt/admission-compass-python/bin/python"
+      # --- Node.js Memory Optimization ---
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=256"

@@ -4,6 +4,7 @@ import argparse
 import csv
 import json
 import re
+import gc
 from collections import Counter
 from pathlib import Path
 
@@ -431,7 +432,8 @@ def main() -> None:
 
     with pdfplumber.open(input_path) as pdf:
         pages_to_process = min(args.limit_pages or len(pdf.pages), len(pdf.pages))
-        for page_number, page in enumerate(pdf.pages[:pages_to_process], start=1):
+        for page_number in range(1, pages_to_process + 1):
+            page = pdf.pages[page_number - 1]
             text = page.extract_text() or ""
             if args.route == "DSE":
                 detected_choice_codes += len(DSE_CHOICE_RE.findall(text))
@@ -440,6 +442,9 @@ def main() -> None:
                 row = parse_page(text, page_number, input_path.name, academic_year)
                 if row:
                     rows.append(row)
+            page.flush_cache()
+            if page_number % 10 == 0:
+                gc.collect()
 
     write_csv(rows, Path(args.output))
     write_report(rows, Path(args.report), input_path.name, pages_to_process, detected_choice_codes)
